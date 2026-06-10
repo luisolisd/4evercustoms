@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  WORKSHOP_ADMIN
+  TECHNICIAN
+  CLIENT
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum WorkOrderStatus {
+  RECEIVED
+  DIAGNOSIS
+  AWAITING_AUTH
+  IN_REPAIR
+  FINAL_TESTING
+  READY_FOR_PICKUP
+  DELIVERED
+  CANCELLED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  STATUS_UPDATE
+  QUOTE_READY
+  SERVICE_COMPLETE
+  MAINTENANCE_REMINDER
+  CUSTOM
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+// ─── Tables ───────────────────────────────────────────────────────────────────
+
+model Workshop {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  phone     String
+  email     String?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  country   String   @default("MX")
+  logoUrl   String?
+  timezone  String   @default("America/Mexico_City")
+  taxId     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          WorkshopUser[]
+  customers      Customer[]
+  vehicles       Vehicle[]
+  appointments   Appointment[]
+  workOrders     WorkOrder[]
+  quotes         Quote[]
+  parts          Part[]
+  inventory      Inventory[]
+  notifications  Notification[]
+  serviceHistory ServiceHistory[]
+  auditLogs      AuditLog[]
+
+  @@index([slug])
+  @@map("workshops")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  phone        String    @unique
+  email        String?   @unique
+  passwordHash String?
+  firstName    String
+  lastName     String
+  avatarUrl    String?
+  fcmToken     String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  workshops     WorkshopUser[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@index([phone])
+  @@map("users")
+}
+
+model WorkshopUser {
+  id         String   @id @default(uuid())
+  workshopId String
+  userId     String
+  role       UserRole
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  workshop Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workshopId, userId])
+  @@index([workshopId])
+  @@index([userId])
+  @@map("workshop_users")
+}
+
+model OtpCode {
+  id        String    @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([phone])
+  @@map("otp_codes")
+}
+
+model Customer {
+  id         String   @id @default(uuid())
+  workshopId String
+  userId     String?
+  firstName  String
+  lastName   String
+  phone      String
+  email      String?
+  address    String?
+  notes      String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  workshop      Workshop      @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  vehicles      Vehicle[]
+  appointments  Appointment[]
+  workOrders    WorkOrder[]
+  quotes        Quote[]
+  notifications Notification[]
+
+  @@unique([workshopId, phone])
+  @@index([workshopId])
+  @@index([phone])
+  @@map("customers")
+}
+
+model Vehicle {
+  id           String   @id @default(uuid())
+  workshopId   String
+  customerId   String
+  make         String
+  model        String
+  year         Int
+  vin          String?
+  licensePlate String?
+  color        String?
+  engineType   String?
+  mileage      Int?
+  notes        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workshop       Workshop         @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer       Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  appointments   Appointment[]
+  workOrders     WorkOrder[]
+  serviceHistory ServiceHistory[]
+
+  @@index([workshopId])
+  @@index([customerId])
+  @@index([licensePlate])
+  @@index([vin])
+  @@map("vehicles")
+}
+
+model Appointment {
+  id           String            @id @default(uuid())
+  workshopId   String
+  customerId   String
+  vehicleId    String
+  scheduledAt  DateTime
+  duration     Int               @default(60)
+  serviceType  String
+  notes        String?
+  status       AppointmentStatus @default(PENDING)
+  assignedToId String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  workshop  Workshop   @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer  Customer   @relation(fields: [customerId], references: [id])
+  vehicle   Vehicle    @relation(fields: [vehicleId], references: [id])
+  workOrder WorkOrder?
+
+  @@index([workshopId])
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@map("appointments")
+}
+
+model WorkOrder {
+  id              String          @id @default(uuid())
+  workshopId      String
+  customerId      String
+  vehicleId       String
+  appointmentId   String?         @unique
+  orderNumber     String
+  status          WorkOrderStatus @default(RECEIVED)
+  description     String?
+  diagnosis       String?
+  technicianNotes String?
+  technicianId    String?
+  receivedAt      DateTime        @default(now())
+  estimatedReady  DateTime?
+  deliveredAt     DateTime?
+  mileageIn       Int?
+  mileageOut      Int?
+  paymentStatus   PaymentStatus   @default(PENDING)
+  totalAmount     Decimal         @default(0) @db.Decimal(10, 2)
+  paidAmount      Decimal         @default(0) @db.Decimal(10, 2)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  workshop       Workshop         @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  vehicle        Vehicle          @relation(fields: [vehicleId], references: [id])
+  appointment    Appointment?     @relation(fields: [appointmentId], references: [id])
+  quotes         Quote[]
+  photos         Photo[]
+  serviceHistory ServiceHistory[]
+  workOrderParts WorkOrderPart[]
+
+  @@unique([workshopId, orderNumber])
+  @@index([workshopId])
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([receivedAt])
+  @@map("work_orders")
+}
+
+model Quote {
+  id              String      @id @default(uuid())
+  workshopId      String
+  customerId      String
+  workOrderId     String?
+  quoteNumber     String
+  status          QuoteStatus @default(DRAFT)
+  validUntil      DateTime?
+  notes           String?
+  subtotal        Decimal     @default(0) @db.Decimal(10, 2)
+  tax             Decimal     @default(0) @db.Decimal(10, 2)
+  total           Decimal     @default(0) @db.Decimal(10, 2)
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  workshop  Workshop    @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer  Customer    @relation(fields: [customerId], references: [id])
+  workOrder WorkOrder?  @relation(fields: [workOrderId], references: [id])
+  items     QuoteItem[]
+
+  @@unique([workshopId, quoteNumber])
+  @@index([workshopId])
+  @@index([customerId])
+  @@index([workOrderId])
+  @@index([status])
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String  @id @default(uuid())
+  quoteId     String
+  description String
+  partId      String?
+  quantity    Decimal @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+  isLabor     Boolean @default(false)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  part  Part? @relation(fields: [partId], references: [id])
+
+  @@index([quoteId])
+  @@map("quote_items")
+}
+
+model Photo {
+  id           String   @id @default(uuid())
+  workshopId   String
+  workOrderId  String
+  url          String
+  thumbnailUrl String?
+  caption      String?
+  uploadedById String
+  takenAt      DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId])
+  @@index([workshopId])
+  @@map("photos")
+}
+
+model Part {
+  id          String  @id @default(uuid())
+  workshopId  String
+  sku         String?
+  name        String
+  description String?
+  brand       String?
+  unitPrice   Decimal @db.Decimal(10, 2)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workshop       Workshop        @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  inventory      Inventory?
+  quoteItems     QuoteItem[]
+  workOrderParts WorkOrderPart[]
+
+  @@unique([workshopId, sku])
+  @@index([workshopId])
+  @@index([name])
+  @@map("parts")
+}
+
+model Inventory {
+  id          String   @id @default(uuid())
+  workshopId  String
+  partId      String   @unique
+  quantity    Decimal  @default(0) @db.Decimal(10, 2)
+  minQuantity Decimal  @default(0) @db.Decimal(10, 2)
+  location    String?
+  updatedAt   DateTime @updatedAt
+
+  workshop  Workshop            @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  part      Part                @relation(fields: [partId], references: [id], onDelete: Cascade)
+  movements InventoryMovement[]
+
+  @@index([workshopId])
+  @@map("inventory")
+}
+
+model InventoryMovement {
+  id          String       @id @default(uuid())
+  inventoryId String
+  type        MovementType
+  quantity    Decimal      @db.Decimal(10, 2)
+  reason      String?
+  reference   String?
+  performedBy String
+  createdAt   DateTime     @default(now())
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@index([inventoryId])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+model WorkOrderPart {
+  id          String   @id @default(uuid())
+  workOrderId String
+  partId      String
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  part      Part      @relation(fields: [partId], references: [id])
+
+  @@index([workOrderId])
+  @@map("work_order_parts")
+}
+
+model ServiceHistory {
+  id           String   @id @default(uuid())
+  workshopId   String
+  vehicleId    String
+  workOrderId  String
+  serviceDate  DateTime
+  description  String
+  mileage      Int?
+  technicianId String?
+  createdAt    DateTime @default(now())
+
+  workshop  Workshop  @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle   @relation(fields: [vehicleId], references: [id])
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@index([workshopId])
+  @@index([vehicleId])
+  @@index([serviceDate])
+  @@map("service_history")
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  workshopId String?
+  userId     String?
+  customerId String?
+  type       NotificationType
+  title      String
+  body       String
+  data       Json?
+  isRead     Boolean          @default(false)
+  sentAt     DateTime?
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  workshop Workshop? @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([customerId])
+  @@index([workshopId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  workshopId String?
+  userId     String?
+  action     String
+  entity     String
+  entityId   String
+  oldData    Json?
+  newData    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  workshop Workshop? @relation(fields: [workshopId], references: [id], onDelete: SetNull)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([workshopId])
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

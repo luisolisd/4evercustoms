@@ -1,0 +1,40 @@
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m694[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m12:26:31 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Layout.jsx[22m
+[2m12:27:04 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.jsx[22m
+[2m12:27:14 a.m.[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33mdate-fns, date-fns/locale[32m[39m
+[2m12:27:14 a.m.[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m12:27:34 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CustomersPage.jsx[22m
+[2m12:27:39 a.m.[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33mreact-hook-form[32m[39m
+[2m12:27:39 a.m.[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m12:27:59 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/VehiclesPage.jsx[22m
+[2m12:28:25 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/AppointmentsPage.jsx[22m
+[2m12:28:48 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/WorkOrdersPage.jsx[22m
+[2m12:30:12 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/WorkOrderDetail.jsx[22m
+[2m12:33:57 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/QuotesPage.jsx[22m
+[2m12:34:37 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/InventoryPage.jsx[22m
+[2m12:35:07 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ReportsPage.jsx[22m
+[2m12:35:37 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:35:41 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:35:41 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:35:56 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:35:56 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/WorkOrderDetail.jsx, /src/pages/QuotesPage.jsx[22m
+[2m12:36:01 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:36:01 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.jsx, /src/pages/WorkOrderDetail.jsx, /src/components/forms/QuoteItemForm.jsx, /src/pages/InventoryPage.jsx[22m
+[2m12:36:05 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:36:05 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.jsx, /src/pages/ReportsPage.jsx[22m
+[2m12:36:10 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:36:10 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx[22m
+[2m12:36:25 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/pages/QuotesPage.jsx, /src/pages/LoginPage.jsx, /src/pages/DashboardPage.jsx, /src/pages/WorkOrderDetail.jsx, /src/components/forms/QuoteItemForm.jsx, /src/pages/InventoryPage.jsx, /src/pages/ReportsPage.jsx, /src/pages/AppointmentsPage.jsx, /src/pages/WorkOrdersPage.jsx, /src/pages/CustomersPage.jsx, /src/components/forms/VehicleForm.jsx, /src/components/forms/AppointmentForm.jsx, /src/components/forms/WorkOrderForm.jsx, /src/pages/VehiclesPage.jsx, /src/pages/ProfilePage.jsx, /src/components/Layout.jsx[22m
+[2m12:36:28 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ProfilePage.jsx[22m
+[2m12:36:31 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ProfilePage.jsx[22m
+[2m12:36:35 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Layout.jsx[22m
+[2m12:36:44 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Layout.jsx[22m
+[2m12:37:51 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/WorkOrderDetail.jsx[22m
+[2m12:37:56 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/WorkOrderDetail.jsx[22m
+[2m12:39:20 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ReportsPage.jsx[22m
+[2m12:39:28 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ReportsPage.jsx[22m
+[2m12:46:23 a.m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/LoginPage.jsx, /src/pages/DashboardPage.jsx, /src/pages/WorkOrderDetail.jsx, /src/components/forms/QuoteItemForm.jsx, /src/pages/InventoryPage.jsx, /src/pages/ReportsPage.jsx, /src/pages/AppointmentsPage.jsx, /src/pages/WorkOrdersPage.jsx, /src/pages/CustomersPage.jsx, /src/components/forms/VehicleForm.jsx, /src/components/forms/AppointmentForm.jsx, /src/components/forms/WorkOrderForm.jsx, /src/pages/QuotesPage.jsx, /src/pages/VehiclesPage.jsx, /src/pages/ProfilePage.jsx[22m

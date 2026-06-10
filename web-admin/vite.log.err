@@ -1,0 +1,116 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+[2m12:35:39 a.m.[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Proyectos/4evercustoms/web-admin/src/pages/ProfilePage.jsx[39m:6:46
+[33m  21 |  import { User, Lock, Bell } from "lucide-react";
+  22 |  import { useAuthStore } from "../store/authStore";
+  23 |  import { updateProfile, changePassword } from "../services/profile";
+     |                                                 ^
+  24 |  import Button from "../components/ui/Button";
+  25 |  import Input from "../components/ui/Input";[39m
+      at TransformPluginContext._formatError (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 8)
+      at async TransformPluginContext.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m12:35:39 a.m.[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?
+[2m12:35:41 a.m.[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Proyectos/4evercustoms/web-admin/src/pages/ProfilePage.jsx[39m:6:46
+[33m  21 |  import { User, Lock, Bell } from "lucide-react";
+  22 |  import { useAuthStore } from "../store/authStore";
+  23 |  import { updateProfile, changePassword } from "../services/profile";
+     |                                                 ^
+  24 |  import Button from "../components/ui/Button";
+  25 |  import Input from "../components/ui/Input";[39m
+      at TransformPluginContext._formatError (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 8)
+      at async TransformPluginContext.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m12:35:41 a.m.[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?
+[2m12:35:41 a.m.[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?
+[2m12:35:58 a.m.[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Proyectos/4evercustoms/web-admin/src/pages/ProfilePage.jsx[39m:6:46
+[33m  21 |  import { User, Lock, Bell } from "lucide-react";
+  22 |  import { useAuthStore } from "../store/authStore";
+  23 |  import { updateProfile, changePassword } from "../services/profile";
+     |                                                 ^
+  24 |  import Button from "../components/ui/Button";
+  25 |  import Input from "../components/ui/Input";[39m
+      at TransformPluginContext._formatError (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 8)
+      at async TransformPluginContext.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m12:35:58 a.m.[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?
+[2m12:36:01 a.m.[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Proyectos/4evercustoms/web-admin/src/pages/ProfilePage.jsx[39m:6:46
+[33m  21 |  import { User, Lock, Bell } from "lucide-react";
+  22 |  import { useAuthStore } from "../store/authStore";
+  23 |  import { updateProfile, changePassword } from "../services/profile";
+     |                                                 ^
+  24 |  import Button from "../components/ui/Button";
+  25 |  import Input from "../components/ui/Input";[39m
+      at TransformPluginContext._formatError (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 8)
+      at async TransformPluginContext.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m12:36:01 a.m.[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?
+[2m12:36:05 a.m.[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Proyectos/4evercustoms/web-admin/src/pages/ProfilePage.jsx[39m:6:46
+[33m  21 |  import { User, Lock, Bell } from "lucide-react";
+  22 |  import { useAuthStore } from "../store/authStore";
+  23 |  import { updateProfile, changePassword } from "../services/profile";
+     |                                                 ^
+  24 |  import Button from "../components/ui/Button";
+  25 |  import Input from "../components/ui/Input";[39m
+      at TransformPluginContext._formatError (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 8)
+      at async TransformPluginContext.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m12:36:05 a.m.[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?
+[2m12:36:10 a.m.[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Proyectos/4evercustoms/web-admin/src/pages/ProfilePage.jsx[39m:6:46
+[33m  21 |  import { User, Lock, Bell } from "lucide-react";
+  22 |  import { useAuthStore } from "../store/authStore";
+  23 |  import { updateProfile, changePassword } from "../services/profile";
+     |                                                 ^
+  24 |  import Button from "../components/ui/Button";
+  25 |  import Input from "../components/ui/Input";[39m
+      at TransformPluginContext._formatError (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 8)
+      at async TransformPluginContext.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Proyectos/4evercustoms/web-admin/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m12:36:10 a.m.[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../services/profile" from "src/pages/ProfilePage.jsx". Does the file exist?

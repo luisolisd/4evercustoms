@@ -1,0 +1,118 @@
+Actúa como un arquitecto de software senior.
+
+(Usaremos PostgreSQL como base de datos principal del sistema.
+
+Actúa como arquitecto de software senior y diseña una base de datos PostgreSQL lista para producción para una plataforma SaaS de gestión de talleres mecánicos.
+
+Requisitos:
+
+* Multiempresa (cada taller solo ve sus propios datos).
+* Clientes.
+* Vehículos.
+* Citas.
+* Órdenes de trabajo.
+* Cotizaciones.
+* Fotografías.
+* Refacciones.
+* Inventario.
+* Usuarios y roles.
+* Notificaciones.
+* Historial de servicios.
+* Registro de cambios (auditoría).
+
+Quiero que generes:
+
+1. Modelo entidad-relación completo.
+2. Todas las tablas PostgreSQL.
+3. Llaves primarias y foráneas.
+4. Índices recomendados.
+5. Restricciones y validaciones.
+6. Migraciones SQL completas.
+7. Datos de prueba.
+8. Estrategia de respaldo y recuperación.
+9. Recomendaciones de escalabilidad para más de 100 talleres.
+
+Cuando termines, crea también los modelos de Node.js usando Prisma ORM compatibles con PostgreSQL.
+)
+
+Quiero desarrollar una aplicación móvil para Android e iOS y un panel administrativo web para la gestión de talleres mecánicos.
+
+El taller se llama 4EVRcustoms
+Objetivo:
+Permitir que los clientes consulten el historial de servicios de sus vehículos, programen citas y reciban notificaciones, mientras que el taller administra operaciones, clientes, vehículos y servicios.
+
+Tecnologías deseadas:
+
+* Frontend móvil: Flutter o React Native (recomienda la mejor opción).
+* Panel administrativo web: React.
+* Backend: Node.js + Express.
+* Base de datos: PostgreSQL.
+* Hosting: Render.
+* Notificaciones push.
+* Autenticación mediante número telefónico y código SMS.
+
+Módulos para clientes:
+
+1. Registro e inicio de sesión por teléfono.
+2. Gestión de múltiples vehículos.
+3. Historial de servicios.
+4. Programación de citas.
+5. Seguimiento del estatus del vehículo:
+
+   * Recibido
+   * Diagnóstico
+   * Esperando autorización
+   * En reparación
+   * Pruebas finales
+   * Listo para entrega
+6. Aprobación o rechazo de cotizaciones.
+7. Visualización de fotografías del servicio.
+8. Notificaciones push.
+9. Recordatorios automáticos de mantenimiento.
+
+Módulos para el taller:
+
+1. Dashboard principal.
+2. Agenda de citas.
+3. Gestión de clientes.
+4. Gestión de vehículos.
+5. Órdenes de trabajo.
+6. Cotizaciones.
+7. Control de estatus.
+8. Carga de fotografías.
+9. Historial completo de servicios.
+10. Reportes e indicadores.
+
+Quiero que desarrolles el proyecto por fases:
+
+FASE 1:
+
+* Arquitectura completa.
+* Modelo de base de datos PostgreSQL.
+* Diagrama de entidades.
+* Estructura de carpetas.
+* APIs necesarias.
+
+FASE 2:
+
+* Backend completo.
+* Migraciones SQL.
+* Autenticación.
+* CRUDs.
+
+FASE 3:
+
+* Aplicación móvil Android e iOS.
+
+FASE 4:
+
+* Panel administrativo web.
+
+FASE 5:
+
+* Notificaciones push.
+* Despliegue en Render.
+* Producción.
+
+No quiero ejemplos ni explicaciones generales.
+Quiero que generes directamente el código del proyecto y que me vaya guiando archivo por archivo hasta tener un MVP funcional.
