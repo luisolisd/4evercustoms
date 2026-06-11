@@ -1,6 +1,7 @@
 const prisma = require('../../config/database');
 const { ok, error, notFound } = require('../../utils/response');
 const push = require('../../utils/push');
+const { recalcOrderTotal } = require('../../utils/orderTotals');
 
 // ── Perfil + taller ──────────────────────────────────────────────────────────
 const me = async (req, res, next) => {
@@ -154,7 +155,7 @@ const respondQuote = async (req, res, next) => {
     }
     const quote = await prisma.quote.findFirst({
       where: { id: req.params.id, customerId: req.customer.id },
-      select: { id: true, status: true },
+      select: { id: true, status: true, workOrderId: true },
     });
     if (!quote) return notFound(res, 'Cotización no encontrada');
     if (!['SENT', 'DRAFT'].includes(quote.status)) {
@@ -167,6 +168,8 @@ const respondQuote = async (req, res, next) => {
         : { status: 'REJECTED', rejectedAt: new Date(), rejectionReason: reason || null },
       select: { id: true, status: true },
     });
+    // Al aprobar/rechazar, el total de la orden cambia (solo cuentan las aprobadas)
+    if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
     ok(res, updated);
   } catch (e) { next(e); }
 };

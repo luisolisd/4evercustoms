@@ -2,6 +2,8 @@ const prisma = require('../../config/database');
 const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { cleanData } = require('../../utils/sanitize');
+const { recalcOrderTotal } = require('../../utils/orderTotals');
+const { notifyCustomer } = require('../../utils/notify');
 
 const generateQuoteNumber = async (workshopId) => {
   const count = await prisma.quote.count({ where: { workshopId } });
@@ -89,7 +91,25 @@ const updateStatus = async (req, res, next) => {
     if (status === 'APPROVED') data.approvedAt = new Date();
     if (status === 'REJECTED') { data.rejectedAt = new Date(); data.rejectionReason = rejectionReason; }
 
-    ok(res, await prisma.quote.update({ where: { id: quote.id }, data }));
+    const updated = await prisma.quote.update({ where: { id: quote.id }, data });
+
+    // Si la cotización está ligada a una orden, recalcula su total (solo cuentan las aprobadas)
+    if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
+
+    // Avisa al cliente cuando el taller le envía una cotización para aprobar
+    if (status === 'SENT') {
+      notifyCustomer(
+        { customerId: quote.customerId, workshopId: quote.workshopId },
+        {
+          type: 'QUOTE_READY',
+          title: 'Tienes una cotización por aprobar',
+          body: `Cotización #${quote.quoteNumber} lista. Revísala y apruébala o recházala.`,
+          url: quote.workOrderId ? `/cliente/orden/${quote.workOrderId}` : '/cliente/avisos',
+        }
+      ).catch(() => {});
+    }
+
+    ok(res, updated);
   } catch (e) { next(e); }
 };
 

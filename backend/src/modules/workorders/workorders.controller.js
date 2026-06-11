@@ -3,6 +3,7 @@ const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { notifyCustomer } = require('../../utils/notify');
 const { cleanData } = require('../../utils/sanitize');
+const { recalcOrderTotal } = require('../../utils/orderTotals');
 
 const STATUS_LABELS = {
   RECEIVED: 'Recibido',
@@ -17,7 +18,7 @@ const STATUS_LABELS = {
 
 const generateOrderNumber = async (workshopId) => {
   const count = await prisma.workOrder.count({ where: { workshopId } });
-  return `WO-${String(count + 1).padStart(5, '0')}`;
+  return `O-${String(count + 1).padStart(4, '0')}`;
 };
 
 const list = async (req, res, next) => {
@@ -204,6 +205,7 @@ const addPart = async (req, res, next) => {
       },
       include: { part: true },
     });
+    await recalcOrderTotal(req.params.orderId);
     ok(res, part, 201);
   } catch (e) { next(e); }
 };
@@ -213,6 +215,7 @@ const removePart = async (req, res, next) => {
     await prisma.workOrderPart.deleteMany({
       where: { workOrderId: req.params.orderId, partId: req.params.partId },
     });
+    await recalcOrderTotal(req.params.orderId);
     ok(res, { message: 'Refacción removida' });
   } catch (e) { next(e); }
 };

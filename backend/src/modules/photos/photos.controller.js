@@ -1,6 +1,11 @@
 const prisma = require('../../config/database');
-const { ok, created, notFound } = require('../../utils/response');
+const { ok, created, notFound, error } = require('../../utils/response');
 const { cloudinary, uploadToCloudinary } = require('./photos.upload');
+const { cloudinary: cloudCfg } = require('../../config');
+
+const cloudinaryReady = () =>
+  cloudCfg.cloudName && cloudCfg.cloudName !== 'DEV_SKIP' &&
+  cloudCfg.apiKey && cloudCfg.apiSecret;
 
 const list = async (req, res, next) => {
   try {
@@ -14,6 +19,9 @@ const list = async (req, res, next) => {
 
 const upload = async (req, res, next) => {
   try {
+    if (!cloudinaryReady()) {
+      return error(res, 'La carga de fotos no está configurada. Falta conectar Cloudinary en el servidor.', 503);
+    }
     if (!req.files?.length) return ok(res, []);
 
     const uploads = await Promise.all(

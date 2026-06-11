@@ -417,7 +417,8 @@ export default function WorkOrderDetail() {
           <Input label="Total a cobrar (MXN)" type="number" step="0.01" min="0" {...payForm.register('totalAmount', { valueAsNumber: true })} />
           <Input label="Monto pagado (MXN)" type="number" step="0.01" min="0" {...payForm.register('paidAmount', { valueAsNumber: true })} />
           <p className="text-xs text-gray-500">
-            El estatus de pago se calcula solo: pagado ≥ total → <b>Pagado</b>; pagado &gt; 0 → <b>Parcial</b>; si no, <b>Pendiente</b>. Se le notifica al cliente.
+            El <b>total</b> se calcula automáticamente con las refacciones + cotizaciones aprobadas; aquí puedes corregirlo manualmente.
+            El estatus de pago se deriva: pagado ≥ total → <b>Pagado</b>; pagado &gt; 0 → <b>Parcial</b>; si no, <b>Pendiente</b>. Se le notifica al cliente.
           </p>
           <div className="flex justify-between gap-2">
             <Button type="button" variant="secondary"
