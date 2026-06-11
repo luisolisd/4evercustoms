@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: starter
     rootDir: backend
-    buildCommand: npm ci && npx prisma generate && npx prisma db push --force-reset --accept-data-loss && npm run seed
+    buildCommand: npm ci && npx prisma generate && npx prisma db push --accept-data-loss && npm run seed
     startCommand: node src/index.js
     envVars:
       - key: NODE_ENV
