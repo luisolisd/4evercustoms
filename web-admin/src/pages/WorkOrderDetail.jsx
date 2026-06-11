@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import {
   getWorkOrder, updateWOStatus, addWOPart, removeWOPart,
-  uploadWOPhotos, deletePhoto, updateWorkOrder,
+  uploadWOPhotos, deletePhoto, updateWorkOrder, updateWOPayment,
 } from '../services/workOrders';
 import { getParts } from '../services/inventory';
 import { addQuoteItem, removeQuoteItem, createQuote, updateQuoteStatus } from '../services/quotes';
@@ -76,6 +76,7 @@ export default function WorkOrderDetail() {
   const [addPartModal, setAddPartModal] = useState(false);
   const [quoteModal, setQuoteModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
+  const [payModal, setPayModal] = useState(false);
   const [removePart, setRemovePart] = useState(null);
   const [selectedPart, setSelectedPart] = useState('');
   const [partQty, setPartQty] = useState(1);
@@ -147,6 +148,13 @@ export default function WorkOrderDetail() {
     onError: (e) => toast.error(e.message),
   });
 
+  const payForm = useForm({ values: order ? { totalAmount: Number(order.totalAmount), paidAmount: Number(order.paidAmount) } : {} });
+  const payMut = useMutation({
+    mutationFn: (d) => updateWOPayment(workshopId, id, d),
+    onSuccess: () => { invalidate(); setPayModal(false); toast.success('Pago actualizado'); },
+    onError: (e) => toast.error(e.message),
+  });
+
   if (isLoading) return <div className="flex justify-center py-24"><div className="animate-spin h-10 w-10 rounded-full border-4 border-brand-600 border-t-transparent" /></div>;
   if (!order) return null;
 
@@ -169,6 +177,7 @@ export default function WorkOrderDetail() {
             <p className="text-gray-500 mt-1">Recibido {fDateTime(order.receivedAt)}</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Registrar pago</Button>
             <Button variant="secondary" icon={Edit2} size="sm" onClick={() => setEditModal(true)}>Editar</Button>
           </div>
         </div>
@@ -399,6 +408,24 @@ export default function WorkOrderDetail() {
           <Textarea label="Notas del técnico" rows={2} {...editForm.register('technicianNotes')} />
           <Input label="Entrega estimada" type="datetime-local" {...editForm.register('estimatedReady')} />
           <div className="flex justify-end"><Button type="submit" loading={editMut.isPending}>Guardar</Button></div>
+        </form>
+      </Modal>
+
+      {/* Payment modal */}
+      <Modal open={payModal} onClose={() => setPayModal(false)} title="Registrar pago" size="sm">
+        <form onSubmit={payForm.handleSubmit((d) => payMut.mutate(d))} className="space-y-4">
+          <Input label="Total a cobrar (MXN)" type="number" step="0.01" min="0" {...payForm.register('totalAmount', { valueAsNumber: true })} />
+          <Input label="Monto pagado (MXN)" type="number" step="0.01" min="0" {...payForm.register('paidAmount', { valueAsNumber: true })} />
+          <p className="text-xs text-gray-500">
+            El estatus de pago se calcula solo: pagado ≥ total → <b>Pagado</b>; pagado &gt; 0 → <b>Parcial</b>; si no, <b>Pendiente</b>. Se le notifica al cliente.
+          </p>
+          <div className="flex justify-between gap-2">
+            <Button type="button" variant="secondary"
+              onClick={() => payForm.setValue('paidAmount', payForm.getValues('totalAmount') || 0)}>
+              Marcar como pagado
+            </Button>
+            <Button type="submit" loading={payMut.isPending}>Guardar</Button>
+          </div>
         </form>
       </Modal>
 

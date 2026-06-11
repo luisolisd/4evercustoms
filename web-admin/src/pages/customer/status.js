@@ -28,6 +28,13 @@ export const APPT_STATUS = {
   NO_SHOW:     { label: 'No asistió', color: 'bg-gray-200 text-gray-600' },
 };
 
+export const PAY_STATUS = {
+  PENDING:  { label: 'Pago pendiente', color: 'bg-amber-100 text-amber-700' },
+  PARTIAL:  { label: 'Pago parcial', color: 'bg-blue-100 text-blue-700' },
+  PAID:     { label: 'Pagado', color: 'bg-green-100 text-green-700' },
+  REFUNDED: { label: 'Reembolsado', color: 'bg-gray-200 text-gray-600' },
+};
+
 export const QUOTE_STATUS = {
   DRAFT:    { label: 'Borrador', color: 'bg-gray-100 text-gray-600' },
   SENT:     { label: 'Por aprobar', color: 'bg-amber-100 text-amber-700' },

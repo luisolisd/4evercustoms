@@ -1,5 +1,5 @@
 const prisma = require('../../config/database');
-const { ok, created, notFound } = require('../../utils/response');
+const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { notifyCustomer } = require('../../utils/notify');
 const { cleanData } = require('../../utils/sanitize');
@@ -148,6 +148,49 @@ const updateStatus = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// Registrar pago: actualiza montos y deriva el estatus de pago; notifica al cliente
+const updatePayment = async (req, res, next) => {
+  try {
+    const order = await prisma.workOrder.findFirst({
+      where: { id: req.params.orderId, workshopId: req.params.workshopId },
+    });
+    if (!order) return notFound(res);
+
+    const total = req.body.totalAmount !== undefined && req.body.totalAmount !== ''
+      ? Number(req.body.totalAmount) : Number(order.totalAmount);
+    const paid = req.body.paidAmount !== undefined && req.body.paidAmount !== ''
+      ? Number(req.body.paidAmount) : Number(order.paidAmount);
+    if ([total, paid].some((n) => Number.isNaN(n) || n < 0)) {
+      return error(res, 'Montos inválidos');
+    }
+
+    let paymentStatus = 'PENDING';
+    if (total > 0 && paid >= total) paymentStatus = 'PAID';
+    else if (paid > 0) paymentStatus = 'PARTIAL';
+
+    const updated = await prisma.workOrder.update({
+      where: { id: order.id },
+      data: { totalAmount: total, paidAmount: paid, paymentStatus },
+    });
+
+    if (paymentStatus !== order.paymentStatus || paid !== Number(order.paidAmount)) {
+      const money = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
+      const titles = { PAID: '✅ Pago completado', PARTIAL: 'Pago parcial registrado', PENDING: 'Pago actualizado' };
+      notifyCustomer(
+        { customerId: order.customerId, workshopId: order.workshopId },
+        {
+          type: 'CUSTOM',
+          title: titles[paymentStatus],
+          body: `Orden #${order.orderNumber}: pagado ${money(paid)} de ${money(total)}.`,
+          url: `/cliente/orden/${order.id}`,
+        }
+      ).catch(() => {});
+    }
+
+    ok(res, updated);
+  } catch (e) { next(e); }
+};
+
 const addPart = async (req, res, next) => {
   try {
     const { partId, quantity, unitPrice } = req.body;
@@ -174,4 +217,4 @@ const removePart = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, addPart, removePart };
+module.exports = { list, create, getOne, update, updateStatus, updatePayment, addPart, removePart };

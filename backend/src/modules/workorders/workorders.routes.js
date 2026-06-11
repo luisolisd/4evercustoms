@@ -12,6 +12,7 @@ router.post('/', ...adminOrTech, ctrl.create);
 router.get('/:orderId', ...auth, ctrl.getOne);
 router.put('/:orderId', ...adminOrTech, ctrl.update);
 router.patch('/:orderId/status', ...adminOrTech, ctrl.updateStatus);
+router.patch('/:orderId/payment', ...adminOrTech, ctrl.updatePayment);
 router.post('/:orderId/parts', ...adminOrTech, ctrl.addPart);
 router.delete('/:orderId/parts/:partId', ...adminOrTech, ctrl.removePart);
 

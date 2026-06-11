@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Clock, X } from 'lucide-react';
 import { getOrder, respondQuote } from '../../services/customer';
-import { WO_STEPS, WO_STATUS, QUOTE_STATUS, money, fmtDate } from './status';
+import { WO_STEPS, WO_STATUS, QUOTE_STATUS, PAY_STATUS, money, fmtDate } from './status';
 
 export default function CustomerOrder() {
   const { id } = useParams();
@@ -137,15 +137,28 @@ export default function CustomerOrder() {
           )}
 
           {/* Pago */}
-          <div className="bg-white rounded-xl p-4 shadow-sm flex justify-between items-center">
-            <div>
-              <p className="text-xs text-gray-400">Total del servicio</p>
-              <p className="text-lg font-bold text-gray-900">{money(o.totalAmount)}</p>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold text-gray-700">Pago</p>
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${PAY_STATUS[o.paymentStatus]?.color || ''}`}>
+                {PAY_STATUS[o.paymentStatus]?.label || o.paymentStatus}
+              </span>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-gray-400">Pagado</p>
-              <p className="text-sm font-medium text-gray-700">{money(o.paidAmount)}</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs text-gray-400">Total del servicio</p>
+                <p className="text-lg font-bold text-gray-900">{money(o.totalAmount)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400">Pagado</p>
+                <p className="text-sm font-medium text-gray-700">{money(o.paidAmount)}</p>
+              </div>
             </div>
+            {o.paymentStatus !== 'PAID' && Number(o.totalAmount) > 0 && (
+              <p className="text-xs text-gray-500 mt-2">
+                Saldo: <b>{money(Number(o.totalAmount) - Number(o.paidAmount))}</b> · El pago se realiza en el taller.
+              </p>
+            )}
           </div>
         </>
       )}
