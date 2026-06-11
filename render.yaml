@@ -4,7 +4,7 @@ services:
     name: 4evrcustoms-api
     runtime: node
     region: oregon
-    plan: starter
+    plan: free
     rootDir: backend
     buildCommand: npm ci && npx prisma generate && npx prisma db push --accept-data-loss && npm run seed
     startCommand: node src/index.js
@@ -49,8 +49,6 @@ services:
   - type: web
     name: 4evrcustoms-admin
     runtime: static
-    region: oregon
-    plan: starter
     rootDir: web-admin
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
@@ -67,4 +65,4 @@ databases:
     databaseName: evrcustoms
     user: evrcustoms_app
     region: oregon
-    plan: starter
+    plan: free
