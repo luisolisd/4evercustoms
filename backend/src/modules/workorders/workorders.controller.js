@@ -2,6 +2,7 @@ const prisma = require('../../config/database');
 const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { notifyCustomer } = require('../../utils/notify');
+const { cleanData } = require('../../utils/sanitize');
 
 const STATUS_LABELS = {
   RECEIVED: 'Recibido',
@@ -60,7 +61,7 @@ const create = async (req, res, next) => {
     const { workshopId } = req.params;
     const orderNumber = await generateOrderNumber(workshopId);
     const order = await prisma.workOrder.create({
-      data: { workshopId, orderNumber, ...req.body },
+      data: { workshopId, orderNumber, ...cleanData(req.body, ['estimatedReady', 'receivedAt', 'deliveredAt']) },
       include: {
         customer: { select: { id: true, firstName: true, lastName: true } },
         vehicle: { select: { id: true, make: true, model: true, year: true } },
@@ -108,7 +109,10 @@ const update = async (req, res, next) => {
     if (!order) return notFound(res);
 
     const allowed = ['description', 'diagnosis', 'technicianNotes', 'technicianId', 'estimatedReady', 'mileageIn', 'mileageOut'];
-    const data = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    const data = cleanData(
+      Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k))),
+      ['estimatedReady']
+    );
     const updated = await prisma.workOrder.update({ where: { id: order.id }, data });
     ok(res, updated);
   } catch (e) { next(e); }

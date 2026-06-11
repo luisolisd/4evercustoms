@@ -1,6 +1,7 @@
 const prisma = require('../../config/database');
 const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
+const { cleanData } = require('../../utils/sanitize');
 
 const generateQuoteNumber = async (workshopId) => {
   const count = await prisma.quote.count({ where: { workshopId } });
@@ -44,7 +45,7 @@ const create = async (req, res, next) => {
     const { workshopId } = req.params;
     const quoteNumber = await generateQuoteNumber(workshopId);
     const quote = await prisma.quote.create({
-      data: { workshopId, quoteNumber, ...req.body },
+      data: { workshopId, quoteNumber, ...cleanData(req.body, ['validUntil']) },
     });
     created(res, quote);
   } catch (e) { next(e); }
@@ -68,7 +69,10 @@ const update = async (req, res, next) => {
     });
     if (!quote) return notFound(res);
     const allowed = ['notes', 'validUntil', 'workOrderId'];
-    const data = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    const data = cleanData(
+      Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k))),
+      ['validUntil']
+    );
     ok(res, await prisma.quote.update({ where: { id: quote.id }, data }));
   } catch (e) { next(e); }
 };

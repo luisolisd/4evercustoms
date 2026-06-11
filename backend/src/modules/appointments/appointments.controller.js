@@ -1,6 +1,17 @@
 const prisma = require('../../config/database');
 const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
+const { cleanData } = require('../../utils/sanitize');
+const { notifyCustomer } = require('../../utils/notify');
+
+const APPT_LABELS = {
+  PENDING: 'Pendiente',
+  CONFIRMED: 'Confirmada',
+  IN_PROGRESS: 'En proceso',
+  COMPLETED: 'Completada',
+  CANCELLED: 'Cancelada',
+  NO_SHOW: 'No asististe',
+};
 
 const list = async (req, res, next) => {
   try {
@@ -39,7 +50,7 @@ const list = async (req, res, next) => {
 const create = async (req, res, next) => {
   try {
     const appointment = await prisma.appointment.create({
-      data: { workshopId: req.params.workshopId, ...req.body },
+      data: { workshopId: req.params.workshopId, ...cleanData(req.body, ['scheduledAt']) },
       include: {
         customer: { select: { id: true, firstName: true, lastName: true } },
         vehicle: { select: { id: true, make: true, model: true, year: true } },
@@ -72,7 +83,10 @@ const update = async (req, res, next) => {
     if (!apt) return notFound(res);
 
     const allowed = ['scheduledAt', 'duration', 'serviceType', 'notes', 'assignedToId'];
-    const data = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    const data = cleanData(
+      Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k))),
+      ['scheduledAt']
+    );
     const updated = await prisma.appointment.update({ where: { id: apt.id }, data });
     ok(res, updated);
   } catch (e) { next(e); }
@@ -86,6 +100,19 @@ const updateStatus = async (req, res, next) => {
     });
     if (!apt) return notFound(res);
     const updated = await prisma.appointment.update({ where: { id: apt.id }, data: { status } });
+
+    if (status && status !== apt.status) {
+      notifyCustomer(
+        { customerId: apt.customerId, workshopId: apt.workshopId },
+        {
+          type: 'APPOINTMENT_REMINDER',
+          title: `Tu cita: ${APPT_LABELS[status] || status}`,
+          body: `Tu cita de "${apt.serviceType}" ahora está ${(APPT_LABELS[status] || status).toLowerCase()}.`,
+          url: '/cliente/citas',
+        }
+      ).catch(() => {});
+    }
+
     ok(res, updated);
   } catch (e) { next(e); }
 };
