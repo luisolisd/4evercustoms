@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "4EVRcustoms",
+    "slug": "4evrcustoms",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "evrcustoms",
+    "newArchEnabled": false,
+    "splash": {
+      "backgroundColor": "#111827"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.evrcustoms.app"
+    },
+    "android": {
+      "package": "com.evrcustoms.app"
+    }
+  }
+}
