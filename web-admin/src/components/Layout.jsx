@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, CalendarDays, ClipboardList,
-  FileText, Package, BarChart3, LogOut, Menu, X, Wrench, Bell,
+  FileText, Package, BarChart3, LogOut, Menu, X, Bell,
   ChevronRight,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -55,17 +55,12 @@ export default function Layout() {
 
   const Sidebar = ({ mobile = false }) => (
     <div className={clsx('flex flex-col h-full', mobile ? 'w-72' : 'w-64')}>
-      {/* Logo */}
+      {/* Logo a color contrastado sobre pastilla blanca */}
       <div className="px-5 py-6 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-brand-600 rounded-xl">
-            <Wrench size={18} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-white font-bold text-base leading-tight">4EVRcustoms</h1>
-            <p className="text-gray-500 text-xs">Panel Administrativo</p>
-          </div>
+        <div className="bg-white rounded-xl px-3 py-2.5 flex items-center justify-center shadow-sm">
+          <img src="/color.png" alt="4EVRcustoms" className="h-7 w-auto select-none" draggable={false} />
         </div>
+        <p className="text-gray-500 text-xs mt-2 text-center">Panel Administrativo</p>
       </div>
 
       {/* Nav */}
@@ -118,7 +113,7 @@ export default function Layout() {
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
             <Menu size={20} />
           </button>
-          <span className="font-bold text-gray-900">4EVRcustoms</span>
+          <img src="/color.png" alt="4EVRcustoms" className="h-6 w-auto select-none" draggable={false} />
           <div className="w-9" />
         </header>
 

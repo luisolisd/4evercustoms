@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Wrench } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -12,6 +12,15 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Posición normalizada del cursor (0..1) para el fondo interactivo
+  const [pointer, setPointer] = useState({ x: 0.5, y: 0.5 });
+
+  const handlePointerMove = (e) => {
+    setPointer({
+      x: e.clientX / window.innerWidth,
+      y: e.clientY / window.innerHeight,
+    });
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -28,14 +37,46 @@ export default function LoginPage() {
     }
   };
 
+  // Desplazamientos sutiles basados en el cursor (efecto parallax)
+  const dx = (pointer.x - 0.5);
+  const dy = (pointer.y - 0.5);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="bg-brand-100 p-2 rounded-lg">
-            <Wrench className="w-5 h-5 text-brand-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">4EVRcustoms</h1>
+    <div
+      onMouseMove={handlePointerMove}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-700 via-gray-900 to-black"
+    >
+      {/* Marca de agua: logo en negro, grande y tenue, donde el logo "se pierde" en el gris */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 w-[140vmax] max-w-none opacity-[0.07] blur-[1px] transition-transform duration-300 ease-out will-change-transform"
+        style={{
+          transform: `translate(-50%, -50%) translate(${dx * 50}px, ${dy * 50}px) rotate(-3deg)`,
+        }}
+      >
+        <img src="/negro.png" alt="" className="w-full select-none invert" draggable={false} />
+      </div>
+
+      {/* Reflejo / spotlight rojizo que sigue el cursor → fondo interactivo */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 transition-[background] duration-150"
+        style={{
+          background: `radial-gradient(600px circle at ${pointer.x * 100}% ${pointer.y * 100}%, rgba(178,34,34,0.18), transparent 55%)`,
+        }}
+      />
+
+      {/* Viñeta para profundizar el gris en los bordes */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)' }}
+      />
+
+      <div className="relative z-10 bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 p-8 w-full max-w-sm">
+        {/* Logo a color contrastado en la parte central superior */}
+        <div className="flex items-center justify-center mb-3">
+          <img src="/color.png" alt="4EVRcustoms" className="h-12 w-auto select-none" draggable={false} />
         </div>
         <p className="text-gray-500 text-center mb-8 text-sm">Panel Administrativo</p>
 
