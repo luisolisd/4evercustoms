@@ -48,6 +48,83 @@ const adminLogin = async (email, password) => {
   };
 };
 
+// ── Mobile: phone + password (customers) ─────────────────────────────────────
+
+// Normaliza a los últimos 10 dígitos (el cliente escribe su número sin +52)
+const normalizePhone = (phone) => (phone || '').replace(/\D/g, '').slice(-10);
+
+const findCustomerByPhone = (phone) =>
+  prisma.customer.findFirst({
+    where: { phone: { endsWith: normalizePhone(phone) }, isActive: true },
+  });
+
+// Crea/vincula el User del cliente y emite los tokens (misma forma de sesión que el resto de la app)
+const issueCustomerSession = async (customer) => {
+  let user = await prisma.user.findUnique({ where: { phone: customer.phone } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: { phone: customer.phone, firstName: customer.firstName, lastName: customer.lastName },
+    });
+  }
+  if (!customer.userId) {
+    await prisma.customer
+      .update({ where: { id: customer.id }, data: { userId: user.id } })
+      .catch(() => {});
+  }
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
+  const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: USER_SELECT });
+  return {
+    accessToken: sign({ userId: user.id }),
+    refreshToken: signRefresh({ userId: user.id }),
+    user: { ...fullUser, customerId: customer.id, workshopId: customer.workshopId },
+    customerId: customer.id,
+    workshopId: customer.workshopId,
+  };
+};
+
+// Paso 1: el cliente escribe su número; le decimos si está registrado y si ya tiene contraseña
+const customerAuthStatus = async (phone) => {
+  const last10 = normalizePhone(phone);
+  if (last10.length !== 10) {
+    throw Object.assign(new Error('Ingresa un número válido de 10 dígitos'), { status: 400 });
+  }
+  const customer = await findCustomerByPhone(phone);
+  if (!customer) return { registered: false, hasPassword: false };
+  return { registered: true, hasPassword: !!customer.passwordHash, firstName: customer.firstName };
+};
+
+// Paso 2a: primera vez → el cliente crea su propia contraseña (solo si el admin ya lo registró)
+const customerSetPassword = async (phone, password) => {
+  const customer = await findCustomerByPhone(phone);
+  if (!customer) {
+    throw Object.assign(
+      new Error('Tu número no está registrado. Pide al taller que te dé de alta.'),
+      { status: 404 }
+    );
+  }
+  if (customer.passwordHash) {
+    throw Object.assign(new Error('Ya tienes una contraseña. Inicia sesión.'), { status: 409 });
+  }
+  if (!password || password.length < 6) {
+    throw Object.assign(new Error('La contraseña debe tener al menos 6 caracteres'), { status: 400 });
+  }
+  const passwordHash = await bcrypt.hash(password, 12);
+  await prisma.customer.update({ where: { id: customer.id }, data: { passwordHash } });
+  return issueCustomerSession({ ...customer, passwordHash });
+};
+
+// Paso 2b: ya tiene contraseña → inicia sesión
+const customerLogin = async (phone, password) => {
+  const customer = await findCustomerByPhone(phone);
+  if (!customer || !customer.passwordHash) {
+    throw Object.assign(new Error('Número o contraseña incorrectos'), { status: 401 });
+  }
+  const valid = await bcrypt.compare(password, customer.passwordHash);
+  if (!valid) throw Object.assign(new Error('Número o contraseña incorrectos'), { status: 401 });
+  return issueCustomerSession(customer);
+};
+
 // ── Mobile: OTP (customers only) ─────────────────────────────────────────────
 
 const requestOtp = async (phone) => {
@@ -198,4 +275,14 @@ const validateAdminSetupOtp = async (phone, code) => {
   };
 };
 
-module.exports = { adminLogin, requestAdminSetupOtp, validateAdminSetupOtp, requestOtp, validateOtp, refreshAccessToken };
+module.exports = {
+  adminLogin,
+  customerAuthStatus,
+  customerSetPassword,
+  customerLogin,
+  requestAdminSetupOtp,
+  validateAdminSetupOtp,
+  requestOtp,
+  validateOtp,
+  refreshAccessToken,
+};

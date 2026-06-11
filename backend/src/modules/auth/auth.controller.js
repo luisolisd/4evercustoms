@@ -1,4 +1,4 @@
-const { adminLogin, requestAdminSetupOtp, validateAdminSetupOtp, requestOtp, validateOtp, refreshAccessToken } = require('./auth.service');
+const { adminLogin, customerAuthStatus, customerSetPassword, customerLogin, requestAdminSetupOtp, validateAdminSetupOtp, requestOtp, validateOtp, refreshAccessToken } = require('./auth.service');
 const { ok, error } = require('../../utils/response');
 const prisma = require('../../config/database');
 
@@ -7,6 +7,34 @@ const loginAdmin = async (req, res, next) => {
     const { email, password } = req.body;
     if (!email || !password) return error(res, 'Email y contraseña son requeridos');
     const result = await adminLogin(email, password);
+    ok(res, result);
+  } catch (e) { next(e); }
+};
+
+// ── Cliente: teléfono + contraseña ──────────────────────────────────────────
+const customerStatus = async (req, res, next) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return error(res, 'El teléfono es requerido');
+    const result = await customerAuthStatus(phone);
+    ok(res, result);
+  } catch (e) { next(e); }
+};
+
+const setCustomerPassword = async (req, res, next) => {
+  try {
+    const { phone, password } = req.body;
+    if (!phone || !password) return error(res, 'Teléfono y contraseña son requeridos');
+    const result = await customerSetPassword(phone, password);
+    ok(res, result);
+  } catch (e) { next(e); }
+};
+
+const loginCustomer = async (req, res, next) => {
+  try {
+    const { phone, password } = req.body;
+    if (!phone || !password) return error(res, 'Teléfono y contraseña son requeridos');
+    const result = await customerLogin(phone, password);
     ok(res, result);
   } catch (e) { next(e); }
 };
@@ -63,7 +91,16 @@ const getMe = async (req, res, next) => {
         },
       },
     });
-    ok(res, user);
+    // Si es cliente, adjunta customerId + workshopId desde su registro de cliente
+    const customer = await prisma.customer.findFirst({
+      where: { userId: req.user.id, isActive: true },
+      select: { id: true, workshopId: true },
+    });
+    ok(res, {
+      ...user,
+      customerId: customer?.id || null,
+      workshopId: customer?.workshopId || user?.workshops?.[0]?.workshop?.id || null,
+    });
   } catch (e) { next(e); }
 };
 
@@ -85,4 +122,4 @@ const verifyAdminSetupOtp = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { loginAdmin, sendAdminSetupOtp, verifyAdminSetupOtp, sendOtp, verifyOtp, refreshToken, logout, getMe };
+module.exports = { loginAdmin, customerStatus, setCustomerPassword, loginCustomer, sendAdminSetupOtp, verifyAdminSetupOtp, sendOtp, verifyOtp, refreshToken, logout, getMe };

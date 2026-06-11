@@ -14,11 +14,10 @@ export const useAuthStore = create((set) => ({
       if (!token) { set({ isLoading: false }); return; }
       const res = await api.get('/auth/me');
       const user = res.data;
-      const workshop = user.workshops?.[0];
       set({
         isLoading: false,
         user,
-        workshopId: workshop?.workshop?.id || null,
+        workshopId: user.workshopId || user.workshops?.[0]?.workshop?.id || null,
         customerId: user.customerId || null,
       });
     } catch {
@@ -31,10 +30,9 @@ export const useAuthStore = create((set) => ({
   setSession: async (accessToken, refreshToken, user) => {
     await SecureStore.setItemAsync('accessToken', accessToken);
     await SecureStore.setItemAsync('refreshToken', refreshToken);
-    const workshop = user.workshops?.[0];
     set({
       user,
-      workshopId: workshop?.workshop?.id || null,
+      workshopId: user.workshopId || user.workshops?.[0]?.workshop?.id || null,
       customerId: user.customerId || null,
     });
   },
