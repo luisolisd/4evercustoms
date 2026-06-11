@@ -88,6 +88,41 @@ const update = async (req, res, next) => {
       ['scheduledAt']
     );
     const updated = await prisma.appointment.update({ where: { id: apt.id }, data });
+
+    // Avisa al cliente si cambió la fecha o los detalles de su cita
+    const dateChanged =
+      data.scheduledAt && new Date(data.scheduledAt).getTime() !== new Date(apt.scheduledAt).getTime();
+    const detailsChanged =
+      ('notes' in data && data.notes !== apt.notes) ||
+      ('serviceType' in data && data.serviceType !== apt.serviceType) ||
+      ('duration' in data && data.duration !== apt.duration);
+
+    if (dateChanged) {
+      const fecha = new Date(data.scheduledAt).toLocaleString('es-MX', {
+        weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
+        timeZone: 'America/Mexico_City',
+      });
+      notifyCustomer(
+        { customerId: apt.customerId, workshopId: apt.workshopId },
+        {
+          type: 'APPOINTMENT_REMINDER',
+          title: 'Tu cita cambió de fecha',
+          body: `Nueva fecha: ${fecha}.`,
+          url: '/cliente/citas',
+        }
+      ).catch(() => {});
+    } else if (detailsChanged) {
+      notifyCustomer(
+        { customerId: apt.customerId, workshopId: apt.workshopId },
+        {
+          type: 'APPOINTMENT_REMINDER',
+          title: 'Tu cita fue actualizada',
+          body: 'El taller actualizó los detalles de tu cita.',
+          url: '/cliente/citas',
+        }
+      ).catch(() => {});
+    }
+
     ok(res, updated);
   } catch (e) { next(e); }
 };
