@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, CalendarDays, Edit2, XCircle, CheckCircle } from 'lucide-react';
+import { Plus, CalendarDays, Edit2, XCircle, CheckCircle, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { getAppointments, createAppointment, updateAppointment, updateAppStatus, cancelAppointment } from '../services/appointments';
+import { getAppointments, createAppointment, updateAppointment, updateAppStatus, cancelAppointment, deleteAppointment } from '../services/appointments';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -32,6 +32,7 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [modal, setModal] = useState(null);
   const [cancelling, setCancelling] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['appointments', workshopId, statusFilter, page],
@@ -65,6 +66,12 @@ export default function AppointmentsPage() {
   const cancelMut = useMutation({
     mutationFn: (id) => cancelAppointment(workshopId, id),
     onSuccess: () => { invalidate(); setCancelling(null); toast.success('Cita cancelada'); },
+    onError: (e) => toast.error(e.message || 'Error'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id) => deleteAppointment(workshopId, id),
+    onSuccess: () => { invalidate(); setDeleting(null); toast.success('Cita eliminada'); },
     onError: (e) => toast.error(e.message || 'Error'),
   });
 
@@ -128,10 +135,13 @@ export default function AppointmentsPage() {
                           <Edit2 size={15} />
                         </button>
                         {!['CANCELLED','COMPLETED'].includes(a.status) && (
-                          <button onClick={() => setCancelling(a)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
+                          <button onClick={() => setCancelling(a)} className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50" title="Cancelar">
                             <XCircle size={15} />
                           </button>
                         )}
+                        <button onClick={() => setDeleting(a)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" title="Eliminar">
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -158,6 +168,15 @@ export default function AppointmentsPage() {
         loading={cancelMut.isPending}
         title="Cancelar cita"
         message={`¿Cancelar la cita de ${cancelling?.customer?.firstName} ${cancelling?.customer?.lastName}?`}
+      />
+
+      <ConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleteMut.mutate(deleting?.id)}
+        loading={deleteMut.isPending}
+        title="Eliminar cita"
+        message={`¿Eliminar definitivamente la cita de ${deleting?.customer?.firstName} ${deleting?.customer?.lastName}? Esta acción no se puede deshacer.`}
       />
     </div>
   );

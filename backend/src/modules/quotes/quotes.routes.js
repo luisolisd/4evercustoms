@@ -13,5 +13,6 @@ router.put('/:quoteId', ...adminOrTech, ctrl.update);
 router.patch('/:quoteId/status', ...auth, ctrl.updateStatus);
 router.post('/:quoteId/items', ...adminOrTech, ctrl.addItem);
 router.delete('/:quoteId/items/:itemId', ...adminOrTech, ctrl.removeItem);
+router.delete('/:quoteId', ...adminOrTech, ctrl.remove);
 
 module.exports = router;

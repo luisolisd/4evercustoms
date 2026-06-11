@@ -10,6 +10,7 @@ router.get('/', ...auth, ctrl.list);
 router.post('/', ...adminOrTech, ctrl.create);
 router.get('/:vehicleId', ...auth, ctrl.getOne);
 router.put('/:vehicleId', ...adminOrTech, ctrl.update);
+router.delete('/:vehicleId', ...adminOrTech, ctrl.remove);
 router.get('/:vehicleId/history', ...auth, ctrl.getHistory);
 
 module.exports = router;

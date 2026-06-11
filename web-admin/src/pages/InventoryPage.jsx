@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Package, AlertTriangle, Edit2, ArrowUpDown } from 'lucide-react';
+import { Plus, Package, AlertTriangle, Edit2, ArrowUpDown, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import {
-  getParts, createPart, updatePart,
+  getParts, createPart, updatePart, deletePart,
   getInventory, createMovement,
 } from '../services/inventory';
 import Button from '../components/ui/Button';
 import SearchInput from '../components/ui/SearchInput';
 import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import EmptyState from '../components/ui/EmptyState';
 import Pagination from '../components/ui/Pagination';
 import PartForm from '../components/forms/PartForm';
@@ -44,6 +45,7 @@ export default function InventoryPage() {
   const [lowStock, setLowStock] = useState(false);
   const [partModal, setPartModal] = useState(null);
   const [movementModal, setMovementModal] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['inventory', workshopId, search, page, lowStock],
@@ -76,6 +78,12 @@ export default function InventoryPage() {
   const movementMut = useMutation({
     mutationFn: (d) => createMovement(workshopId, movementModal?.part?.id, d),
     onSuccess: () => { invalidate(); setMovementModal(null); movForm.reset({ type: 'IN', quantity: 1, reason: '', unitCost: '' }); toast.success('Movimiento registrado'); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deletePartMut = useMutation({
+    mutationFn: (id) => deletePart(workshopId, id),
+    onSuccess: () => { invalidate(); setDeleting(null); toast.success('Refacción eliminada'); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -168,6 +176,13 @@ export default function InventoryPage() {
                           >
                             <Edit2 size={14} />
                           </button>
+                          <button
+                            onClick={() => setDeleting(item.part)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -233,6 +248,15 @@ export default function InventoryPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deletePartMut.mutate(deleting.id)}
+        loading={deletePartMut.isPending}
+        title="Eliminar refacción"
+        message={`¿Eliminar "${deleting?.name}" del inventario?`}
+      />
     </div>
   );
 }

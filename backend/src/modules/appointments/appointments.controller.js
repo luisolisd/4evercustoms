@@ -162,4 +162,13 @@ const cancel = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, cancel };
+const remove = async (req, res, next) => {
+  try {
+    await prisma.appointment.deleteMany({
+      where: { id: req.params.appointmentId, workshopId: req.params.workshopId },
+    });
+    ok(res, { message: 'Cita eliminada' });
+  } catch (e) { next(e); }
+};
+
+module.exports = { list, create, getOne, update, updateStatus, cancel, remove };

@@ -140,4 +140,17 @@ const removeItem = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, addItem, removeItem };
+const remove = async (req, res, next) => {
+  try {
+    const quote = await prisma.quote.findFirst({
+      where: { id: req.params.quoteId, workshopId: req.params.workshopId },
+      select: { id: true, workOrderId: true },
+    });
+    if (!quote) return notFound(res);
+    await prisma.quote.delete({ where: { id: quote.id } }); // los items se borran en cascada
+    if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
+    ok(res, { message: 'Cotización eliminada' });
+  } catch (e) { next(e); }
+};
+
+module.exports = { list, create, getOne, update, updateStatus, addItem, removeItem, remove };

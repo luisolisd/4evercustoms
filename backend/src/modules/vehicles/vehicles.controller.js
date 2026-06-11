@@ -88,4 +88,14 @@ const getHistory = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, getHistory };
+const remove = async (req, res, next) => {
+  try {
+    await prisma.vehicle.updateMany({
+      where: { id: req.params.vehicleId, workshopId: req.params.workshopId },
+      data: { isActive: false },
+    });
+    ok(res, { message: 'Vehículo eliminado' });
+  } catch (e) { next(e); }
+};
+
+module.exports = { list, create, getOne, update, getHistory, remove };

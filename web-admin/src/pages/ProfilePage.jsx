@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { User, Lock, Bell } from 'lucide-react';
+import { User, Lock, Store } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { updateProfile, changePassword } from '../services/profile';
+import { getWorkshop, updateWorkshop } from '../services/workshop';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { useToast } from '../hooks/useToast';
@@ -11,8 +12,51 @@ import clsx from 'clsx';
 
 const TABS = [
   { id: 'profile', label: 'Perfil', icon: User },
+  { id: 'workshop', label: 'Taller', icon: Store },
   { id: 'security', label: 'Seguridad', icon: Lock },
 ];
+
+function WorkshopTab({ workshopId }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['workshop', workshopId],
+    queryFn: () => getWorkshop(workshopId),
+    enabled: !!workshopId,
+  });
+  const w = data?.data;
+
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    values: w ? {
+      name: w.name || '', phone: w.phone || '', email: w.email || '',
+      address: w.address || '', city: w.city || '', state: w.state || '',
+    } : undefined,
+  });
+
+  const mut = useMutation({
+    mutationFn: (d) => updateWorkshop(workshopId, d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['workshop', workshopId] }); toast.success('Datos del taller actualizados'); },
+    onError: (e) => toast.error(e.message || 'Error al guardar'),
+  });
+
+  if (isLoading) return <p className="text-gray-400 text-sm">Cargando…</p>;
+
+  return (
+    <form onSubmit={handleSubmit((d) => mut.mutate(d))} className="space-y-5 max-w-md">
+      <Input label="Nombre del taller" {...register('name', { required: 'Requerido' })} error={errors.name?.message} />
+      <Input label="Teléfono" {...register('phone', { required: 'Requerido' })} error={errors.phone?.message} />
+      <Input label="Correo" type="email" {...register('email')} />
+      <Input label="Dirección" {...register('address')} />
+      <div className="grid grid-cols-2 gap-4">
+        <Input label="Ciudad" {...register('city')} />
+        <Input label="Estado" {...register('state')} />
+      </div>
+      <div className="pt-2">
+        <Button type="submit" loading={mut.isPending}>Guardar cambios</Button>
+      </div>
+    </form>
+  );
+}
 
 function ProfileTab({ user, workshopId }) {
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -127,6 +171,7 @@ export default function ProfilePage() {
         </div>
         <div className="p-6">
           {tab === 'profile' && <ProfileTab user={user} workshopId={workshopId} />}
+          {tab === 'workshop' && <WorkshopTab workshopId={workshopId} />}
           {tab === 'security' && <SecurityTab workshopId={workshopId} />}
         </div>
       </div>

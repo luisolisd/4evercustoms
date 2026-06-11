@@ -5,6 +5,7 @@ const base = (wid) => `/workshops/${wid}/work-orders`;
 export const getWorkOrders  = (wid, p) => api.get(base(wid), { params: p });
 export const getWorkOrder   = (wid, id) => api.get(`${base(wid)}/${id}`);
 export const createWorkOrder= (wid, d) => api.post(base(wid), d);
+export const deleteWorkOrder= (wid, id) => api.delete(`${base(wid)}/${id}`);
 export const updateWorkOrder= (wid, id, d) => api.put(`${base(wid)}/${id}`, d);
 export const updateWOStatus = (wid, id, status, paymentStatus) =>
   api.patch(`${base(wid)}/${id}/status`, { status, paymentStatus });

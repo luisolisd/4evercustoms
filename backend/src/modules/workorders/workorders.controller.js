@@ -220,4 +220,22 @@ const removePart = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, updatePayment, addPart, removePart };
+const remove = async (req, res, next) => {
+  try {
+    const order = await prisma.workOrder.findFirst({
+      where: { id: req.params.orderId, workshopId: req.params.workshopId },
+      select: { id: true },
+    });
+    if (!order) return notFound(res);
+    await prisma.$transaction([
+      prisma.serviceHistory.deleteMany({ where: { workOrderId: order.id } }),
+      prisma.photo.deleteMany({ where: { workOrderId: order.id } }),
+      prisma.workOrderPart.deleteMany({ where: { workOrderId: order.id } }),
+      prisma.quote.deleteMany({ where: { workOrderId: order.id } }),
+      prisma.workOrder.delete({ where: { id: order.id } }),
+    ]);
+    ok(res, { message: 'Orden eliminada' });
+  } catch (e) { next(e); }
+};
+
+module.exports = { list, create, getOne, update, updateStatus, updatePayment, addPart, removePart, remove };

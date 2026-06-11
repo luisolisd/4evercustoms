@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Car, Edit2 } from 'lucide-react';
+import { Plus, Car, Edit2, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { getVehicles, createVehicle, updateVehicle } from '../services/vehicles';
+import { getVehicles, createVehicle, updateVehicle, deleteVehicle } from '../services/vehicles';
 import Button from '../components/ui/Button';
 import SearchInput from '../components/ui/SearchInput';
 import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import EmptyState from '../components/ui/EmptyState';
 import Pagination from '../components/ui/Pagination';
 import VehicleForm from '../components/forms/VehicleForm';
@@ -21,6 +22,7 @@ export default function VehiclesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['vehicles', workshopId, search, page],
@@ -43,6 +45,12 @@ export default function VehiclesPage() {
     mutationFn: ({ id, data }) => updateVehicle(workshopId, id, data),
     onSuccess: () => { invalidate(); setModal(null); toast.success('Vehículo actualizado'); },
     onError: (e) => toast.error(e.message || 'Error al actualizar'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id) => deleteVehicle(workshopId, id),
+    onSuccess: () => { invalidate(); setDeleting(null); toast.success('Vehículo eliminado'); },
+    onError: (e) => toast.error(e.message || 'Error al eliminar'),
   });
 
   const handleSubmit = (data) => {
@@ -129,12 +137,20 @@ export default function VehiclesPage() {
                       {v.mileage ? `${fNumber(v.mileage)} km` : '—'}
                     </td>
                     <td className="px-5 py-4">
-                      <button
-                        onClick={() => setModal({ mode: 'edit', vehicle: v })}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                      >
-                        <Edit2 size={15} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setModal({ mode: 'edit', vehicle: v })}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          onClick={() => setDeleting(v)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -152,6 +168,15 @@ export default function VehiclesPage() {
           loading={createMut.isPending || updateMut.isPending}
         />
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleteMut.mutate(deleting.id)}
+        loading={deleteMut.isPending}
+        title="Eliminar vehículo"
+        message={`¿Eliminar ${deleting?.year} ${deleting?.make} ${deleting?.model}? Su historial de servicios se conserva.`}
+      />
     </div>
   );
 }

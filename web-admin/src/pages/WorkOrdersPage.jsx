@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ClipboardList, Eye } from 'lucide-react';
+import { Plus, ClipboardList, Eye, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { getWorkOrders, createWorkOrder } from '../services/workOrders';
+import { getWorkOrders, createWorkOrder, deleteWorkOrder } from '../services/workOrders';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import EmptyState from '../components/ui/EmptyState';
 import Pagination from '../components/ui/Pagination';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
@@ -36,6 +37,7 @@ export default function WorkOrdersPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [deleting, setDeleting] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['work-orders', workshopId, statusFilter, search, page],
@@ -56,6 +58,12 @@ export default function WorkOrdersPage() {
       navigate(`/work-orders/${res.data.id}`);
     },
     onError: (e) => toast.error(e.message || 'Error al crear orden'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id) => deleteWorkOrder(workshopId, id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['work-orders', workshopId] }); setDeleting(null); toast.success('Orden eliminada'); },
+    onError: (e) => toast.error(e.message || 'Error al eliminar'),
   });
 
   return (
@@ -112,9 +120,14 @@ export default function WorkOrdersPage() {
                     <td className="px-5 py-4 text-right font-semibold text-gray-900">{fMoney(o.totalAmount)}</td>
                     <td className="px-5 py-4 text-gray-500">{fDate(o.receivedAt)}</td>
                     <td className="px-5 py-4">
-                      <button onClick={(e) => { e.stopPropagation(); navigate(`/work-orders/${o.id}`); }} className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50">
-                        <Eye size={15} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/work-orders/${o.id}`); }} className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50">
+                          <Eye size={15} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setDeleting(o); }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -128,6 +141,15 @@ export default function WorkOrdersPage() {
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Nueva orden de trabajo" size="lg">
         <WorkOrderForm onSubmit={(d) => createMut.mutate(d)} loading={createMut.isPending} />
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleteMut.mutate(deleting.id)}
+        loading={deleteMut.isPending}
+        title="Eliminar orden"
+        message={`¿Eliminar la orden ${deleting?.orderNumber}? Se borrarán sus fotos, refacciones, cotizaciones e historial. Esta acción no se puede deshacer.`}
+      />
     </div>
   );
 }

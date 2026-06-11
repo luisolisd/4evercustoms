@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAIL = 'admin@4evrcustoms.mx';
+const ADMIN_EMAIL = 'forevercustoms472@gmail.com';
 const ADMIN_PASSWORD = 'Admin123!';
 
 async function main() {
