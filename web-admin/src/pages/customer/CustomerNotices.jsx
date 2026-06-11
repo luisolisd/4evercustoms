@@ -4,10 +4,11 @@ import { Bell, BellRing } from 'lucide-react';
 import { getNotifications, markNotificationRead } from '../../services/customer';
 import { enablePush, pushStatus } from '../../services/push';
 import { fmtDateTime } from './status';
+import RefreshButton from './RefreshButton';
 
 export default function CustomerNotices() {
   const qc = useQueryClient();
-  const { data: items, isLoading } = useQuery({ queryKey: ['c-notices'], queryFn: getNotifications });
+  const { data: items, isLoading, refetch, isFetching } = useQuery({ queryKey: ['c-notices'], queryFn: getNotifications });
 
   const read = useMutation({
     mutationFn: markNotificationRead,
@@ -16,7 +17,10 @@ export default function CustomerNotices() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Avisos</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900">Avisos</h1>
+        <RefreshButton onClick={() => refetch()} spinning={isFetching} />
+      </div>
 
       <PushBanner />
 

@@ -19,7 +19,7 @@ export default function CustomerLayout() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
-      <header className="bg-gray-900 text-white sticky top-0 z-10">
+      <header className="bg-gray-900 text-white sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-white rounded-md px-2 py-1">
@@ -33,12 +33,18 @@ export default function CustomerLayout() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-lg w-full mx-auto px-4 py-4 pb-24">
+      <main
+        className="flex-1 max-w-lg w-full mx-auto px-4 pt-4"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)' }}
+      >
         <Outlet />
       </main>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200">
+      <nav
+        className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-10"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div className="max-w-lg mx-auto flex">
           {tabs.map((t) => (
             <NavLink key={t.to} to={t.to}

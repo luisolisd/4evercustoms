@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarPlus, X } from 'lucide-react';
 import { getAppointments, getVehicles, createAppointment, cancelAppointment } from '../../services/customer';
 import { APPT_STATUS, fmtDateTime } from './status';
+import RefreshButton from './RefreshButton';
 
 export default function CustomerAppointments() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { data: appts, isLoading } = useQuery({ queryKey: ['c-appts'], queryFn: getAppointments });
+  const { data: appts, isLoading, refetch, isFetching } = useQuery({ queryKey: ['c-appts'], queryFn: getAppointments });
   const { data: vehicles } = useQuery({ queryKey: ['c-vehicles'], queryFn: getVehicles });
 
   const create = useMutation({
@@ -22,7 +23,10 @@ export default function CustomerAppointments() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Mis citas</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-xl font-bold text-gray-900">Mis citas</h1>
+          <RefreshButton onClick={() => refetch()} spinning={isFetching} />
+        </div>
         <button onClick={() => setOpen(true)}
           className="flex items-center gap-1.5 bg-brand-600 text-white rounded-lg px-3 py-2 text-sm font-medium hover:bg-brand-700">
           <CalendarPlus size={16} /> Agendar

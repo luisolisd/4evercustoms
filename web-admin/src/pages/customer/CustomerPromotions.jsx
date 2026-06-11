@@ -2,13 +2,17 @@ import { useQuery } from '@tanstack/react-query';
 import { Tag } from 'lucide-react';
 import { getPromotions } from '../../services/customer';
 import { fmtDate } from './status';
+import RefreshButton from './RefreshButton';
 
 export default function CustomerPromotions() {
-  const { data: promos, isLoading } = useQuery({ queryKey: ['c-promos'], queryFn: getPromotions });
+  const { data: promos, isLoading, refetch, isFetching } = useQuery({ queryKey: ['c-promos'], queryFn: getPromotions });
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Promociones</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900">Promociones</h1>
+        <RefreshButton onClick={() => refetch()} spinning={isFetching} />
+      </div>
 
       {isLoading && <p className="text-gray-400 text-sm">Cargando…</p>}
       {!isLoading && (!promos || promos.length === 0) && (
