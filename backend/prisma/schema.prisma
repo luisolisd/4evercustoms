@@ -97,6 +97,7 @@ model Workshop {
   notifications  Notification[]
   serviceHistory ServiceHistory[]
   auditLogs      AuditLog[]
+  promotions     Promotion[]
 
   @@index([slug])
   @@map("workshops")
@@ -170,12 +171,13 @@ model Customer {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  workshop      Workshop      @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  vehicles      Vehicle[]
-  appointments  Appointment[]
-  workOrders    WorkOrder[]
-  quotes        Quote[]
-  notifications Notification[]
+  workshop          Workshop           @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  vehicles          Vehicle[]
+  appointments      Appointment[]
+  workOrders        WorkOrder[]
+  quotes            Quote[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
 
   @@unique([workshopId, phone])
   @@index([workshopId])
@@ -489,4 +491,35 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model PushSubscription {
+  id         String   @id @default(uuid())
+  customerId String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("push_subscriptions")
+}
+
+model Promotion {
+  id         String   @id @default(uuid())
+  workshopId String
+  title      String
+  body       String
+  imageUrl   String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  workshop Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@index([workshopId])
+  @@index([isActive])
+  @@map("promotions")
 }

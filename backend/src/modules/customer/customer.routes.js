@@ -16,5 +16,8 @@ router.patch('/appointments/:id/cancel', ctrl.cancelAppointment);
 router.patch('/quotes/:id/respond', ctrl.respondQuote);
 router.get('/notifications', ctrl.notifications);
 router.patch('/notifications/:id/read', ctrl.markNotificationRead);
+router.get('/promotions', ctrl.promotions);
+router.post('/push/subscribe', ctrl.subscribePush);
+router.post('/push/unsubscribe', ctrl.unsubscribePush);
 
 module.exports = router;

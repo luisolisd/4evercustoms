@@ -1,11 +1,13 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Calendar, LogOut, Car } from 'lucide-react';
+import { Home, Calendar, LogOut, Tag, Bell } from 'lucide-react';
 import clsx from 'clsx';
 import { useCustomerStore } from '../../store/customerAuthStore';
 
 const tabs = [
   { to: '/cliente/inicio', icon: Home, label: 'Inicio' },
+  { to: '/cliente/promociones', icon: Tag, label: 'Promos' },
   { to: '/cliente/citas', icon: Calendar, label: 'Citas' },
+  { to: '/cliente/avisos', icon: Bell, label: 'Avisos' },
 ];
 
 export default function CustomerLayout() {

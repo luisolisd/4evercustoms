@@ -23,3 +23,6 @@ export const cancelAppointment = (id) =>
 export const respondQuote = (id, decision, reason) =>
   customerApi.patch(`/customer/quotes/${id}/respond`, { decision, reason }).then(data);
 export const getNotifications = () => customerApi.get('/customer/notifications').then(data);
+export const markNotificationRead = (id) =>
+  customerApi.patch(`/customer/notifications/${id}/read`).then(data);
+export const getPromotions = () => customerApi.get('/customer/promotions').then(data);

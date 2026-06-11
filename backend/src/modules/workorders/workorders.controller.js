@@ -1,6 +1,18 @@
 const prisma = require('../../config/database');
 const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
+const { notifyCustomer } = require('../../utils/notify');
+
+const STATUS_LABELS = {
+  RECEIVED: 'Recibido',
+  DIAGNOSIS: 'En diagnóstico',
+  AWAITING_AUTH: 'Esperando tu autorización',
+  IN_REPAIR: 'En reparación',
+  FINAL_TESTING: 'En pruebas finales',
+  READY_FOR_PICKUP: 'Listo para entrega',
+  DELIVERED: 'Entregado',
+  CANCELLED: 'Cancelado',
+};
 
 const generateOrderNumber = async (workshopId) => {
   const count = await prisma.workOrder.count({ where: { workshopId } });
@@ -114,6 +126,20 @@ const updateStatus = async (req, res, next) => {
     if (status === 'DELIVERED') data.deliveredAt = new Date();
 
     const updated = await prisma.workOrder.update({ where: { id: order.id }, data });
+
+    // Notifica al cliente cuando cambia el estatus de su vehículo
+    if (status && status !== order.status) {
+      notifyCustomer(
+        { customerId: order.customerId, workshopId: order.workshopId },
+        {
+          type: 'STATUS_UPDATE',
+          title: `Tu vehículo: ${STATUS_LABELS[status] || status}`,
+          body: `La orden #${order.orderNumber} cambió a "${STATUS_LABELS[status] || status}".`,
+          url: `/cliente/orden/${order.id}`,
+        }
+      ).catch(() => {});
+    }
+
     ok(res, updated);
   } catch (e) { next(e); }
 };

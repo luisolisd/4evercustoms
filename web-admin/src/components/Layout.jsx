@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, CalendarDays, ClipboardList,
   FileText, Package, BarChart3, LogOut, Menu, X, Bell,
-  ChevronRight,
+  ChevronRight, Megaphone,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import ToastContainer from './ui/Toast';
@@ -17,6 +17,7 @@ const nav = [
   { to: '/work-orders',  icon: ClipboardList,    label: 'Órdenes' },
   { to: '/quotes',       icon: FileText,         label: 'Cotizaciones' },
   { to: '/inventory',    icon: Package,          label: 'Inventario' },
+  { to: '/promotions',   icon: Megaphone,        label: 'Promociones' },
   { to: '/reports',      icon: BarChart3,        label: 'Reportes' },
 ];
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Car, ChevronRight, Phone, MapPin } from 'lucide-react';
 import { getMe, getVehicles } from '../../services/customer';
 import { WO_STATUS, fmtDate } from './status';
+import { PushBanner } from './CustomerNotices';
 
 export default function CustomerHome() {
   const { data: me } = useQuery({ queryKey: ['c-me'], queryFn: getMe });
@@ -14,6 +15,8 @@ export default function CustomerHome() {
         <h1 className="text-xl font-bold text-gray-900">Hola, {me?.firstName || ''} 👋</h1>
         <p className="text-gray-500 text-sm">Estos son tus vehículos y su estatus.</p>
       </div>
+
+      <PushBanner />
 
       {isLoading && <p className="text-gray-400 text-sm">Cargando…</p>}
 

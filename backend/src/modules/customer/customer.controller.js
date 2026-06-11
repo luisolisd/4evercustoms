@@ -1,5 +1,6 @@
 const prisma = require('../../config/database');
 const { ok, error, notFound } = require('../../utils/response');
+const push = require('../../utils/push');
 
 // ── Perfil + taller ──────────────────────────────────────────────────────────
 const me = async (req, res, next) => {
@@ -193,6 +194,45 @@ const markNotificationRead = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// ── Promociones del taller ───────────────────────────────────────────────────
+const promotions = async (req, res, next) => {
+  try {
+    const list = await prisma.promotion.findMany({
+      where: { workshopId: req.customer.workshopId, isActive: true },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, title: true, body: true, imageUrl: true, createdAt: true },
+    });
+    ok(res, list);
+  } catch (e) { next(e); }
+};
+
+// ── Suscripción a notificaciones push (Web Push) ─────────────────────────────
+const subscribePush = async (req, res, next) => {
+  try {
+    const { endpoint, keys } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return error(res, 'Suscripción inválida', 400);
+    }
+    await prisma.pushSubscription.upsert({
+      where: { endpoint },
+      update: { customerId: req.customer.id, p256dh: keys.p256dh, auth: keys.auth },
+      create: { customerId: req.customer.id, endpoint, p256dh: keys.p256dh, auth: keys.auth },
+    });
+    ok(res, { message: 'Suscripción registrada' });
+  } catch (e) { next(e); }
+};
+
+const unsubscribePush = async (req, res, next) => {
+  try {
+    const { endpoint } = req.body;
+    if (endpoint) {
+      await prisma.pushSubscription.deleteMany({ where: { endpoint, customerId: req.customer.id } });
+    }
+    ok(res, { message: 'Suscripción eliminada' });
+  } catch (e) { next(e); }
+};
+
 module.exports = {
   me,
   vehicles,
@@ -204,4 +244,7 @@ module.exports = {
   respondQuote,
   notifications,
   markNotificationRead,
+  promotions,
+  subscribePush,
+  unsubscribePush,
 };

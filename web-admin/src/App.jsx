@@ -8,6 +8,8 @@ import CustomerHome        from './pages/customer/CustomerHome';
 import CustomerVehicle     from './pages/customer/CustomerVehicle';
 import CustomerOrder       from './pages/customer/CustomerOrder';
 import CustomerAppointments from './pages/customer/CustomerAppointments';
+import CustomerPromotions   from './pages/customer/CustomerPromotions';
+import CustomerNotices      from './pages/customer/CustomerNotices';
 
 import LoginPage      from './pages/LoginPage';
 import SetupPage      from './pages/SetupPage';
@@ -19,6 +21,7 @@ import WorkOrdersPage from './pages/WorkOrdersPage';
 import WorkOrderDetail from './pages/WorkOrderDetail';
 import QuotesPage     from './pages/QuotesPage';
 import InventoryPage  from './pages/InventoryPage';
+import PromotionsPage from './pages/PromotionsPage';
 import ReportsPage    from './pages/ReportsPage';
 import ProfilePage    from './pages/ProfilePage';
 import Layout         from './components/Layout';
@@ -55,7 +58,9 @@ export default function App() {
         <Route path="inicio" element={<CustomerHome />} />
         <Route path="vehiculo/:id" element={<CustomerVehicle />} />
         <Route path="orden/:id" element={<CustomerOrder />} />
+        <Route path="promociones" element={<CustomerPromotions />} />
         <Route path="citas" element={<CustomerAppointments />} />
+        <Route path="avisos" element={<CustomerNotices />} />
       </Route>
       <Route path="/setup" element={<SetupRoute />} />
       <Route
@@ -75,6 +80,7 @@ export default function App() {
         <Route path="work-orders/:id" element={<WorkOrderDetail />} />
         <Route path="quotes"       element={<QuotesPage />} />
         <Route path="inventory"    element={<InventoryPage />} />
+        <Route path="promotions"   element={<PromotionsPage />} />
         <Route path="reports"      element={<ReportsPage />} />
         <Route path="profile"      element={<ProfilePage />} />
       </Route>
