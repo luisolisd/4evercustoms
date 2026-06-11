@@ -130,6 +130,17 @@ export default function LoginPage() {
             {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
           </button>
         </form>
+
+        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+          <p className="text-xs text-gray-400 mb-2">¿Eres cliente del taller?</p>
+          <button
+            type="button"
+            onClick={() => navigate('/cliente')}
+            className="w-full border border-brand-200 text-brand-700 rounded-lg py-2.5 font-medium hover:bg-brand-50 transition-colors"
+          >
+            Soy cliente
+          </button>
+        </div>
       </div>
     </div>
   );

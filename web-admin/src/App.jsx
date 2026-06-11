@@ -1,5 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
+import { useCustomerStore } from './store/customerAuthStore';
+
+import CustomerLogin       from './pages/customer/CustomerLogin';
+import CustomerLayout      from './pages/customer/CustomerLayout';
+import CustomerHome        from './pages/customer/CustomerHome';
+import CustomerVehicle     from './pages/customer/CustomerVehicle';
+import CustomerOrder       from './pages/customer/CustomerOrder';
+import CustomerAppointments from './pages/customer/CustomerAppointments';
 
 import LoginPage      from './pages/LoginPage';
 import SetupPage      from './pages/SetupPage';
@@ -29,10 +37,26 @@ const SetupRoute = () => {
   return <SetupPage />;
 };
 
+const CustomerRoute = ({ children }) => {
+  const token = useCustomerStore((s) => s.token);
+  if (!token) return <Navigate to="/cliente/acceso" replace />;
+  return children;
+};
+
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+
+      {/* ── Portal de cliente (PWA) ─────────────────────────────── */}
+      <Route path="/cliente/acceso" element={<CustomerLogin />} />
+      <Route path="/cliente" element={<CustomerRoute><CustomerLayout /></CustomerRoute>}>
+        <Route index element={<Navigate to="/cliente/inicio" replace />} />
+        <Route path="inicio" element={<CustomerHome />} />
+        <Route path="vehiculo/:id" element={<CustomerVehicle />} />
+        <Route path="orden/:id" element={<CustomerOrder />} />
+        <Route path="citas" element={<CustomerAppointments />} />
+      </Route>
       <Route path="/setup" element={<SetupRoute />} />
       <Route
         path="/"

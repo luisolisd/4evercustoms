@@ -11,8 +11,10 @@ const photosRoutes       = require('../modules/photos/photos.routes');
 const inventoryRoutes    = require('../modules/inventory/inventory.routes');
 const notifRoutes        = require('../modules/notifications/notifications.routes');
 const reportRoutes       = require('../modules/reports/reports.routes');
+const customerSelfRoutes = require('../modules/customer/customer.routes');
 
 router.use('/auth', authRoutes);
+router.use('/customer', customerSelfRoutes);
 router.use('/workshops', workshopRoutes);
 router.use('/workshops/:workshopId/customers', customerRoutes);
 router.use('/workshops/:workshopId/vehicles', vehicleRoutes);
