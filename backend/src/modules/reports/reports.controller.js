@@ -48,14 +48,14 @@ const revenue = async (req, res, next) => {
 
     const result = await prisma.$queryRaw`
       SELECT
-        DATE_TRUNC('month', updated_at) AS month,
-        SUM(total_amount) AS revenue,
+        DATE_TRUNC('month', "updatedAt") AS month,
+        SUM("totalAmount") AS revenue,
         COUNT(*) AS orders
       FROM work_orders
-      WHERE workshop_id = ${wid}::uuid
-        AND payment_status = 'PAID'
-        AND updated_at >= NOW() - (${months} || ' months')::interval
-      GROUP BY DATE_TRUNC('month', updated_at)
+      WHERE "workshopId" = ${wid}::uuid
+        AND "paymentStatus" = 'PAID'
+        AND "updatedAt" >= NOW() - (${months} || ' months')::interval
+      GROUP BY DATE_TRUNC('month', "updatedAt")
       ORDER BY month ASC
     `;
 
@@ -77,11 +77,11 @@ const ordersByStatus = async (req, res, next) => {
 const topServices = async (req, res, next) => {
   try {
     const result = await prisma.$queryRaw`
-      SELECT service_type, COUNT(*) AS total
+      SELECT "serviceType", COUNT(*) AS total
       FROM appointments
-      WHERE workshop_id = ${req.params.workshopId}::uuid
+      WHERE "workshopId" = ${req.params.workshopId}::uuid
         AND status = 'COMPLETED'
-      GROUP BY service_type
+      GROUP BY "serviceType"
       ORDER BY total DESC
       LIMIT 10
     `;
