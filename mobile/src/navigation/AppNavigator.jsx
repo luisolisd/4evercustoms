@@ -98,6 +98,10 @@ function RootNavigator() {
 
   useEffect(() => { init(); }, []);
 
+  useEffect(() => {
+    if (user) registerForPushNotifications();
+  }, [user]);
+
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
@@ -105,10 +109,6 @@ function RootNavigator() {
       </View>
     );
   }
-
-  useEffect(() => {
-    if (user) registerForPushNotifications();
-  }, [user]);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

@@ -16,7 +16,8 @@
       "bundleIdentifier": "com.evrcustoms.app"
     },
     "android": {
-      "package": "com.evrcustoms.app"
+      "package": "com.evrcustoms.app",
+      "versionCode": 1
     }
   }
 }
