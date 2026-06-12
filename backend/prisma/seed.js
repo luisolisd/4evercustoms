@@ -25,19 +25,37 @@ async function main() {
     },
   });
 
-  // Admin user
+  // Admin user — identificado de forma robusta (maneja cambio de teléfono/correo)
+  const ADMIN_PHONE = '+524721082970';
+  const OLD_ADMIN_PHONE = '+526641000001';
   const adminPasswordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
-  const adminUser = await prisma.user.upsert({
-    where: { phone: '+526641000001' },
-    update: { email: ADMIN_EMAIL, passwordHash: adminPasswordHash },
-    create: {
-      phone: '+526641000001',
-      email: ADMIN_EMAIL,
-      passwordHash: adminPasswordHash,
-      firstName: 'Admin',
-      lastName: '4EVR',
-    },
+
+  let adminUser = await prisma.user.findFirst({
+    where: { OR: [{ phone: ADMIN_PHONE }, { phone: OLD_ADMIN_PHONE }, { email: ADMIN_EMAIL }] },
   });
+  if (adminUser) {
+    adminUser = await prisma.user.update({
+      where: { id: adminUser.id },
+      data: {
+        phone: ADMIN_PHONE,
+        email: ADMIN_EMAIL,
+        firstName: 'Admin',
+        lastName: '4EVR',
+        // Conserva la contraseña existente; solo la fija si no tiene una
+        ...(adminUser.passwordHash ? {} : { passwordHash: adminPasswordHash }),
+      },
+    });
+  } else {
+    adminUser = await prisma.user.create({
+      data: {
+        phone: ADMIN_PHONE,
+        email: ADMIN_EMAIL,
+        passwordHash: adminPasswordHash,
+        firstName: 'Admin',
+        lastName: '4EVR',
+      },
+    });
+  }
 
   await prisma.workshopUser.upsert({
     where: { workshopId_userId: { workshopId: workshop.id, userId: adminUser.id } },

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, CalendarDays, ClipboardList,
@@ -6,6 +7,7 @@ import {
   ChevronRight, Megaphone,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { getWorkshop } from '../services/workshop';
 import ToastContainer from './ui/Toast';
 import clsx from 'clsx';
 
@@ -48,8 +50,16 @@ function NavItem({ to, icon: Icon, label, onClick }) {
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
+  const workshopId = useAuthStore((s) => s.workshopId);
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const { data: wRes } = useQuery({
+    queryKey: ['workshop', workshopId],
+    queryFn: () => getWorkshop(workshopId),
+    enabled: !!workshopId,
+  });
+  const workshopName = wRes?.data?.name;
 
   const handleLogout = () => { logout(); navigate('/login'); };
   const close = () => setSidebarOpen(false);
@@ -61,7 +71,8 @@ export default function Layout() {
         <div className="bg-white rounded-xl px-3 py-2.5 flex items-center justify-center shadow-sm">
           <img src="/color.png" alt="4EVRcustoms" className="h-7 w-auto select-none" draggable={false} />
         </div>
-        <p className="text-gray-500 text-xs mt-2 text-center">Panel Administrativo</p>
+        <p className="text-white text-sm font-semibold mt-2 text-center truncate">{workshopName || '4EVRcustoms'}</p>
+        <p className="text-gray-500 text-xs text-center">Panel Administrativo</p>
       </div>
 
       {/* Nav */}

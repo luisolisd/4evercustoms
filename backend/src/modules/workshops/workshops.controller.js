@@ -4,7 +4,10 @@ const { ok, error, notFound } = require('../../utils/response');
 
 const getWorkshop = async (req, res, next) => {
   try {
-    ok(res, req.workshop);
+    const workshop = await prisma.workshop.findUnique({
+      where: { id: req.params.workshopId },
+    });
+    ok(res, workshop);
   } catch (e) { next(e); }
 };
 
