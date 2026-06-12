@@ -37,6 +37,7 @@ const upload = async (req, res, next) => {
             url: result.secure_url,
             thumbnailUrl: result.secure_url.replace('/upload/', '/upload/w_300,h_300,c_fill/'),
             caption: req.body.caption || null,
+            phase: req.body.phase || null,
             uploadedById: req.user.id,
           },
         })

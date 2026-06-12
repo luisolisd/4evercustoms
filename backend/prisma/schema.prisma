@@ -342,6 +342,7 @@ model Photo {
   url          String
   thumbnailUrl String?
   caption      String?
+  phase        String?  // 'RECEPTION' (cómo llega) | 'DELIVERY' (cómo se entrega)
   uploadedById String
   takenAt      DateTime @default(now())
   createdAt    DateTime @default(now())

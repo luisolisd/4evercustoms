@@ -23,7 +23,8 @@ const styles = StyleSheet.create({
   cPU: { width: 65, textAlign: 'right' },
   cQty: { width: 30, textAlign: 'right' },
   cTotal: { width: 70, textAlign: 'right' },
-  midRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 28 },
+  bottomWrap: { marginTop: 'auto' }, // empuja el bloque inferior al fondo de la página
+  midRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
   notesBox: { width: '54%', borderWidth: 1, borderColor: '#d1d5db', borderRadius: 4, padding: 8, minHeight: 110 },
   notesText: { marginTop: 3, color: '#374151', lineHeight: 1.4 },
   totals: { width: '40%' },
@@ -58,10 +59,12 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
   const legal = workshop?.legalName
     ? `${workshop.legalName}${workshop?.taxId ? ` · RFC: ${workshop.taxId}` : ''}`
     : (workshop?.taxId ? `RFC: ${workshop.taxId}` : '');
-  // Pie de página con RFC explícito
-  const footerLegal = [workshop?.legalName, workshop?.taxId ? `RFC: ${workshop.taxId}` : '']
-    .filter(Boolean).join(' ');
-  const footerLine = [line2, footerLegal].filter(Boolean).join('  |  ');
+  // Pie: DOMICILIO | Nombre RAZÓN SOCIAL | RFC: XXXX
+  const footerLine = [
+    line2,
+    workshop?.legalName ? `Nombre ${workshop.legalName}` : '',
+    workshop?.taxId ? `RFC: ${workshop.taxId}` : '',
+  ].filter(Boolean).join('  |  ');
   // Técnico = dueño/razón social; cliente del registro
   const tecnico = workshop?.legalName || workshop?.name || '';
   const cliente = order.customer ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() : '';
@@ -109,6 +112,8 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
           </View>
         ))}
 
+        {/* Bloque inferior fijo al fondo de la página */}
+        <View style={styles.bottomWrap}>
         {/* Observaciones / Recomendaciones (izquierda) + Totales (derecha) */}
         <View style={styles.midRow}>
           <View style={styles.notesBox}>
@@ -142,6 +147,7 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
         </View>
 
         <Text style={styles.bottom}>{footerLine}</Text>
+        </View>
       </Page>
     </Document>
   );

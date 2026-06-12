@@ -150,12 +150,16 @@ export default function WorkOrderDetail() {
     onSuccess: () => { invalidate(); toast.success('Ítem removido'); },
   });
 
+  const phaseRef = useRef('RECEPTION');
+  const pickPhotos = (phase) => { phaseRef.current = phase; photoInput.current.click(); };
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     const fd = new FormData();
     files.forEach((f) => fd.append('photos', f));
+    fd.append('phase', phaseRef.current);
     photoMut.mutate(fd);
+    e.target.value = '';
   };
 
   const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, recommendations: order.recommendations, technicianNotes: order.technicianNotes, estimatedReady: order.estimatedReady?.slice(0,16) } : {} });
@@ -233,13 +237,6 @@ export default function WorkOrderDetail() {
         </div>
       </div>
 
-      {order.diagnosis && (
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5">
-          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">Diagnóstico</p>
-          <p className="text-sm text-blue-900">{order.diagnosis}</p>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex border-b">
@@ -274,14 +271,26 @@ export default function WorkOrderDetail() {
               ))}
               {order.description && (
                 <div className="col-span-full bg-gray-50 rounded-xl p-4">
-                  <p className="text-xs text-gray-500 mb-1">Descripción del problema</p>
-                  <p className="text-sm text-gray-800">{order.description}</p>
+                  <p className="text-xs text-gray-500 mb-1">Descripción del problema (Falla)</p>
+                  <p className="text-sm text-gray-800 whitespace-pre-line">{order.description}</p>
+                </div>
+              )}
+              {order.diagnosis && (
+                <div className="col-span-full bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-500 mb-1">Observaciones / Diagnóstico</p>
+                  <p className="text-sm text-gray-800 whitespace-pre-line">{order.diagnosis}</p>
+                </div>
+              )}
+              {order.recommendations && (
+                <div className="col-span-full bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-500 mb-1">Recomendaciones</p>
+                  <p className="text-sm text-gray-800 whitespace-pre-line">{order.recommendations}</p>
                 </div>
               )}
               {order.technicianNotes && (
-                <div className="col-span-full bg-gray-50 rounded-xl p-4">
-                  <p className="text-xs text-gray-500 mb-1">Notas del técnico</p>
-                  <p className="text-sm text-gray-800">{order.technicianNotes}</p>
+                <div className="col-span-full bg-amber-50 border border-amber-100 rounded-xl p-4">
+                  <p className="text-xs text-amber-700 mb-1">Notas del técnico (internas)</p>
+                  <p className="text-sm text-gray-800 whitespace-pre-line">{order.technicianNotes}</p>
                 </div>
               )}
             </div>
@@ -321,35 +330,22 @@ export default function WorkOrderDetail() {
 
           {/* PHOTOS */}
           {tab === 'photos' && (
-            <div>
-              <div className="flex justify-end mb-4">
-                <Button icon={Camera} size="sm" onClick={() => photoInput.current.click()} loading={photoMut.isPending}>
-                  Subir fotos
-                </Button>
-                <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
-              </div>
-              {!order.photos?.length ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                  <Camera size={40} className="mb-3 opacity-30" />
-                  <p className="text-sm">No hay fotos aún</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {order.photos.map((p) => (
-                    <div key={p.id} className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100">
-                      <img src={p.thumbnailUrl || p.url} alt={p.caption || ''} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <a href={p.url} target="_blank" rel="noreferrer" className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30">
-                          <Eye size={14} />
-                        </a>
-                        <button onClick={() => delPhotoMut.mutate(p.id)} className="p-2 bg-white/20 rounded-lg text-white hover:bg-red-500/50">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="space-y-8">
+              <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
+              <PhotoSection
+                title="Recepción — cómo llega el vehículo"
+                photos={(order.photos || []).filter((p) => p.phase !== 'DELIVERY')}
+                onUpload={() => pickPhotos('RECEPTION')}
+                loading={photoMut.isPending}
+                onDelete={(id) => delPhotoMut.mutate(id)}
+              />
+              <PhotoSection
+                title="Entrega — cómo se entrega el vehículo"
+                photos={(order.photos || []).filter((p) => p.phase === 'DELIVERY')}
+                onUpload={() => pickPhotos('DELIVERY')}
+                loading={photoMut.isPending}
+                onDelete={(id) => delPhotoMut.mutate(id)}
+              />
             </div>
           )}
 
@@ -486,6 +482,35 @@ export default function WorkOrderDetail() {
           </div>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+function PhotoSection({ title, photos, onUpload, loading, onDelete }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-gray-700">{title} <span className="text-gray-400 font-normal">({photos.length})</span></p>
+        <Button icon={Camera} size="sm" variant="secondary" onClick={onUpload} loading={loading}>Subir fotos</Button>
+      </div>
+      {photos.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+          <Camera size={28} className="mb-2 opacity-30" />
+          <p className="text-xs">Sin fotos</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {photos.map((p) => (
+            <div key={p.id} className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100">
+              <img src={p.thumbnailUrl || p.url} alt={p.caption || ''} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <a href={p.url} target="_blank" rel="noreferrer" className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30"><Eye size={14} /></a>
+                <button onClick={() => onDelete(p.id)} className="p-2 bg-white/20 rounded-lg text-white hover:bg-red-500/50"><Trash2 size={14} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
