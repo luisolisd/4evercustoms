@@ -36,7 +36,8 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 30 },
   sigCol: { alignItems: 'center', width: 150 },
   sigLine: { borderTopWidth: 1, borderTopColor: '#9ca3af', width: 140, marginTop: 6, paddingTop: 4 },
-  sigName: { fontFamily: 'Helvetica-Bold', marginTop: 2 },
+  sigLabel: { width: 140, textAlign: 'center' },
+  sigName: { width: 140, textAlign: 'center', fontFamily: 'Helvetica-Bold', marginTop: 2 },
   sigImg: { width: 120, height: 46, objectFit: 'contain' },
   qr: { width: 66, height: 66 },
   bottom: { borderTopWidth: 1, borderTopColor: '#111827', marginTop: 16, paddingTop: 6, textAlign: 'center', fontSize: 8, color: '#374151' },
@@ -141,13 +142,13 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
           {qrDataUrl ? <Image style={styles.qr} src={qrDataUrl} /> : <View style={{ width: 66 }} />}
           <View style={styles.sigCol}>
             {order.customerSignature ? <Image style={styles.sigImg} src={order.customerSignature} /> : <View style={{ height: 46 }} />}
-            <View style={styles.sigLine}><Text>Firma cliente</Text></View>
+            <View style={styles.sigLine}><Text style={styles.sigLabel}>Firma cliente</Text></View>
             {cliente ? <Text style={styles.sigName}>{cliente}</Text> : null}
-            {order.signedAt ? <Text style={{ fontSize: 7, color: '#9ca3af' }}>Firmado {fdate(order.signedAt)}</Text> : null}
+            {order.signedAt ? <Text style={{ width: 140, textAlign: 'center', fontSize: 7, color: '#9ca3af' }}>Firmado {fdate(order.signedAt)}</Text> : null}
           </View>
           <View style={styles.sigCol}>
             <View style={{ height: 46 }} />
-            <View style={styles.sigLine}><Text>Firma técnico</Text></View>
+            <View style={styles.sigLine}><Text style={styles.sigLabel}>Firma técnico</Text></View>
             {tecnico ? <Text style={styles.sigName}>{tecnico}</Text> : null}
           </View>
         </View>
