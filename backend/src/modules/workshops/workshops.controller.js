@@ -103,10 +103,31 @@ const getMyProfile = async (req, res, next) => {
 
 const updateMe = async (req, res, next) => {
   try {
-    const allowed = ['firstName', 'lastName', 'email', 'avatarUrl'];
+    const allowed = ['firstName', 'lastName', 'email', 'avatarUrl', 'phone'];
     const data = Object.fromEntries(
-      Object.entries(req.body).filter(([k]) => allowed.includes(k))
+      Object.entries(req.body).filter(([k]) => allowed.includes(k) && req.body[k] !== '')
     );
+
+    // Teléfono: normaliza a +52XXXXXXXXXX y libera el número si lo tiene otro usuario
+    if (data.phone) {
+      const digits = String(data.phone).replace(/\D/g, '').slice(-10);
+      if (digits.length !== 10) return error(res, 'El teléfono debe tener 10 dígitos', 400);
+      data.phone = `+52${digits}`;
+
+      const holder = await prisma.user.findUnique({ where: { phone: data.phone } });
+      if (holder && holder.id !== req.user.id) {
+        const [linkedCustomer, membership] = await Promise.all([
+          prisma.customer.findFirst({ where: { userId: holder.id }, select: { id: true } }),
+          prisma.workshopUser.findFirst({ where: { userId: holder.id }, select: { id: true } }),
+        ]);
+        if (!linkedCustomer && !membership) {
+          await prisma.user.delete({ where: { id: holder.id } }); // usuario suelto → se libera
+        } else {
+          return error(res, 'Ese número ya está en uso por un cliente. Elimina ese cliente (o usa otro número) y reinténtalo.', 409);
+        }
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data,

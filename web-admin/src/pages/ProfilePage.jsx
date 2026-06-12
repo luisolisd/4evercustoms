@@ -65,7 +65,11 @@ function ProfileTab({ user, workshopId }) {
   const updateUser = useAuthStore((s) => s.updateUser);
   const toast = useToast();
   const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: { firstName: user?.firstName || '', lastName: user?.lastName || '' },
+    defaultValues: {
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phone: (user?.phone || '').replace(/\D/g, '').slice(-10),
+    },
   });
 
   const mut = useMutation({
@@ -86,7 +90,10 @@ function ProfileTab({ user, workshopId }) {
         </div>
       </div>
       <Input label="Nombre" {...register('firstName', { required: 'Requerido' })} error={errors.firstName?.message} />
-      <Input label="Apellido" {...register('lastName', { required: 'Requerido' })} error={errors.lastName?.message} />
+      <Input label="Apellido" {...register('lastName')} error={errors.lastName?.message} />
+      <Input label="Teléfono (10 dígitos)" placeholder="4721082970" maxLength={10}
+        {...register('phone', { pattern: { value: /^\d{10}$/, message: '10 dígitos' } })}
+        error={errors.phone?.message} />
       <div className="pt-2">
         <Button type="submit" loading={mut.isPending}>Guardar cambios</Button>
       </div>

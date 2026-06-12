@@ -85,10 +85,12 @@ export default function Layout() {
       <div className="px-4 py-4 border-t border-gray-800">
         <Link to="/profile" onClick={mobile ? close : undefined} className="flex items-center gap-3 mb-3 group px-1 rounded-xl hover:bg-gray-800 py-1.5 -mx-1 transition-colors">
           <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
-            A
+            {(user?.firstName?.[0] || 'A')}{user?.lastName?.[0] || ''}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium truncate group-hover:text-brand-300 transition-colors">Administrador</p>
+            <p className="text-white text-sm font-medium truncate group-hover:text-brand-300 transition-colors">
+              {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Administrador'}
+            </p>
             <p className="text-gray-500 text-xs truncate">{(user?.phone || '').replace(/\D/g, '').slice(-10) || '—'}</p>
           </div>
         </Link>
