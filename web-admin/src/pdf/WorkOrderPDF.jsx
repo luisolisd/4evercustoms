@@ -54,7 +54,8 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
   const subtotal = total / 1.16; // los precios ya incluyen IVA → se desglosa hacia atrás
   const iva = total - subtotal;
   const items = buildItems(order);
-  const conceptosTotal = items.reduce((s, i) => s + i.total, 0);
+  // Los precios capturados ya incluyen IVA; en los conceptos se muestran SIN IVA (÷1.16)
+  const conceptosTotal = items.reduce((s, i) => s + i.total, 0) / 1.16;
   const line2 = [workshop?.address, workshop?.city].filter(Boolean).join(', ');
   const legal = workshop?.legalName
     ? `${workshop.legalName}${workshop?.taxId ? ` · RFC: ${workshop.taxId}` : ''}`
@@ -106,9 +107,9 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
         ) : items.map((it, i) => (
           <View key={i} style={styles.itemRow}>
             <Text style={styles.cDesc}>{it.description}</Text>
-            <Text style={styles.cPU}>{money(it.unitPrice)}</Text>
+            <Text style={styles.cPU}>{money(it.unitPrice / 1.16)}</Text>
             <Text style={styles.cQty}>{it.qty}</Text>
-            <Text style={styles.cTotal}>{money(it.total)}</Text>
+            <Text style={styles.cTotal}>{money(it.total / 1.16)}</Text>
           </View>
         ))}
 

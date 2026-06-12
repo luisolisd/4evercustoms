@@ -398,8 +398,8 @@ export default function WorkOrderDetail() {
                           <tr key={item.id} className="border-b hover:bg-gray-50">
                             <td className="px-4 py-2">{item.description}{item.isLabor && <span className="ml-1 text-gray-400">(M.O.)</span>}</td>
                             <td className="px-4 py-2 text-right">{item.quantity}</td>
-                            <td className="px-4 py-2 text-right">{fMoney(item.unitPrice)}</td>
-                            <td className="px-4 py-2 text-right font-semibold">{fMoney(item.total)}</td>
+                            <td className="px-4 py-2 text-right">{fMoney(Number(item.unitPrice) / 1.16)}</td>
+                            <td className="px-4 py-2 text-right font-semibold">{fMoney(Number(item.total) / 1.16)}</td>
                             <td className="px-4 py-2 text-right">
                               <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} className="text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>
                             </td>
@@ -407,7 +407,9 @@ export default function WorkOrderDetail() {
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr className="font-bold text-sm"><td colSpan={3} className="px-4 py-3 text-right text-gray-900">Total (IVA incl.)</td><td className="px-4 py-3 text-right text-gray-900">{fMoney(q.total)}</td><td /></tr>
+                        <tr><td colSpan={3} className="px-4 pt-3 text-right text-gray-500">Subtotal</td><td className="px-4 pt-3 text-right text-gray-700">{fMoney(Number(q.total) / 1.16)}</td><td /></tr>
+                        <tr><td colSpan={3} className="px-4 py-0.5 text-right text-gray-500">IVA (16%)</td><td className="px-4 py-0.5 text-right text-gray-700">{fMoney(Number(q.total) - Number(q.total) / 1.16)}</td><td /></tr>
+                        <tr className="font-bold text-sm"><td colSpan={3} className="px-4 pb-3 pt-1 text-right text-gray-900">Total (IVA incl.)</td><td className="px-4 pb-3 pt-1 text-right text-gray-900">{fMoney(q.total)}</td><td /></tr>
                       </tfoot>
                     </table></div>
                     {['DRAFT','SENT'].includes(q.status) && (
