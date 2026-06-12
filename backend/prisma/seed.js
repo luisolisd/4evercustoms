@@ -25,14 +25,31 @@ async function main() {
     },
   });
 
-  // Admin user — identificado de forma robusta (maneja cambio de teléfono/correo)
+  // Admin user — identificado de forma robusta (maneja cambio de teléfono/correo
+  // y posibles usuarios duplicados de pruebas previas).
   const ADMIN_PHONE = '+524721082970';
   const OLD_ADMIN_PHONE = '+526641000001';
   const adminPasswordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
 
-  let adminUser = await prisma.user.findFirst({
-    where: { OR: [{ phone: ADMIN_PHONE }, { phone: OLD_ADMIN_PHONE }, { email: ADMIN_EMAIL }] },
+  // 1) Identifica al admin: primero por su membresía de taller (el real),
+  //    si no, por teléfono (nuevo o viejo) o correo.
+  const adminMembership = await prisma.workshopUser.findFirst({
+    where: { workshopId: workshop.id, role: 'WORKSHOP_ADMIN' },
+    orderBy: { createdAt: 'asc' },
   });
+  let adminUser = adminMembership
+    ? await prisma.user.findUnique({ where: { id: adminMembership.userId } })
+    : await prisma.user.findFirst({
+        where: { OR: [{ phone: ADMIN_PHONE }, { phone: OLD_ADMIN_PHONE }, { email: ADMIN_EMAIL }] },
+      });
+
+  // 2) Libera el correo destino de cualquier OTRO usuario (email es opcional → se anula).
+  await prisma.user.updateMany({
+    where: { email: ADMIN_EMAIL, ...(adminUser ? { NOT: { id: adminUser.id } } : {}) },
+    data: { email: null },
+  });
+
+  // 3) Crea o actualiza al admin con el correo/teléfono deseados.
   if (adminUser) {
     adminUser = await prisma.user.update({
       where: { id: adminUser.id },
