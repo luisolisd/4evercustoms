@@ -16,9 +16,15 @@ const STATUS_LABELS = {
   CANCELLED: 'Cancelado',
 };
 
+// Usa el último número real + 1 (no el conteo) para no chocar tras borrar órdenes.
 const generateOrderNumber = async (workshopId) => {
-  const count = await prisma.workOrder.count({ where: { workshopId } });
-  return `O-${String(count + 1).padStart(4, '0')}`;
+  const last = await prisma.workOrder.findFirst({
+    where: { workshopId },
+    orderBy: { createdAt: 'desc' },
+    select: { orderNumber: true },
+  });
+  const n = last ? (parseInt(String(last.orderNumber).replace(/\D/g, ''), 10) || 0) : 0;
+  return `O-${String(n + 1).padStart(4, '0')}`;
 };
 
 const list = async (req, res, next) => {

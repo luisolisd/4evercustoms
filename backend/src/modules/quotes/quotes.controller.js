@@ -5,9 +5,15 @@ const { cleanData } = require('../../utils/sanitize');
 const { recalcOrderTotal } = require('../../utils/orderTotals');
 const { notifyCustomer } = require('../../utils/notify');
 
+// Usa el último número real + 1 (no el conteo) para no chocar tras borrar cotizaciones.
 const generateQuoteNumber = async (workshopId) => {
-  const count = await prisma.quote.count({ where: { workshopId } });
-  return `COT-${String(count + 1).padStart(5, '0')}`;
+  const last = await prisma.quote.findFirst({
+    where: { workshopId },
+    orderBy: { createdAt: 'desc' },
+    select: { quoteNumber: true },
+  });
+  const n = last ? (parseInt(String(last.quoteNumber).replace(/\D/g, ''), 10) || 0) : 0;
+  return `COT-${String(n + 1).padStart(5, '0')}`;
 };
 
 const recalcTotals = async (quoteId) => {
