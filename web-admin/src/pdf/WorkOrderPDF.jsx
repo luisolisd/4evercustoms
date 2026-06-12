@@ -9,9 +9,10 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between' },
   title: { fontSize: 20, fontFamily: 'Helvetica-Bold' },
   sub: { fontSize: 10, color: '#374151', marginTop: 3 },
-  wsBox: { alignItems: 'flex-end', maxWidth: 250 },
-  wsText: { fontSize: 8, color: '#374151', textAlign: 'right' },
-  logo: { width: 95, marginTop: 5 },
+  wsBox: { flexDirection: 'row', alignItems: 'center' },
+  wsTextCol: { width: 160, alignItems: 'center', marginRight: 10 },
+  wsText: { fontSize: 8, color: '#374151', textAlign: 'center', lineHeight: 1.3 },
+  logo: { width: 90 },
   hr: { borderBottomWidth: 1, borderBottomColor: '#111827', marginVertical: 12 },
   vehicle: { fontSize: 12, fontFamily: 'Helvetica-Bold', marginTop: 4 },
   falla: { fontSize: 9, color: '#374151', marginTop: 5 },
@@ -77,9 +78,12 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
             <Text style={styles.sub}>#{order.orderNumber}  |  {fdate(order.receivedAt)}</Text>
           </View>
           <View style={styles.wsBox}>
-            <Text style={[styles.wsText, styles.bold]}>{workshop?.name || '4EVRcustoms'}</Text>
-            {line2 ? <Text style={styles.wsText}>{line2}</Text> : null}
-            {legal ? <Text style={styles.wsText}>{legal}</Text> : null}
+            <View style={styles.wsTextCol}>
+              <Text style={[styles.wsText, styles.bold]}>{workshop?.name || '4EVRcustoms'}</Text>
+              {line2 ? <Text style={styles.wsText}>{line2}</Text> : null}
+              {workshop?.legalName ? <Text style={styles.wsText}>{workshop.legalName}</Text> : null}
+              {workshop?.taxId ? <Text style={styles.wsText}>RFC: {workshop.taxId}</Text> : null}
+            </View>
             {logoDataUrl ? <Image style={styles.logo} src={logoDataUrl} /> : null}
           </View>
         </View>
