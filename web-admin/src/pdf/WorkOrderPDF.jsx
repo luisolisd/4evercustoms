@@ -23,14 +23,18 @@ const styles = StyleSheet.create({
   cPU: { width: 65, textAlign: 'right' },
   cQty: { width: 30, textAlign: 'right' },
   cTotal: { width: 70, textAlign: 'right' },
-  totals: { marginTop: 28, alignSelf: 'flex-end', width: 220 },
+  midRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 28 },
+  notesBox: { width: '54%', borderWidth: 1, borderColor: '#d1d5db', borderRadius: 4, padding: 8, minHeight: 110 },
+  notesText: { marginTop: 3, color: '#374151', lineHeight: 1.4 },
+  totals: { width: '40%' },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 36 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 30 },
   sigCol: { alignItems: 'center', width: 150 },
   sigLine: { borderTopWidth: 1, borderTopColor: '#9ca3af', width: 140, marginTop: 6, paddingTop: 4 },
-  sigImg: { width: 120, height: 48, objectFit: 'contain' },
-  qr: { width: 68, height: 68 },
-  bottom: { borderTopWidth: 1, borderTopColor: '#111827', marginTop: 18, paddingTop: 6, textAlign: 'center', fontSize: 8, color: '#374151' },
+  sigName: { fontFamily: 'Helvetica-Bold', marginTop: 2 },
+  sigImg: { width: 120, height: 46, objectFit: 'contain' },
+  qr: { width: 66, height: 66 },
+  bottom: { borderTopWidth: 1, borderTopColor: '#111827', marginTop: 16, paddingTop: 6, textAlign: 'center', fontSize: 8, color: '#374151' },
 });
 
 function buildItems(order) {
@@ -54,6 +58,13 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
   const legal = workshop?.legalName
     ? `${workshop.legalName}${workshop?.taxId ? ` · RFC: ${workshop.taxId}` : ''}`
     : (workshop?.taxId ? `RFC: ${workshop.taxId}` : '');
+  // Pie de página con RFC explícito
+  const footerLegal = [workshop?.legalName, workshop?.taxId ? `RFC: ${workshop.taxId}` : '']
+    .filter(Boolean).join(' ');
+  const footerLine = [line2, footerLegal].filter(Boolean).join('  |  ');
+  // Técnico = dueño/razón social; cliente del registro
+  const tecnico = workshop?.legalName || workshop?.name || '';
+  const cliente = order.customer ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() : '';
 
   return (
     <Document>
@@ -98,28 +109,39 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
           </View>
         ))}
 
-        <View style={styles.totals}>
-          <View style={styles.totalRow}><Text style={styles.bold}>Subtotal</Text><Text>{money(subtotal)}</Text></View>
-          <View style={styles.totalRow}><Text>IVA (16%)</Text><Text>{money(iva)}</Text></View>
-          <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 4 }]}>
-            <Text style={styles.bold}>Total</Text><Text style={styles.bold}>{money(total)}</Text>
+        {/* Observaciones / Recomendaciones (izquierda) + Totales (derecha) */}
+        <View style={styles.midRow}>
+          <View style={styles.notesBox}>
+            <Text style={styles.bold}>Observaciones:</Text>
+            <Text style={styles.notesText}>{order.diagnosis || ''}</Text>
+            <Text style={[styles.bold, { marginTop: 10 }]}>Recomendaciones:</Text>
+            <Text style={styles.notesText}>{order.recommendations || ''}</Text>
+          </View>
+          <View style={styles.totals}>
+            <View style={styles.totalRow}><Text style={styles.bold}>Subtotal</Text><Text>{money(subtotal)}</Text></View>
+            <View style={styles.totalRow}><Text>IVA (16%)</Text><Text>{money(iva)}</Text></View>
+            <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 4 }]}>
+              <Text style={styles.bold}>Total</Text><Text style={styles.bold}>{money(total)}</Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.footer}>
-          {qrDataUrl ? <Image style={styles.qr} src={qrDataUrl} /> : <View style={{ width: 68 }} />}
+          {qrDataUrl ? <Image style={styles.qr} src={qrDataUrl} /> : <View style={{ width: 66 }} />}
           <View style={styles.sigCol}>
-            {order.customerSignature ? <Image style={styles.sigImg} src={order.customerSignature} /> : <View style={{ height: 48 }} />}
+            {order.customerSignature ? <Image style={styles.sigImg} src={order.customerSignature} /> : <View style={{ height: 46 }} />}
             <View style={styles.sigLine}><Text>Firma cliente</Text></View>
+            {cliente ? <Text style={styles.sigName}>{cliente}</Text> : null}
             {order.signedAt ? <Text style={{ fontSize: 7, color: '#9ca3af' }}>Firmado {fdate(order.signedAt)}</Text> : null}
           </View>
           <View style={styles.sigCol}>
-            <View style={{ height: 48 }} />
+            <View style={{ height: 46 }} />
             <View style={styles.sigLine}><Text>Firma técnico</Text></View>
+            {tecnico ? <Text style={styles.sigName}>{tecnico}</Text> : null}
           </View>
         </View>
 
-        <Text style={styles.bottom}>{[line2, legal].filter(Boolean).join('  |  ')}</Text>
+        <Text style={styles.bottom}>{footerLine}</Text>
       </Page>
     </Document>
   );

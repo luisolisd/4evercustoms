@@ -109,7 +109,7 @@ const update = async (req, res, next) => {
     });
     if (!order) return notFound(res);
 
-    const allowed = ['description', 'diagnosis', 'technicianNotes', 'technicianId', 'estimatedReady', 'mileageIn', 'mileageOut'];
+    const allowed = ['description', 'diagnosis', 'recommendations', 'technicianNotes', 'technicianId', 'estimatedReady', 'mileageIn', 'mileageOut'];
     const data = cleanData(
       Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k))),
       ['estimatedReady']

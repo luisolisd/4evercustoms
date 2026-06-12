@@ -158,7 +158,7 @@ export default function WorkOrderDetail() {
     photoMut.mutate(fd);
   };
 
-  const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, technicianNotes: order.technicianNotes, estimatedReady: order.estimatedReady?.slice(0,16) } : {} });
+  const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, recommendations: order.recommendations, technicianNotes: order.technicianNotes, estimatedReady: order.estimatedReady?.slice(0,16) } : {} });
   const editMut = useMutation({
     mutationFn: (d) => updateWorkOrder(workshopId, id, d),
     onSuccess: () => { invalidate(); setEditModal(false); toast.success('Orden actualizada'); },
@@ -420,8 +420,9 @@ export default function WorkOrderDetail() {
       {/* Edit modal */}
       <Modal open={editModal} onClose={() => setEditModal(false)} title="Editar orden" size="md">
         <form onSubmit={editForm.handleSubmit((d) => editMut.mutate(d))} className="space-y-4">
-          <Textarea label="Diagnóstico" rows={3} {...editForm.register('diagnosis')} />
-          <Textarea label="Notas del técnico" rows={2} {...editForm.register('technicianNotes')} />
+          <Textarea label="Observaciones / Diagnóstico (PDF)" rows={3} {...editForm.register('diagnosis')} />
+          <Textarea label="Recomendaciones (PDF)" rows={3} {...editForm.register('recommendations')} />
+          <Textarea label="Notas del técnico (internas)" rows={2} {...editForm.register('technicianNotes')} />
           <Input label="Entrega estimada" type="datetime-local" {...editForm.register('estimatedReady')} />
           <div className="flex justify-end"><Button type="submit" loading={editMut.isPending}>Guardar</Button></div>
         </form>

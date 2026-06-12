@@ -253,6 +253,7 @@ model WorkOrder {
   status          WorkOrderStatus @default(RECEIVED)
   description     String?
   diagnosis       String?
+  recommendations String?
   technicianNotes String?
   technicianId    String?
   receivedAt      DateTime        @default(now())
