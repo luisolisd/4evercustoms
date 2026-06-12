@@ -123,7 +123,7 @@ export default function InventoryPage() {
           <EmptyState icon={Package} title="Sin refacciones" description={search ? 'Ninguna refacción coincide.' : 'Agrega la primera refacción al inventario.'} action={!search ? 'Agregar refacción' : undefined} onAction={() => setPartModal('create')} />
         ) : (
           <>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-5 py-3">Refacción</th>
@@ -189,7 +189,7 @@ export default function InventoryPage() {
                   );
                 })}
               </tbody>
-            </table>
+            </table></div>
             {pagination && <Pagination {...pagination} onPageChange={setPage} />}
           </>
         )}

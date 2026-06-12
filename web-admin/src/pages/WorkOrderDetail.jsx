@@ -305,7 +305,7 @@ export default function WorkOrderDetail() {
               {!order.workOrderParts?.length ? (
                 <p className="text-center text-gray-400 py-8 text-sm">No hay refacciones agregadas</p>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="w-full text-sm min-w-[520px]">
                   <thead><tr className="text-gray-500 text-xs uppercase border-b"><th className="text-left py-2">Refacción</th><th className="text-right py-2">Cant.</th><th className="text-right py-2">Precio unit.</th><th className="text-right py-2">Total</th><th className="py-2" /></tr></thead>
                   <tbody className="divide-y">
                     {order.workOrderParts.map((p) => (
@@ -323,7 +323,7 @@ export default function WorkOrderDetail() {
                   <tfoot>
                     <tr><td colSpan={3} className="pt-4 text-right font-semibold text-gray-700">Total refacciones</td><td className="pt-4 text-right font-bold text-lg text-gray-900">{fMoney(order.workOrderParts.reduce((s, p) => s + Number(p.total), 0))}</td><td /></tr>
                   </tfoot>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -381,7 +381,7 @@ export default function WorkOrderDetail() {
                         )}
                       </div>
                     </div>
-                    <table className="w-full text-xs">
+                    <div className="overflow-x-auto"><table className="w-full text-xs min-w-[480px]">
                       <thead><tr className="text-gray-400 border-b"><th className="text-left px-4 py-2">Descripción</th><th className="text-right px-4 py-2">Cant.</th><th className="text-right px-4 py-2">P.U.</th><th className="text-right px-4 py-2">Total</th><th className="px-4 py-2" /></tr></thead>
                       <tbody>
                         {q.items?.map((item) => (
@@ -399,7 +399,7 @@ export default function WorkOrderDetail() {
                       <tfoot>
                         <tr className="font-bold text-sm"><td colSpan={3} className="px-4 py-3 text-right text-gray-900">Total (IVA incl.)</td><td className="px-4 py-3 text-right text-gray-900">{fMoney(q.total)}</td><td /></tr>
                       </tfoot>
-                    </table>
+                    </table></div>
                     {['DRAFT','SENT'].includes(q.status) && (
                       <div className="px-4 pb-4">
                         <QuoteItemForm onSubmit={(d) => addQuoteItemMut.mutate({ qid: q.id, data: d })} loading={addQuoteItemMut.isPending} />

@@ -98,7 +98,7 @@ export default function CustomersPage() {
           />
         ) : (
           <>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-5 py-3">Cliente</th>
@@ -176,7 +176,7 @@ export default function CustomersPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
             {pagination && (
               <Pagination {...pagination} onPageChange={setPage} />
             )}

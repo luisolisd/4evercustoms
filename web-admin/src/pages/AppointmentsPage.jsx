@@ -101,7 +101,7 @@ export default function AppointmentsPage() {
           <EmptyState icon={CalendarDays} title="No hay citas" description="Agenda la primera cita del día." action="Nueva cita" onAction={() => setModal('create')} />
         ) : (
           <>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-5 py-3">Fecha y hora</th>
@@ -147,7 +147,7 @@ export default function AppointmentsPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
             {pagination && <Pagination {...pagination} onPageChange={setPage} />}
           </>
         )}

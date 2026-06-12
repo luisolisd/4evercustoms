@@ -92,7 +92,7 @@ export default function VehiclesPage() {
           <EmptyState icon={Car} title="No hay vehículos" description="Registra el primer vehículo." action={!search ? 'Agregar vehículo' : undefined} onAction={() => setModal('create')} />
         ) : (
           <>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-5 py-3">Vehículo</th>
@@ -155,7 +155,7 @@ export default function VehiclesPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
             {pagination && <Pagination {...pagination} onPageChange={setPage} />}
           </>
         )}
