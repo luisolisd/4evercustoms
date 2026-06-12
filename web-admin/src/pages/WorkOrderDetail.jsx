@@ -312,8 +312,8 @@ export default function WorkOrderDetail() {
                       <tr key={p.id} className="hover:bg-gray-50">
                         <td className="py-3 font-medium">{p.part?.name}<span className="text-xs text-gray-400 ml-2">{p.part?.sku}</span></td>
                         <td className="py-3 text-right">{p.quantity}</td>
-                        <td className="py-3 text-right">{fMoney(p.unitPrice)}</td>
-                        <td className="py-3 text-right font-bold">{fMoney(p.total)}</td>
+                        <td className="py-3 text-right">{fMoney(Number(p.unitPrice) / 1.16)}</td>
+                        <td className="py-3 text-right font-bold">{fMoney(Number(p.total) / 1.16)}</td>
                         <td className="py-3 text-right">
                           <button onClick={() => setRemovePart(p)} className="p-1 text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
                         </td>
@@ -322,12 +322,13 @@ export default function WorkOrderDetail() {
                   </tbody>
                   <tfoot>
                     {(() => {
-                      const sub = order.workOrderParts.reduce((s, p) => s + Number(p.total), 0);
+                      const totalIva = order.workOrderParts.reduce((s, p) => s + Number(p.total), 0); // ya incluye IVA
+                      const subtotal = totalIva / 1.16;
                       return (
                         <>
-                          <tr><td colSpan={3} className="pt-4 text-right text-gray-500">Subtotal</td><td className="pt-4 text-right text-gray-700">{fMoney(sub)}</td><td /></tr>
-                          <tr><td colSpan={3} className="py-0.5 text-right text-gray-500">IVA (16%)</td><td className="py-0.5 text-right text-gray-700">{fMoney(sub * 0.16)}</td><td /></tr>
-                          <tr><td colSpan={3} className="pb-4 pt-1 text-right font-semibold text-gray-700">Total refacciones (IVA incl.)</td><td className="pb-4 pt-1 text-right font-bold text-lg text-gray-900">{fMoney(sub * 1.16)}</td><td /></tr>
+                          <tr><td colSpan={3} className="pt-4 text-right text-gray-500">Subtotal</td><td className="pt-4 text-right text-gray-700">{fMoney(subtotal)}</td><td /></tr>
+                          <tr><td colSpan={3} className="py-0.5 text-right text-gray-500">IVA (16%)</td><td className="py-0.5 text-right text-gray-700">{fMoney(totalIva - subtotal)}</td><td /></tr>
+                          <tr><td colSpan={3} className="pb-4 pt-1 text-right font-semibold text-gray-700">Total refacciones (IVA incl.)</td><td className="pb-4 pt-1 text-right font-bold text-lg text-gray-900">{fMoney(totalIva)}</td><td /></tr>
                         </>
                       );
                     })()}
@@ -465,9 +466,8 @@ export default function WorkOrderDetail() {
           <Input label="Cantidad" type="number" min={1} value={partQty} onChange={(e) => setPartQty(Number(e.target.value))} />
           {selectedPartData && (
             <p className="text-sm text-gray-600">
-              P.U.: <strong>{fMoney(selectedPartData.unitPrice)}</strong>
-              {' · '}Total: <strong>{fMoney(Number(selectedPartData.unitPrice) * partQty)}</strong>
-              <span className="text-xs text-gray-400"> (sin IVA)</span>
+              P.U. (sin IVA): <strong>{fMoney(Number(selectedPartData.unitPrice) / 1.16)}</strong>
+              {' · '}Total (IVA incl.): <strong>{fMoney(Number(selectedPartData.unitPrice) * partQty)}</strong>
             </p>
           )}
           <div className="flex justify-end gap-3">

@@ -19,7 +19,7 @@ export default function PartForm({ defaultValues, onSubmit, loading }) {
         <Input label="Marca" placeholder="Bosch" {...register('brand')} />
       </div>
       <Input
-        label="Precio unitario (sin IVA) *"
+        label="Precio unit. (IVA incl.) *"
         type="number"
         step="0.01"
         placeholder="0.00"
