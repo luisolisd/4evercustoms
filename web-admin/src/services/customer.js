@@ -25,4 +25,8 @@ export const respondQuote = (id, decision, reason) =>
 export const getNotifications = () => customerApi.get('/customer/notifications').then(data);
 export const markNotificationRead = (id) =>
   customerApi.patch(`/customer/notifications/${id}/read`).then(data);
+export const deleteNotification = (id) =>
+  customerApi.delete(`/customer/notifications/${id}`).then(data);
+export const clearNotifications = () =>
+  customerApi.delete('/customer/notifications').then(data);
 export const getPromotions = () => customerApi.get('/customer/promotions').then(data);

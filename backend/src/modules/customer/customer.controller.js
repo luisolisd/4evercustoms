@@ -197,6 +197,22 @@ const markNotificationRead = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+const deleteNotification = async (req, res, next) => {
+  try {
+    await prisma.notification.deleteMany({
+      where: { id: req.params.id, customerId: req.customer.id },
+    });
+    ok(res, { message: 'Aviso eliminado' });
+  } catch (e) { next(e); }
+};
+
+const clearNotifications = async (req, res, next) => {
+  try {
+    await prisma.notification.deleteMany({ where: { customerId: req.customer.id } });
+    ok(res, { message: 'Avisos eliminados' });
+  } catch (e) { next(e); }
+};
+
 // ── Promociones del taller ───────────────────────────────────────────────────
 const promotions = async (req, res, next) => {
   try {
@@ -247,6 +263,8 @@ module.exports = {
   respondQuote,
   notifications,
   markNotificationRead,
+  deleteNotification,
+  clearNotifications,
   promotions,
   subscribePush,
   unsubscribePush,

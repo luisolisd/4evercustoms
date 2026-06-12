@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellRing } from 'lucide-react';
-import { getNotifications, markNotificationRead } from '../../services/customer';
+import { Bell, BellRing, Trash2 } from 'lucide-react';
+import { getNotifications, markNotificationRead, clearNotifications } from '../../services/customer';
 import { enablePush, pushStatus } from '../../services/push';
 import { fmtDateTime } from './status';
 import RefreshButton from './RefreshButton';
@@ -15,11 +15,28 @@ export default function CustomerNotices() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['c-notices'] }),
   });
 
+  const clear = useMutation({
+    mutationFn: clearNotifications,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['c-notices'] }),
+  });
+
+  const onClear = () => {
+    if (window.confirm('¿Borrar todos tus avisos?')) clear.mutate();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">Avisos</h1>
-        <RefreshButton onClick={() => refetch()} spinning={isFetching} />
+        <div className="flex items-center gap-1">
+          {items?.length > 0 && (
+            <button onClick={onClear} disabled={clear.isPending} aria-label="Borrar todos"
+              className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 active:scale-95 transition">
+              <Trash2 size={18} />
+            </button>
+          )}
+          <RefreshButton onClick={() => refetch()} spinning={isFetching} />
+        </div>
       </div>
 
       <PushBanner />
