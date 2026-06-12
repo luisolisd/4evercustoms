@@ -12,11 +12,13 @@ export default function QuoteItemForm({ onSubmit, loading }) {
     defaultValues: { isLabor: false, quantity: 1, unitPrice: 0 },
   });
 
-  const { data: parts } = useQuery({
+  // Mismo formato que el resto (devuelve el body) para no chocar con la key compartida 'parts-all'
+  const { data: partsRes } = useQuery({
     queryKey: ['parts-all', workshopId],
-    queryFn: () => getParts(workshopId, { limit: 200 }).then((r) => r.data),
+    queryFn: () => getParts(workshopId, { limit: 200 }),
     enabled: !!workshopId,
   });
+  const parts = partsRes?.data || [];
 
   const partOptions = (parts || []).map((p) => ({
     value: p.id,
