@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { getWorkshop } from '../services/workshop';
+import { APP_VERSION } from '../version';
 import ToastContainer from './ui/Toast';
 import clsx from 'clsx';
 
@@ -97,6 +98,7 @@ export default function Layout() {
         >
           <LogOut size={15} /> Cerrar sesión
         </button>
+        <p className="text-center text-[10px] text-gray-600 mt-3">{APP_VERSION}</p>
       </div>
     </div>
   );

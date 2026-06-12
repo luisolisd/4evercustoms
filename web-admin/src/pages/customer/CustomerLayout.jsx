@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, Calendar, LogOut, Tag, Bell } from 'lucide-react';
 import clsx from 'clsx';
 import { useCustomerStore } from '../../store/customerAuthStore';
+import { APP_VERSION } from '../../version';
 
 const tabs = [
   { to: '/cliente/inicio', icon: Home, label: 'Inicio' },
@@ -38,6 +39,7 @@ export default function CustomerLayout() {
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)' }}
       >
         <Outlet />
+        <p className="text-center text-[10px] text-gray-400 pt-6">4EVRcustoms {APP_VERSION}</p>
       </main>
 
       {/* Bottom nav */}

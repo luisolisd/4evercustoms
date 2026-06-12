@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerStatus, customerSetPassword, customerLogin } from '../../services/customer';
 import { useCustomerStore } from '../../store/customerAuthStore';
+import { APP_VERSION } from '../../version';
 
 export default function CustomerLogin() {
   const navigate = useNavigate();
@@ -117,6 +118,7 @@ export default function CustomerLogin() {
             <LinkBtn onClick={back}>Cambiar número</LinkBtn>
           </form>
         )}
+        <p className="text-center text-[10px] text-gray-400 mt-5">{APP_VERSION}</p>
       </div>
     </div>
   );

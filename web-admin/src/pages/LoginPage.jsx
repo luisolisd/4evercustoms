@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
+import { APP_VERSION } from '../version';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -141,6 +142,7 @@ export default function LoginPage() {
             Soy cliente
           </button>
         </div>
+        <p className="text-center text-[10px] text-gray-400 mt-4">{APP_VERSION}</p>
       </div>
     </div>
   );
