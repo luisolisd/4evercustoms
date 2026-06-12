@@ -60,12 +60,10 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
   const legal = workshop?.legalName
     ? `${workshop.legalName}${workshop?.taxId ? ` · RFC: ${workshop.taxId}` : ''}`
     : (workshop?.taxId ? `RFC: ${workshop.taxId}` : '');
-  // Pie: DOMICILIO | Nombre RAZÓN SOCIAL | RFC: XXXX
-  const footerLine = [
-    line2,
-    workshop?.legalName ? `Nombre ${workshop.legalName}` : '',
-    workshop?.taxId ? `RFC: ${workshop.taxId}` : '',
-  ].filter(Boolean).join('  |  ');
+  // Pie: DOMICILIO | RAZÓN SOCIAL RFC: XXXX
+  const nameRfc = [workshop?.legalName, workshop?.taxId ? `RFC: ${workshop.taxId}` : '']
+    .filter(Boolean).join(' ');
+  const footerLine = [workshop?.address, nameRfc].filter(Boolean).join('  |  ');
   // Técnico = dueño/razón social; cliente del registro
   const tecnico = workshop?.legalName || workshop?.name || '';
   const cliente = order.customer ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() : '';

@@ -25,6 +25,17 @@ async function main() {
     },
   });
 
+  // Completa razón social / RFC si faltan (no sobrescribe lo que el taller haya editado)
+  if (!workshop.legalName || !workshop.taxId) {
+    await prisma.workshop.update({
+      where: { id: workshop.id },
+      data: {
+        legalName: workshop.legalName || 'PEDRO RAMIRO SOLIS DURAN',
+        taxId: workshop.taxId || 'SODP871115H1A',
+      },
+    });
+  }
+
   // Admin user — identificado de forma robusta (maneja cambio de teléfono/correo
   // y posibles usuarios duplicados de pruebas previas).
   const ADMIN_PHONE = '+524721082970';
