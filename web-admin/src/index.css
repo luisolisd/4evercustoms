@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Desactiva el doble-tap para hacer zoom (iOS/Android) */
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-gray-50 text-gray-900 font-sans;
   }
