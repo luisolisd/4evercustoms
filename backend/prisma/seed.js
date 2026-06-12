@@ -49,12 +49,29 @@ async function main() {
     data: { email: null },
   });
 
-  // 3) Crea o actualiza al admin con el correo/teléfono deseados.
+  // 3) Resuelve el teléfono destino. Si otro usuario ya lo tiene:
+  //    - si es un usuario suelto (sin cliente ni rol) → se elimina para liberarlo;
+  //    - si es un usuario real (cliente/staff) → no se le roba; el admin conserva su teléfono.
+  let targetPhone = ADMIN_PHONE;
+  const phoneHolder = await prisma.user.findUnique({ where: { phone: ADMIN_PHONE } });
+  if (phoneHolder && (!adminUser || phoneHolder.id !== adminUser.id)) {
+    const [linkedCustomer, membership] = await Promise.all([
+      prisma.customer.findFirst({ where: { userId: phoneHolder.id }, select: { id: true } }),
+      prisma.workshopUser.findFirst({ where: { userId: phoneHolder.id }, select: { id: true } }),
+    ]);
+    if (!linkedCustomer && !membership) {
+      await prisma.user.delete({ where: { id: phoneHolder.id } });
+    } else {
+      targetPhone = adminUser ? adminUser.phone : ADMIN_PHONE;
+    }
+  }
+
+  // 4) Crea o actualiza al admin con el correo/teléfono resueltos.
   if (adminUser) {
     adminUser = await prisma.user.update({
       where: { id: adminUser.id },
       data: {
-        phone: ADMIN_PHONE,
+        phone: targetPhone,
         email: ADMIN_EMAIL,
         firstName: 'Admin',
         lastName: '4EVR',
@@ -65,7 +82,7 @@ async function main() {
   } else {
     adminUser = await prisma.user.create({
       data: {
-        phone: ADMIN_PHONE,
+        phone: targetPhone,
         email: ADMIN_EMAIL,
         passwordHash: adminPasswordHash,
         firstName: 'Admin',
@@ -183,5 +200,6 @@ async function main() {
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
+  // No bloquea el deploy: el esquema ya se aplicó con `prisma db push`.
+  .catch((e) => { console.error('[seed] Error (no bloquea el deploy):', e.message); })
   .finally(() => prisma.$disconnect());
