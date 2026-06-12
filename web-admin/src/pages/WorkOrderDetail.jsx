@@ -8,10 +8,10 @@ import {
 import { getWorkshop } from '../services/workshop';
 import {
   getWorkOrder, updateWOStatus, addWOPart, removeWOPart,
-  uploadWOPhotos, deletePhoto, updateWorkOrder, updateWOPayment,
+  uploadWOPhotos, deletePhoto, updateWorkOrder, updateWOPayment, linkQuoteToOrder,
 } from '../services/workOrders';
 import { getParts } from '../services/inventory';
-import { addQuoteItem, removeQuoteItem, createQuote, updateQuoteStatus } from '../services/quotes';
+import { addQuoteItem, removeQuoteItem, createQuote, updateQuoteStatus, getQuotes } from '../services/quotes';
 import { useAuthStore } from '../store/authStore';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -76,6 +76,7 @@ export default function WorkOrderDetail() {
   const [tab, setTab] = useState('info');
   const [addPartModal, setAddPartModal] = useState(false);
   const [quoteModal, setQuoteModal] = useState(false);
+  const [linkModal, setLinkModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [payModal, setPayModal] = useState(false);
   const [removePart, setRemovePart] = useState(null);
@@ -132,6 +133,19 @@ export default function WorkOrderDetail() {
     mutationFn: (d) => createQuote(workshopId, { customerId: order.customerId, workOrderId: order.id, ...d }),
     onSuccess: () => { invalidate(); setQuoteModal(false); toast.success('Cotización creada'); },
     onError: (e) => toast.error(e.message),
+  });
+
+  const { data: unlinkedRes } = useQuery({
+    queryKey: ['unlinked-quotes', workshopId, order?.customerId],
+    queryFn: () => getQuotes(workshopId, { customerId: order.customerId, unlinked: true, limit: 50 }),
+    enabled: !!workshopId && !!order?.customerId && linkModal,
+  });
+  const unlinkedQuotes = unlinkedRes?.data || [];
+
+  const linkQuoteMut = useMutation({
+    mutationFn: (quoteId) => linkQuoteToOrder(workshopId, id, quoteId),
+    onSuccess: () => { invalidate(); setLinkModal(false); toast.success('Cotización vinculada'); },
+    onError: (e) => toast.error(e.message || 'Error al vincular'),
   });
 
   const addQuoteItemMut = useMutation({
@@ -362,7 +376,8 @@ export default function WorkOrderDetail() {
           {/* QUOTES */}
           {tab === 'quotes' && (
             <div className="space-y-4">
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setLinkModal(true)}>Vincular existente</Button>
                 <Button icon={Plus} size="sm" onClick={() => setQuoteModal(true)}>Nueva cotización</Button>
               </div>
               {!order.quotes?.length ? (
@@ -497,6 +512,24 @@ export default function WorkOrderDetail() {
             <Button variant="secondary" onClick={() => setQuoteModal(false)}>Cancelar</Button>
             <Button onClick={() => addQuoteMut.mutate({})} loading={addQuoteMut.isPending}>Crear cotización</Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Link existing quote modal */}
+      <Modal open={linkModal} onClose={() => setLinkModal(false)} title="Vincular cotización existente" size="md">
+        <div className="space-y-2">
+          <p className="text-sm text-gray-600">Cotizaciones de este cliente que aún no están ligadas a una orden:</p>
+          {unlinkedQuotes.length === 0 ? (
+            <p className="text-center text-gray-400 py-6 text-sm">No hay cotizaciones sin orden para este cliente.</p>
+          ) : unlinkedQuotes.map((q) => (
+            <div key={q.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2">
+              <div className="min-w-0">
+                <p className="font-mono font-medium text-sm text-gray-900">{q.quoteNumber}</p>
+                <p className="text-xs text-gray-500">{q.status} · {fMoney(q.total)} · {q._count?.items ?? 0} líneas</p>
+              </div>
+              <Button size="xs" loading={linkQuoteMut.isPending} onClick={() => linkQuoteMut.mutate(q.id)}>Vincular</Button>
+            </div>
+          ))}
         </div>
       </Modal>
     </div>

@@ -29,10 +29,15 @@ const recalcTotals = async (quoteId) => {
 const list = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
-    const { status, customerId } = req.query;
+    const { status, customerId, unlinked } = req.query;
     const { page, limit, skip } = parsePagination(req.query);
 
-    const where = { workshopId, ...(status && { status }), ...(customerId && { customerId }) };
+    const where = {
+      workshopId,
+      ...(status && { status }),
+      ...(customerId && { customerId }),
+      ...(unlinked === 'true' && { workOrderId: null }), // cotizaciones sin orden de trabajo
+    };
     const [data, total] = await Promise.all([
       prisma.quote.findMany({
         where, skip, take: limit,

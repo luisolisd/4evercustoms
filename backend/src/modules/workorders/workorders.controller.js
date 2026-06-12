@@ -198,6 +198,30 @@ const updatePayment = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// Vincula una cotización existente (sin orden) a esta orden de trabajo.
+const linkQuote = async (req, res, next) => {
+  try {
+    const { quoteId } = req.body;
+    const order = await prisma.workOrder.findFirst({
+      where: { id: req.params.orderId, workshopId: req.params.workshopId },
+      select: { id: true, customerId: true },
+    });
+    if (!order) return notFound(res);
+    const quote = await prisma.quote.findFirst({
+      where: { id: quoteId, workshopId: req.params.workshopId },
+      select: { id: true, customerId: true, workOrderId: true },
+    });
+    if (!quote) return notFound(res, 'Cotización no encontrada');
+    if (quote.workOrderId) return error(res, 'Esa cotización ya está ligada a una orden', 400);
+    if (quote.customerId !== order.customerId) {
+      return error(res, 'La cotización es de otro cliente', 400);
+    }
+    await prisma.quote.update({ where: { id: quote.id }, data: { workOrderId: order.id } });
+    await recalcOrderTotal(order.id); // por si la cotización ya está aprobada
+    ok(res, { message: 'Cotización vinculada' });
+  } catch (e) { next(e); }
+};
+
 const addPart = async (req, res, next) => {
   try {
     const { partId, quantity, unitPrice } = req.body;
@@ -244,4 +268,4 @@ const remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, updatePayment, addPart, removePart, remove };
+module.exports = { list, create, getOne, update, updateStatus, updatePayment, linkQuote, addPart, removePart, remove };

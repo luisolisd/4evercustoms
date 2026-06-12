@@ -102,13 +102,14 @@ export default function CustomerOrder() {
                       {q.items?.map((it) => (
                         <li key={it.id} className="flex justify-between text-xs text-gray-600">
                           <span className="truncate pr-2">{it.description} ×{Number(it.quantity)}</span>
-                          <span className="shrink-0">{money(it.total)}</span>
+                          <span className="shrink-0">{money(Number(it.total) / 1.16)}</span>
                         </li>
                       ))}
                     </ul>
-                    <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                      <span className="text-sm font-semibold text-gray-900">Total (IVA incl.)</span>
-                      <span className="text-sm font-bold text-gray-900">{money(q.total)}</span>
+                    <div className="mt-2 pt-2 border-t space-y-0.5">
+                      <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>{money(Number(q.total) / 1.16)}</span></div>
+                      <div className="flex justify-between text-xs text-gray-500"><span>IVA (16%)</span><span>{money(Number(q.total) - Number(q.total) / 1.16)}</span></div>
+                      <div className="flex justify-between text-sm font-bold text-gray-900"><span>Total (IVA incl.)</span><span>{money(q.total)}</span></div>
                     </div>
                     {pending && (
                       <div className="flex gap-2 mt-3">
@@ -127,6 +128,32 @@ export default function CustomerOrder() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Refacciones */}
+          {o.workOrderParts?.length > 0 && (
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Refacciones</p>
+              <ul className="space-y-1">
+                {o.workOrderParts.map((p) => (
+                  <li key={p.id} className="flex justify-between text-xs text-gray-600">
+                    <span className="truncate pr-2">{p.part?.name || 'Refacción'} ×{Number(p.quantity)}</span>
+                    <span className="shrink-0">{money(Number(p.total) / 1.16)}</span>
+                  </li>
+                ))}
+              </ul>
+              {(() => {
+                const totalIva = o.workOrderParts.reduce((s, p) => s + Number(p.total), 0);
+                const subtotal = totalIva / 1.16;
+                return (
+                  <div className="mt-2 pt-2 border-t space-y-0.5">
+                    <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>{money(subtotal)}</span></div>
+                    <div className="flex justify-between text-xs text-gray-500"><span>IVA (16%)</span><span>{money(totalIva - subtotal)}</span></div>
+                    <div className="flex justify-between text-sm font-bold text-gray-900"><span>Total refacciones (IVA incl.)</span><span>{money(totalIva)}</span></div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

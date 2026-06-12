@@ -10,6 +10,7 @@ export const updateWorkOrder= (wid, id, d) => api.put(`${base(wid)}/${id}`, d);
 export const updateWOStatus = (wid, id, status, paymentStatus) =>
   api.patch(`${base(wid)}/${id}/status`, { status, paymentStatus });
 export const updateWOPayment = (wid, id, d) => api.patch(`${base(wid)}/${id}/payment`, d);
+export const linkQuoteToOrder = (wid, id, quoteId) => api.patch(`${base(wid)}/${id}/link-quote`, { quoteId });
 export const addWOPart    = (wid, id, d) => api.post(`${base(wid)}/${id}/parts`, d);
 export const removeWOPart = (wid, id, partId) => api.delete(`${base(wid)}/${id}/parts/${partId}`);
 export const getWOPhotos  = (wid, id) => api.get(`/workshops/${wid}/work-orders/${id}/photos`);

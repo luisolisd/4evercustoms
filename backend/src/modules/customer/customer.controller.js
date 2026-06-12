@@ -65,6 +65,12 @@ const workOrderDetail = async (req, res, next) => {
         totalAmount: true, paidAmount: true, paymentStatus: true,
         signedAt: true,
         vehicle: { select: { id: true, make: true, model: true, year: true, licensePlate: true } },
+        workOrderParts: {
+          select: {
+            id: true, quantity: true, unitPrice: true, total: true,
+            part: { select: { name: true, sku: true } },
+          },
+        },
         photos: {
           orderBy: { takenAt: 'desc' },
           select: { id: true, url: true, thumbnailUrl: true, caption: true, takenAt: true },
