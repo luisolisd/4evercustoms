@@ -73,8 +73,8 @@ async function main() {
       data: {
         phone: targetPhone,
         email: ADMIN_EMAIL,
-        firstName: 'Admin',
-        lastName: '4EVR',
+        firstName: 'Administrador',
+        lastName: '',
         // Conserva la contraseña existente; solo la fija si no tiene una
         ...(adminUser.passwordHash ? {} : { passwordHash: adminPasswordHash }),
       },
@@ -85,8 +85,8 @@ async function main() {
         phone: targetPhone,
         email: ADMIN_EMAIL,
         passwordHash: adminPasswordHash,
-        firstName: 'Admin',
-        lastName: '4EVR',
+        firstName: 'Administrador',
+        lastName: '',
       },
     });
   }
