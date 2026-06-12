@@ -99,7 +99,7 @@ export default function CustomerOrder() {
                       ))}
                     </ul>
                     <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                      <span className="text-sm font-semibold text-gray-900">Total</span>
+                      <span className="text-sm font-semibold text-gray-900">Total (IVA incl.)</span>
                       <span className="text-sm font-bold text-gray-900">{money(q.total)}</span>
                     </div>
                     {pending && (

@@ -20,6 +20,7 @@ export const createAppointment = (payload) =>
   customerApi.post('/customer/appointments', payload).then(data);
 export const cancelAppointment = (id) =>
   customerApi.patch(`/customer/appointments/${id}/cancel`).then(data);
+export const getQuotes = () => customerApi.get('/customer/quotes').then(data);
 export const respondQuote = (id, decision, reason) =>
   customerApi.patch(`/customer/quotes/${id}/respond`, { decision, reason }).then(data);
 export const getNotifications = () => customerApi.get('/customer/notifications').then(data);

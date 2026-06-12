@@ -146,6 +146,27 @@ const cancelAppointment = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// ── Cotizaciones del cliente ─────────────────────────────────────────────────
+const quotes = async (req, res, next) => {
+  try {
+    const list = await prisma.quote.findMany({
+      where: {
+        customerId: req.customer.id,
+        status: { in: ['SENT', 'DRAFT', 'APPROVED', 'REJECTED'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true, quoteNumber: true, status: true, total: true, validUntil: true,
+        notes: true, createdAt: true, workOrderId: true,
+        items: { select: { id: true, description: true, quantity: true, unitPrice: true, total: true } },
+        workOrder: { select: { orderNumber: true } },
+      },
+    });
+    ok(res, list);
+  } catch (e) { next(e); }
+};
+
 // ── Cotizaciones: aprobar / rechazar ─────────────────────────────────────────
 const respondQuote = async (req, res, next) => {
   try {
@@ -260,6 +281,7 @@ module.exports = {
   appointments,
   createAppointment,
   cancelAppointment,
+  quotes,
   respondQuote,
   notifications,
   markNotificationRead,

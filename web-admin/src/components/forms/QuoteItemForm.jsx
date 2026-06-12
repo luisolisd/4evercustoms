@@ -58,7 +58,7 @@ export default function QuoteItemForm({ onSubmit, loading }) {
           {...register('quantity', { required: true, valueAsNumber: true, min: 0.01 })}
         />
         <Input
-          label="Precio unitario *"
+          label="Precio unit. (IVA incl.) *"
           type="number"
           step="0.01"
           error={errors.unitPrice?.message}

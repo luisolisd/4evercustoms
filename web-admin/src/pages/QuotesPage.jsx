@@ -126,18 +126,8 @@ function QuoteRow({ quote, workshopId, onDelete }) {
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={editable ? 4 : 3} className="px-4 py-2 text-right text-gray-500 font-medium">Subtotal</td>
-                <td className={clsx('px-4 py-2 text-right', editable && 'pr-4')}>{fMoney(quote.subtotal)}</td>
-                {editable && <td />}
-              </tr>
-              <tr>
-                <td colSpan={editable ? 4 : 3} className="px-4 py-1 text-right text-gray-500 font-medium">IVA 16%</td>
-                <td className={clsx('px-4 py-1 text-right', editable && 'pr-4')}>{fMoney(quote.tax)}</td>
-                {editable && <td />}
-              </tr>
-              <tr>
-                <td colSpan={editable ? 4 : 3} className="px-4 pb-3 pt-1 text-right font-bold text-gray-900">Total</td>
-                <td className={clsx('px-4 pb-3 pt-1 text-right font-bold text-gray-900 text-sm', editable && 'pr-4')}>{fMoney(quote.total)}</td>
+                <td colSpan={editable ? 4 : 3} className="px-4 pb-3 pt-2 text-right font-bold text-gray-900">Total (IVA incl.)</td>
+                <td className={clsx('px-4 pb-3 pt-2 text-right font-bold text-gray-900 text-sm', editable && 'pr-4')}>{fMoney(quote.total)}</td>
                 {editable && <td />}
               </tr>
             </tfoot>

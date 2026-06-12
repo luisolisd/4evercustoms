@@ -13,6 +13,7 @@ router.get('/work-orders/:orderId', ctrl.workOrderDetail);
 router.get('/appointments', ctrl.appointments);
 router.post('/appointments', ctrl.createAppointment);
 router.patch('/appointments/:id/cancel', ctrl.cancelAppointment);
+router.get('/quotes', ctrl.quotes);
 router.patch('/quotes/:id/respond', ctrl.respondQuote);
 router.get('/notifications', ctrl.notifications);
 router.patch('/notifications/:id/read', ctrl.markNotificationRead);

@@ -12,11 +12,11 @@ const generateQuoteNumber = async (workshopId) => {
 
 const recalcTotals = async (quoteId) => {
   const items = await prisma.quoteItem.findMany({ where: { quoteId } });
-  const subtotal = items.reduce((s, i) => s + Number(i.total), 0);
-  const tax = subtotal * 0.16;
+  // Los precios capturados por el admin ya son finales (IVA incluido): no se suma impuesto extra.
+  const total = items.reduce((s, i) => s + Number(i.total), 0);
   await prisma.quote.update({
     where: { id: quoteId },
-    data: { subtotal, tax, total: subtotal + tax },
+    data: { subtotal: total, tax: 0, total },
   });
 };
 

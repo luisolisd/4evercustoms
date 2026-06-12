@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Car, ChevronRight, Phone, MapPin } from 'lucide-react';
-import { getMe, getVehicles } from '../../services/customer';
-import { WO_STATUS, fmtDate } from './status';
+import { Car, ChevronRight, Phone, MapPin, FileText, Check, X } from 'lucide-react';
+import { getMe, getVehicles, getQuotes, respondQuote } from '../../services/customer';
+import { WO_STATUS, QUOTE_STATUS, money, fmtDate } from './status';
 import { PushBanner } from './CustomerNotices';
 
 export default function CustomerHome() {
@@ -17,6 +17,8 @@ export default function CustomerHome() {
       </div>
 
       <PushBanner />
+
+      <PendingQuotes />
 
       {isLoading && <p className="text-gray-400 text-sm">Cargando…</p>}
 
@@ -75,6 +77,66 @@ export default function CustomerHome() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function PendingQuotes() {
+  const qc = useQueryClient();
+  const { data: quotes } = useQuery({ queryKey: ['c-quotes'], queryFn: getQuotes });
+
+  const respond = useMutation({
+    mutationFn: ({ id, decision }) => respondQuote(id, decision),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['c-quotes'] });
+      qc.invalidateQueries({ queryKey: ['c-vehicles'] });
+    },
+  });
+
+  const pending = (quotes || []).filter((q) => ['SENT', 'DRAFT'].includes(q.status));
+  if (pending.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-semibold text-gray-700 px-1 flex items-center gap-1.5">
+        <FileText size={15} className="text-brand-600" /> Cotizaciones por aprobar
+      </p>
+      {pending.map((q) => (
+        <div key={q.id} className="bg-white rounded-xl p-4 shadow-sm border border-amber-100">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-gray-900 text-sm">
+              #{q.quoteNumber}{q.workOrder ? ` · Orden ${q.workOrder.orderNumber}` : ''}
+            </p>
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${QUOTE_STATUS[q.status]?.color || ''}`}>
+              {QUOTE_STATUS[q.status]?.label || q.status}
+            </span>
+          </div>
+          <ul className="mt-2 space-y-1">
+            {q.items?.map((it) => (
+              <li key={it.id} className="flex justify-between text-xs text-gray-600">
+                <span className="truncate pr-2">{it.description} ×{Number(it.quantity)}</span>
+                <span className="shrink-0">{money(it.total)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t">
+            <span className="text-sm font-semibold text-gray-900">Total (IVA incl.)</span>
+            <span className="text-sm font-bold text-gray-900">{money(q.total)}</span>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button disabled={respond.isPending}
+              onClick={() => respond.mutate({ id: q.id, decision: 'APPROVED' })}
+              className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1">
+              <Check size={15} /> Aprobar
+            </button>
+            <button disabled={respond.isPending}
+              onClick={() => respond.mutate({ id: q.id, decision: 'REJECTED' })}
+              className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-sm font-medium hover:bg-red-100 disabled:opacity-50 flex items-center justify-center gap-1">
+              <X size={15} /> Rechazar
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

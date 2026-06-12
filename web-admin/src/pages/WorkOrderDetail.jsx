@@ -383,9 +383,7 @@ export default function WorkOrderDetail() {
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr className="font-semibold"><td colSpan={3} className="px-4 pt-3 text-right text-gray-600">Subtotal</td><td className="px-4 pt-3 text-right">{fMoney(q.subtotal)}</td><td /></tr>
-                        <tr className="font-semibold"><td colSpan={3} className="px-4 py-0.5 text-right text-gray-600">IVA 16%</td><td className="px-4 py-0.5 text-right">{fMoney(q.tax)}</td><td /></tr>
-                        <tr className="font-bold text-sm"><td colSpan={3} className="px-4 pb-3 text-right text-gray-900">Total</td><td className="px-4 pb-3 text-right text-gray-900">{fMoney(q.total)}</td><td /></tr>
+                        <tr className="font-bold text-sm"><td colSpan={3} className="px-4 py-3 text-right text-gray-900">Total (IVA incl.)</td><td className="px-4 py-3 text-right text-gray-900">{fMoney(q.total)}</td><td /></tr>
                       </tfoot>
                     </table>
                     {['DRAFT','SENT'].includes(q.status) && (
