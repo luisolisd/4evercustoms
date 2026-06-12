@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { getCustomer } from '../services/customers';
 import { getWorkOrders } from '../services/workOrders';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
+import BrandLogo from '../components/ui/BrandLogo';
 import { fDate, fMoney } from '../utils/formatters';
 
 export default function CustomerDetail() {
@@ -76,7 +77,7 @@ export default function CustomerDetail() {
           <div className="grid sm:grid-cols-2 gap-3">
             {c.vehicles.map((v) => (
               <div key={v.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
-                <div className="p-2.5 bg-gray-100 rounded-xl"><Car size={18} className="text-gray-500" /></div>
+                <div className="bg-white border border-gray-100 rounded-xl w-10 h-10 flex items-center justify-center"><BrandLogo make={v.make} size={24} /></div>
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-900">{v.year} {v.make} {v.model}</p>
                   <p className="text-xs text-gray-500">{v.licensePlate || 'Sin placa'}{v.color ? ` · ${v.color}` : ''}</p>

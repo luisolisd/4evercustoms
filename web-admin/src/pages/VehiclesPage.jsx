@@ -10,6 +10,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import EmptyState from '../components/ui/EmptyState';
 import Pagination from '../components/ui/Pagination';
 import VehicleForm from '../components/forms/VehicleForm';
+import BrandLogo from '../components/ui/BrandLogo';
 import { useToast } from '../hooks/useToast';
 import { fNumber } from '../utils/formatters';
 import clsx from 'clsx';
@@ -107,8 +108,8 @@ export default function VehiclesPage() {
                   <tr key={v.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gray-100 rounded-xl">
-                          <Car size={16} className="text-gray-500" />
+                        <div className="p-1.5 bg-white border border-gray-100 rounded-xl w-9 h-9 flex items-center justify-center">
+                          <BrandLogo make={v.make} size={22} />
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">{v.year} {v.make} {v.model}</p>

@@ -4,6 +4,7 @@ import { Car, ChevronRight, Phone, MapPin, FileText, Check, X } from 'lucide-rea
 import { getMe, getVehicles, getQuotes, respondQuote } from '../../services/customer';
 import { WO_STATUS, QUOTE_STATUS, money, fmtDate } from './status';
 import { PushBanner } from './CustomerNotices';
+import BrandLogo from '../../components/ui/BrandLogo';
 
 export default function CustomerHome() {
   const { data: me } = useQuery({ queryKey: ['c-me'], queryFn: getMe });
@@ -38,7 +39,7 @@ export default function CustomerHome() {
               className="block bg-white rounded-xl p-4 shadow-sm hover:shadow active:scale-[0.99] transition">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="bg-brand-100 text-brand-600 rounded-lg p-2 shrink-0"><Car size={20} /></div>
+                  <div className="bg-white border border-gray-100 rounded-lg shrink-0 w-10 h-10 flex items-center justify-center"><BrandLogo make={v.make} size={26} /></div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{v.make} {v.model} {v.year}</p>
                     <p className="text-xs text-gray-500 truncate">
