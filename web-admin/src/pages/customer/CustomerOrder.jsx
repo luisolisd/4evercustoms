@@ -1,18 +1,26 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Clock, X } from 'lucide-react';
-import { getOrder, respondQuote } from '../../services/customer';
+import { ArrowLeft, Check, Clock, X, PenLine } from 'lucide-react';
+import { getOrder, respondQuote, signOrder } from '../../services/customer';
 import { WO_STEPS, WO_STATUS, QUOTE_STATUS, PAY_STATUS, money, fmtDate } from './status';
+import SignaturePad from './SignaturePad';
 
 export default function CustomerOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [signing, setSigning] = useState(false);
   const { data: o, isLoading } = useQuery({ queryKey: ['c-order', id], queryFn: () => getOrder(id) });
 
   const respond = useMutation({
     mutationFn: ({ quoteId, decision, reason }) => respondQuote(quoteId, decision, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['c-order', id] }),
+  });
+
+  const sign = useMutation({
+    mutationFn: (signature) => signOrder(id, signature),
+    onSuccess: () => { setSigning(false); qc.invalidateQueries({ queryKey: ['c-order', id] }); },
   });
 
   const cancelled = o?.status === 'CANCELLED';
@@ -160,7 +168,33 @@ export default function CustomerOrder() {
               </p>
             )}
           </div>
+
+          {/* Firma digital */}
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Firma de conformidad</p>
+            {o.signedAt ? (
+              <p className="text-sm text-green-700 flex items-center gap-1.5">
+                <Check size={15} /> Firmaste esta orden el {fmtDate(o.signedAt)}.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 mb-3">Firma para dar tu conformidad con el servicio realizado.</p>
+                <button onClick={() => setSigning(true)}
+                  className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white rounded-lg py-2.5 text-sm font-medium">
+                  <PenLine size={16} /> Firmar orden
+                </button>
+              </>
+            )}
+          </div>
         </>
+      )}
+
+      {signing && (
+        <SignaturePad
+          onClose={() => setSigning(false)}
+          onSave={(dataUrl) => sign.mutate(dataUrl)}
+          loading={sign.isPending}
+        />
       )}
     </div>
   );

@@ -13,7 +13,7 @@ const getWorkshop = async (req, res, next) => {
 
 const updateWorkshop = async (req, res, next) => {
   try {
-    const allowed = ['name', 'phone', 'email', 'address', 'city', 'state', 'zipCode', 'logoUrl', 'taxId'];
+    const allowed = ['name', 'legalName', 'phone', 'email', 'address', 'city', 'state', 'zipCode', 'logoUrl', 'taxId'];
     const data = Object.fromEntries(
       Object.entries(req.body).filter(([k]) => allowed.includes(k))
     );

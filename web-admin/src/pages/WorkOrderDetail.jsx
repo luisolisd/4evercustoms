@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Camera, Plus, Trash2, ChevronRight, DollarSign,
-  Clock, Car, Edit2, Eye,
+  Clock, Car, Edit2, Eye, FileDown,
 } from 'lucide-react';
+import { getWorkshop } from '../services/workshop';
 import {
   getWorkOrder, updateWOStatus, addWOPart, removeWOPart,
   uploadWOPhotos, deletePhoto, updateWorkOrder, updateWOPayment,
@@ -96,6 +97,22 @@ export default function WorkOrderDetail() {
   });
   const allParts = partsRes?.data || [];
 
+  const { data: workshopRes } = useQuery({
+    queryKey: ['workshop', workshopId],
+    queryFn: () => getWorkshop(workshopId),
+    enabled: !!workshopId,
+  });
+
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const handlePdf = async () => {
+    setPdfBusy(true);
+    try {
+      const { downloadWorkOrderPdf } = await import('../pdf/WorkOrderPDF');
+      await downloadWorkOrderPdf(order, workshopRes?.data || {});
+    } catch (e) { toast.error('No se pudo generar el PDF'); }
+    finally { setPdfBusy(false); }
+  };
+
   const invalidate = () => qc.invalidateQueries({ queryKey: ['work-order', id] });
 
   const statusMut  = useMutation({ mutationFn: (s) => updateWOStatus(workshopId, id, s), onSuccess: () => { invalidate(); toast.success('Estado actualizado'); }, onError: (e) => toast.error(e.message) });
@@ -176,7 +193,8 @@ export default function WorkOrderDetail() {
             </div>
             <p className="text-gray-500 mt-1">Recibido {fDateTime(order.receivedAt)}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="secondary" icon={FileDown} size="sm" loading={pdfBusy} onClick={handlePdf}>PDF</Button>
             <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Registrar pago</Button>
             <Button variant="secondary" icon={Edit2} size="sm" onClick={() => setEditModal(true)}>Editar</Button>
           </div>

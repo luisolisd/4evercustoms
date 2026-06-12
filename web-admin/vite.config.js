@@ -14,6 +14,8 @@ export default defineConfig({
       includeAssets: ['apple-touch-icon.png', 'color.png', 'negro.png'],
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+        globIgnores: ['**/WorkOrderPDF-*.js'], // PDF (admin) se carga bajo demanda, no se precachea
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
         name: '4EVRcustoms',

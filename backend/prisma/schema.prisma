@@ -71,6 +71,7 @@ enum MovementType {
 model Workshop {
   id        String   @id @default(uuid())
   name      String
+  legalName String?
   slug      String   @unique
   phone     String
   email     String?
@@ -262,6 +263,8 @@ model WorkOrder {
   paymentStatus   PaymentStatus   @default(PENDING)
   totalAmount     Decimal         @default(0) @db.Decimal(10, 2)
   paidAmount      Decimal         @default(0) @db.Decimal(10, 2)
+  customerSignature String?       @db.Text
+  signedAt        DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 

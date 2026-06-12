@@ -28,7 +28,8 @@ function WorkshopTab({ workshopId }) {
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     values: w ? {
-      name: w.name || '', phone: w.phone || '', email: w.email || '',
+      name: w.name || '', legalName: w.legalName || '', taxId: w.taxId || '',
+      phone: w.phone || '', email: w.email || '',
       address: w.address || '', city: w.city || '', state: w.state || '',
     } : undefined,
   });
@@ -44,6 +45,8 @@ function WorkshopTab({ workshopId }) {
   return (
     <form onSubmit={handleSubmit((d) => mut.mutate(d))} className="space-y-5 max-w-md">
       <Input label="Nombre del taller" {...register('name', { required: 'Requerido' })} error={errors.name?.message} />
+      <Input label="Razón social (aparece en el PDF)" placeholder="PEDRO RAMIRO SOLIS DURAN" {...register('legalName')} />
+      <Input label="RFC" placeholder="SODP871115H1A" {...register('taxId')} />
       <Input label="Teléfono" {...register('phone', { required: 'Requerido' })} error={errors.phone?.message} />
       <Input label="Correo" type="email" {...register('email')} />
       <Input label="Dirección" {...register('address')} />

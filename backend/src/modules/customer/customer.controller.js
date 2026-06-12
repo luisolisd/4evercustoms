@@ -63,6 +63,7 @@ const workOrderDetail = async (req, res, next) => {
         receivedAt: true, estimatedReady: true, deliveredAt: true,
         mileageIn: true, mileageOut: true,
         totalAmount: true, paidAmount: true, paymentStatus: true,
+        signedAt: true,
         vehicle: { select: { id: true, make: true, model: true, year: true, licensePlate: true } },
         photos: {
           orderBy: { takenAt: 'desc' },
@@ -83,6 +84,26 @@ const workOrderDetail = async (req, res, next) => {
     });
     if (!order) return notFound(res, 'Orden no encontrada');
     ok(res, order);
+  } catch (e) { next(e); }
+};
+
+// ── Firma digital de la orden ────────────────────────────────────────────────
+const signWorkOrder = async (req, res, next) => {
+  try {
+    const { signature } = req.body; // data URL (image/png base64)
+    if (!signature || !String(signature).startsWith('data:image')) {
+      return error(res, 'Firma inválida', 400);
+    }
+    const order = await prisma.workOrder.findFirst({
+      where: { id: req.params.orderId, customerId: req.customer.id },
+      select: { id: true },
+    });
+    if (!order) return notFound(res, 'Orden no encontrada');
+    await prisma.workOrder.update({
+      where: { id: order.id },
+      data: { customerSignature: signature, signedAt: new Date() },
+    });
+    ok(res, { message: 'Orden firmada', signedAt: new Date() });
   } catch (e) { next(e); }
 };
 
@@ -278,6 +299,7 @@ module.exports = {
   vehicles,
   vehicleDetail,
   workOrderDetail,
+  signWorkOrder,
   appointments,
   createAppointment,
   cancelAppointment,

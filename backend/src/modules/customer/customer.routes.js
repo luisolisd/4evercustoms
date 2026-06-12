@@ -10,6 +10,7 @@ router.get('/me', ctrl.me);
 router.get('/vehicles', ctrl.vehicles);
 router.get('/vehicles/:vehicleId', ctrl.vehicleDetail);
 router.get('/work-orders/:orderId', ctrl.workOrderDetail);
+router.patch('/work-orders/:orderId/sign', ctrl.signWorkOrder);
 router.get('/appointments', ctrl.appointments);
 router.post('/appointments', ctrl.createAppointment);
 router.patch('/appointments/:id/cancel', ctrl.cancelAppointment);

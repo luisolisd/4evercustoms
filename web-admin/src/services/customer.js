@@ -15,6 +15,8 @@ export const getMe = () => customerApi.get('/customer/me').then(data);
 export const getVehicles = () => customerApi.get('/customer/vehicles').then(data);
 export const getVehicle = (id) => customerApi.get(`/customer/vehicles/${id}`).then(data);
 export const getOrder = (id) => customerApi.get(`/customer/work-orders/${id}`).then(data);
+export const signOrder = (id, signature) =>
+  customerApi.patch(`/customer/work-orders/${id}/sign`, { signature }).then(data);
 export const getAppointments = () => customerApi.get('/customer/appointments').then(data);
 export const createAppointment = (payload) =>
   customerApi.post('/customer/appointments', payload).then(data);
