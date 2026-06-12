@@ -1,5 +1,8 @@
-import { Document, Page, View, Text, Image, StyleSheet, pdf } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, StyleSheet, pdf, Font } from '@react-pdf/renderer';
 import QRCode from 'qrcode';
+
+// Evita que react-pdf corte palabras a la mitad (AUTO-MOTRIZ); solo corta en espacios.
+Font.registerHyphenationCallback((word) => [word]);
 
 const money = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(n || 0));
 const fdate = (d) => (d ? new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
