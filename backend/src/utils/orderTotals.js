@@ -15,7 +15,11 @@ async function recalcOrderTotal(orderId) {
     prisma.quote.aggregate({ where: { workOrderId: orderId, status: 'APPROVED' }, _sum: { total: true } }),
   ]);
 
-  const total = Number(partsAgg._sum.total || 0) + Number(quotesAgg._sum.total || 0);
+  // Refacciones: el precio capturado es SIN IVA → se le agrega 16% al total.
+  // Cotizaciones: el precio ya incluye IVA.
+  const partsTotal = Number(partsAgg._sum.total || 0) * 1.16;
+  const quotesTotal = Number(quotesAgg._sum.total || 0);
+  const total = Math.round((partsTotal + quotesTotal) * 100) / 100;
   const paid = Number(order.paidAmount);
 
   let paymentStatus = 'PENDING';

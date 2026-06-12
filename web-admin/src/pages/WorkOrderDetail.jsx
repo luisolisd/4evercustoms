@@ -306,7 +306,7 @@ export default function WorkOrderDetail() {
                 <p className="text-center text-gray-400 py-8 text-sm">No hay refacciones agregadas</p>
               ) : (
                 <div className="overflow-x-auto"><table className="w-full text-sm min-w-[520px]">
-                  <thead><tr className="text-gray-500 text-xs uppercase border-b"><th className="text-left py-2">Refacción</th><th className="text-right py-2">Cant.</th><th className="text-right py-2">P.U. (IVA incl.)</th><th className="text-right py-2">Total (IVA incl.)</th><th className="py-2" /></tr></thead>
+                  <thead><tr className="text-gray-500 text-xs uppercase border-b"><th className="text-left py-2">Refacción</th><th className="text-right py-2">Cant.</th><th className="text-right py-2">P.U.</th><th className="text-right py-2">Total</th><th className="py-2" /></tr></thead>
                   <tbody className="divide-y">
                     {order.workOrderParts.map((p) => (
                       <tr key={p.id} className="hover:bg-gray-50">
@@ -321,7 +321,16 @@ export default function WorkOrderDetail() {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr><td colSpan={3} className="pt-4 text-right font-semibold text-gray-700">Total refacciones (IVA incl.)</td><td className="pt-4 text-right font-bold text-lg text-gray-900">{fMoney(order.workOrderParts.reduce((s, p) => s + Number(p.total), 0))}</td><td /></tr>
+                    {(() => {
+                      const sub = order.workOrderParts.reduce((s, p) => s + Number(p.total), 0);
+                      return (
+                        <>
+                          <tr><td colSpan={3} className="pt-4 text-right text-gray-500">Subtotal</td><td className="pt-4 text-right text-gray-700">{fMoney(sub)}</td><td /></tr>
+                          <tr><td colSpan={3} className="py-0.5 text-right text-gray-500">IVA (16%)</td><td className="py-0.5 text-right text-gray-700">{fMoney(sub * 0.16)}</td><td /></tr>
+                          <tr><td colSpan={3} className="pb-4 pt-1 text-right font-semibold text-gray-700">Total refacciones (IVA incl.)</td><td className="pb-4 pt-1 text-right font-bold text-lg text-gray-900">{fMoney(sub * 1.16)}</td><td /></tr>
+                        </>
+                      );
+                    })()}
                   </tfoot>
                 </table></div>
               )}
@@ -456,8 +465,9 @@ export default function WorkOrderDetail() {
           <Input label="Cantidad" type="number" min={1} value={partQty} onChange={(e) => setPartQty(Number(e.target.value))} />
           {selectedPartData && (
             <p className="text-sm text-gray-600">
-              P.U. (IVA incl.): <strong>{fMoney(selectedPartData.unitPrice)}</strong>
-              {' · '}Total (IVA incl.): <strong>{fMoney(Number(selectedPartData.unitPrice) * partQty)}</strong>
+              P.U.: <strong>{fMoney(selectedPartData.unitPrice)}</strong>
+              {' · '}Total: <strong>{fMoney(Number(selectedPartData.unitPrice) * partQty)}</strong>
+              <span className="text-xs text-gray-400"> (sin IVA)</span>
             </p>
           )}
           <div className="flex justify-end gap-3">

@@ -128,7 +128,7 @@ export default function InventoryPage() {
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-5 py-3">Refacción</th>
                   <th className="text-left px-5 py-3">Categoría</th>
-                  <th className="text-right px-5 py-3">P.U. (IVA incl.)</th>
+                  <th className="text-right px-5 py-3">Precio unit. (sin IVA)</th>
                   <th className="text-right px-5 py-3">Stock</th>
                   <th className="text-right px-5 py-3">Mínimo</th>
                   <th className="text-center px-5 py-3">Estado</th>
