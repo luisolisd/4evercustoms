@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, CalendarDays, Edit2, XCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { Plus, CalendarDays, Edit2, XCircle, Trash2, ChevronDown } from 'lucide-react';
+import clsx from 'clsx';
 import { useAuthStore } from '../store/authStore';
 import { getAppointments, createAppointment, updateAppointment, updateAppStatus, cancelAppointment, deleteAppointment } from '../services/appointments';
 import Button from '../components/ui/Button';
@@ -8,7 +9,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import EmptyState from '../components/ui/EmptyState';
 import Pagination from '../components/ui/Pagination';
-import { AppointmentBadge } from '../components/ui/Badge';
+import { APPOINTMENT_STATUS } from '../components/ui/Badge';
 import AppointmentForm from '../components/forms/AppointmentForm';
 import Select from '../components/ui/Select';
 import { useToast } from '../hooks/useToast';
@@ -22,6 +23,43 @@ const STATUS_OPTS = [
   { value: 'COMPLETED',   label: 'Completada' },
   { value: 'CANCELLED',   label: 'Cancelada' },
 ];
+
+// Estados seleccionables por fila (orden del flujo de la cita)
+const STATUS_FLOW = ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'NO_SHOW', 'CANCELLED'];
+
+const SELECT_COLORS = {
+  gray:   'bg-gray-100 text-gray-700 ring-gray-200',
+  blue:   'bg-blue-50 text-blue-700 ring-blue-200',
+  yellow: 'bg-amber-50 text-amber-700 ring-amber-200',
+  orange: 'bg-orange-50 text-orange-700 ring-orange-200',
+  green:  'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  red:    'bg-red-50 text-red-700 ring-red-200',
+};
+
+// Selector de estatus por fila: dispara el cambio al elegir un estado distinto.
+function StatusSelect({ value, onChange, disabled }) {
+  const color = APPOINTMENT_STATUS[value]?.color || 'gray';
+  return (
+    <div className="relative inline-block">
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        title="Cambiar estado de la cita"
+        className={clsx(
+          'appearance-none cursor-pointer rounded-full pl-3 pr-7 py-1 text-xs font-semibold ring-1 ring-inset transition',
+          'focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-60 disabled:cursor-wait',
+          SELECT_COLORS[color]
+        )}
+      >
+        {STATUS_FLOW.map((k) => (
+          <option key={k} value={k} className="bg-white text-gray-900">{APPOINTMENT_STATUS[k]?.label || k}</option>
+        ))}
+      </select>
+      <ChevronDown size={13} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 opacity-70" />
+    </div>
+  );
+}
 
 export default function AppointmentsPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
@@ -79,8 +117,9 @@ export default function AppointmentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Citas</h1>
-          <p className="text-sm text-gray-500 mt-1">{pagination?.total ?? 0} citas</p>
+          <p className="eyebrow mb-1">Agenda</p>
+          <h1 className="page-title">Citas</h1>
+          <p className="page-subtitle">{pagination?.total ?? 0} citas</p>
         </div>
         <Button icon={Plus} onClick={() => setModal('create')}>Nueva cita</Button>
       </div>
@@ -94,7 +133,7 @@ export default function AppointmentsPage() {
         />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="card overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>
         ) : appointments.length === 0 ? (
@@ -123,14 +162,15 @@ export default function AppointmentsPage() {
                       <p className="text-xs text-gray-500">{a.vehicle?.year} {a.vehicle?.make} {a.vehicle?.model}</p>
                     </td>
                     <td className="px-5 py-4 text-gray-700">{a.serviceType}</td>
-                    <td className="px-5 py-4 text-center"><AppointmentBadge status={a.status} /></td>
+                    <td className="px-5 py-4 text-center">
+                      <StatusSelect
+                        value={a.status}
+                        disabled={statusMut.isPending}
+                        onChange={(status) => statusMut.mutate({ id: a.id, status })}
+                      />
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1 justify-end">
-                        {a.status === 'PENDING' && (
-                          <button onClick={() => statusMut.mutate({ id: a.id, status: 'CONFIRMED' })} className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50" title="Confirmar">
-                            <CheckCircle size={15} />
-                          </button>
-                        )}
                         <button onClick={() => setModal({ mode: 'edit', appointment: a })} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50">
                           <Edit2 size={15} />
                         </button>

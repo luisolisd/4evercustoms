@@ -1,20 +1,20 @@
 import clsx from 'clsx';
 
 const COLORS = {
-  gray:   'bg-gray-100 text-gray-700',
-  blue:   'bg-blue-100 text-blue-700',
-  yellow: 'bg-yellow-100 text-yellow-700',
-  orange: 'bg-orange-100 text-orange-700',
-  green:  'bg-green-100 text-green-700',
-  purple: 'bg-purple-100 text-purple-700',
-  red:    'bg-red-100 text-red-700',
-  teal:   'bg-teal-100 text-teal-700',
-  brand:  'bg-brand-100 text-brand-700',
+  gray:   'bg-gray-100 text-gray-700 ring-gray-200',
+  blue:   'bg-blue-50 text-blue-700 ring-blue-200',
+  yellow: 'bg-amber-50 text-amber-700 ring-amber-200',
+  orange: 'bg-orange-50 text-orange-700 ring-orange-200',
+  green:  'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  purple: 'bg-purple-50 text-purple-700 ring-purple-200',
+  red:    'bg-red-50 text-red-700 ring-red-200',
+  teal:   'bg-teal-50 text-teal-700 ring-teal-200',
+  brand:  'bg-brand-50 text-brand-700 ring-brand-200',
 };
 
 export default function Badge({ color = 'gray', children, className }) {
   return (
-    <span className={clsx('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', COLORS[color], className)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset', COLORS[color], className)}>
       {children}
     </span>
   );

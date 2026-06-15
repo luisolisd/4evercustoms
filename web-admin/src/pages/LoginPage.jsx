@@ -63,7 +63,7 @@ export default function LoginPage() {
         aria-hidden
         className="pointer-events-none absolute inset-0 transition-[background] duration-150"
         style={{
-          background: `radial-gradient(600px circle at ${pointer.x * 100}% ${pointer.y * 100}%, rgba(178,34,34,0.18), transparent 55%)`,
+          background: `radial-gradient(620px circle at ${pointer.x * 100}% ${pointer.y * 100}%, rgba(234,88,12,0.22), transparent 55%)`,
         }}
       />
 
@@ -74,15 +74,15 @@ export default function LoginPage() {
         style={{ background: 'radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)' }}
       />
 
-      <div className="relative z-10 bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 p-8 w-full max-w-sm">
+      <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl shadow-elevated ring-1 ring-white/10 p-8 w-full max-w-sm animate-scale-in">
         {/* Logo a color contrastado en la parte central superior */}
         <div className="flex items-center justify-center mb-3">
           <img src="/color.png" alt="4EVRcustoms" className="h-12 w-auto select-none" draggable={false} />
         </div>
-        <p className="text-gray-500 text-center mb-8 text-sm">Panel Administrativo</p>
+        <p className="eyebrow text-center mb-8">Panel Administrativo</p>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4 text-sm animate-fade-in">
             {error}
           </div>
         )}
@@ -97,7 +97,7 @@ export default function LoginPage() {
               placeholder="admin@taller.mx"
               required
               autoComplete="email"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 shadow-soft transition focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 text-sm"
             />
           </div>
 
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 placeholder="Tu contraseña"
                 required
                 autoComplete="current-password"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 pr-10 shadow-soft transition focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 text-sm"
               />
               <button
                 type="button"
@@ -126,7 +126,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-600 text-white rounded-lg py-2.5 font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-brand-gradient text-white rounded-xl py-3 font-semibold shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0 transition-all"
           >
             {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
           </button>
@@ -137,7 +137,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => navigate('/cliente')}
-            className="w-full border border-brand-200 text-brand-700 rounded-lg py-2.5 font-medium hover:bg-brand-50 transition-colors"
+            className="w-full border border-brand-200 text-brand-700 rounded-xl py-2.5 font-semibold hover:bg-brand-50 hover:border-brand-300 transition-colors"
           >
             Soy cliente
           </button>

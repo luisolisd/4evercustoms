@@ -11,9 +11,9 @@ const ICONS = {
 };
 
 const STYLES = {
-  success: 'bg-green-50 border-green-200 text-green-800',
-  error:   'bg-red-50 border-red-200 text-red-800',
-  info:    'bg-blue-50 border-blue-200 text-blue-800',
+  success: 'bg-white border-emerald-200 text-emerald-800 [&_svg:first-child]:text-emerald-500',
+  error:   'bg-white border-red-200 text-red-800 [&_svg:first-child]:text-red-500',
+  info:    'bg-white border-blue-200 text-blue-800 [&_svg:first-child]:text-blue-500',
 };
 
 function Toast({ id, type, message }) {
@@ -26,7 +26,7 @@ function Toast({ id, type, message }) {
   }, [id, remove]);
 
   return (
-    <div className={clsx('flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg max-w-sm animate-in slide-in-from-right-5', STYLES[type])}>
+    <div className={clsx('flex items-start gap-3 px-4 py-3 rounded-2xl border shadow-elevated max-w-sm animate-slide-in-right', STYLES[type])}>
       <Icon size={18} className="shrink-0 mt-0.5" />
       <p className="text-sm flex-1">{message}</p>
       <button onClick={() => remove(id)} className="shrink-0 opacity-60 hover:opacity-100">

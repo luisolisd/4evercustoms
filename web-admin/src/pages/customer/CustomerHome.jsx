@@ -11,10 +11,10 @@ export default function CustomerHome() {
   const { data: vehicles, isLoading } = useQuery({ queryKey: ['c-vehicles'], queryFn: getVehicles });
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Hola, {me?.firstName || ''} 👋</h1>
-        <p className="text-gray-500 text-sm">Estos son tus vehículos y su estatus.</p>
+    <div className="space-y-4 animate-fade-up">
+      <div className="pt-1">
+        <h1 className="font-display text-2xl font-bold text-gray-900 tracking-tight">Hola, {me?.firstName || ''} 👋</h1>
+        <p className="text-gray-500 text-sm mt-0.5">Estos son tus vehículos y su estatus.</p>
       </div>
 
       <PushBanner />
@@ -24,7 +24,7 @@ export default function CustomerHome() {
       {isLoading && <p className="text-gray-400 text-sm">Cargando…</p>}
 
       {!isLoading && (!vehicles || vehicles.length === 0) && (
-        <div className="bg-white rounded-xl p-6 text-center text-gray-500 text-sm shadow-sm">
+        <div className="card p-6 text-center text-gray-500 text-sm">
           <Car className="w-8 h-8 mx-auto mb-2 text-gray-300" />
           Aún no tienes vehículos registrados. El taller los agregará por ti.
         </div>
@@ -36,10 +36,10 @@ export default function CustomerHome() {
           const st = last ? WO_STATUS[last.status] : null;
           return (
             <Link key={v.id} to={`/cliente/vehiculo/${v.id}`}
-              className="block bg-white rounded-xl p-4 shadow-sm hover:shadow active:scale-[0.99] transition">
+              className="block card p-4 hover:shadow-elevated hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="bg-white border border-gray-100 rounded-lg shrink-0 w-10 h-10 flex items-center justify-center"><BrandLogo make={v.make} size={26} /></div>
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 rounded-xl shrink-0 w-11 h-11 flex items-center justify-center shadow-soft"><BrandLogo make={v.make} size={26} /></div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{v.make} {v.model} {v.year}</p>
                     <p className="text-xs text-gray-500 truncate">
@@ -64,8 +64,8 @@ export default function CustomerHome() {
 
       {/* Datos del taller */}
       {me?.workshop && (
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-sm font-semibold text-gray-900 mb-2">{me.workshop.name}</p>
+        <div className="card p-4">
+          <p className="font-display text-sm font-bold text-gray-900 mb-2">{me.workshop.name}</p>
           {me.workshop.phone && (
             <a href={`tel:${me.workshop.phone}`} className="flex items-center gap-2 text-sm text-gray-600 mb-1">
               <Phone size={14} /> {me.workshop.phone}

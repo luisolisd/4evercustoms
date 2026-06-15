@@ -11,8 +11,8 @@ export default function Pagination({ page, pages, total, limit, onPageChange }) 
   for (let i = Math.max(1, page - 2); i <= Math.min(pages, page + 2); i++) pages_.push(i);
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-gray-600">
-      <span>Mostrando {from}–{to} de {total}</span>
+    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
+      <span>Mostrando <span className="font-semibold text-gray-700">{from}–{to}</span> de {total}</span>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(page - 1)}
@@ -27,8 +27,8 @@ export default function Pagination({ page, pages, total, limit, onPageChange }) 
             key={p}
             onClick={() => onPageChange(p)}
             className={clsx(
-              'min-w-[32px] h-8 rounded px-2 font-medium',
-              p === page ? 'bg-brand-600 text-white' : 'hover:bg-gray-100'
+              'min-w-[34px] h-8 rounded-lg px-2 font-semibold transition',
+              p === page ? 'bg-brand-gradient text-white shadow-glow' : 'text-gray-600 hover:bg-gray-100'
             )}
           >
             {p}

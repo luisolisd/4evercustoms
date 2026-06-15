@@ -75,8 +75,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Resumen de operaciones del taller</p>
+        <p className="eyebrow mb-1">Panel general</p>
+        <h1 className="page-title">Dashboard</h1>
+        <p className="page-subtitle">Resumen de operaciones del taller</p>
       </div>
 
       {/* Stats */}
@@ -89,8 +90,8 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-6">Ingresos últimos 6 meses</h2>
+        <div className="lg:col-span-2 card p-6">
+          <h2 className="font-display font-bold text-gray-900 mb-6">Ingresos últimos 6 meses</h2>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={revenueChart} barSize={28}>
               <XAxis dataKey="mes" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
@@ -102,8 +103,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Orders by status */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-4">Estado de órdenes</h2>
+        <div className="card p-6">
+          <h2 className="font-display font-bold text-gray-900 mb-4">Estado de órdenes</h2>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
@@ -121,8 +122,8 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Today's appointments */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-4">Citas de hoy</h2>
+        <div className="card p-6">
+          <h2 className="font-display font-bold text-gray-900 mb-4">Citas de hoy</h2>
           {!todayAppointments?.length ? (
             <p className="text-sm text-gray-400 py-4 text-center">No hay citas para hoy</p>
           ) : (
@@ -144,8 +145,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent orders */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-4">Órdenes recientes</h2>
+        <div className="card p-6">
+          <h2 className="font-display font-bold text-gray-900 mb-4">Órdenes recientes</h2>
           {!recentOrders?.length ? (
             <p className="text-sm text-gray-400 py-4 text-center">No hay órdenes</p>
           ) : (

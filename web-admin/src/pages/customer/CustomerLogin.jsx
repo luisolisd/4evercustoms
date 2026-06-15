@@ -65,15 +65,16 @@ export default function CustomerLogin() {
   const back = () => { setStep('phone'); setPassword(''); setConfirm(''); setError(''); };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-700 via-gray-900 to-black p-5">
-      <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-sm">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-ink-800 via-ink-900 to-ink-950 p-5 overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-mesh opacity-80" />
+      <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-elevated ring-1 ring-white/10 p-7 w-full max-w-sm animate-scale-in">
         <div className="flex justify-center mb-2">
           <img src="/color.png" alt="4EVRcustoms" className="h-11 w-auto" />
         </div>
-        <p className="text-center text-gray-500 text-sm mb-6">Portal de clientes</p>
+        <p className="eyebrow text-center mb-6">Portal de clientes</p>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">{error}</div>
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4 text-sm animate-fade-in">{error}</div>
         )}
 
         {step === 'phone' && (
@@ -81,12 +82,12 @@ export default function CustomerLogin() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tu número de teléfono</label>
               <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-600 text-sm font-medium">+52</span>
+                <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50 text-gray-600 text-sm font-semibold">+52</span>
                 <input
                   type="tel" inputMode="numeric" value={phone}
                   onChange={(e) => setPhone(onlyDigits(e.target.value))}
                   placeholder="6641234567" autoFocus
-                  className="flex-1 border border-gray-300 rounded-r-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                  className="flex-1 border border-gray-200 rounded-r-xl px-3.5 py-2.5 shadow-soft transition focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 text-sm"
                 />
               </div>
             </div>
@@ -99,10 +100,10 @@ export default function CustomerLogin() {
             <p className="text-sm text-gray-600">{firstName ? `¡Hola ${firstName}! ` : ''}Crea tu contraseña para tu primer acceso.</p>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
               placeholder="Nueva contraseña (mín. 6)" autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm" />
+              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 shadow-soft transition focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 text-sm" />
             <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
               placeholder="Confirmar contraseña"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm" />
+              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 shadow-soft transition focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 text-sm" />
             <Btn loading={loading}>Crear y entrar</Btn>
             <LinkBtn onClick={back}>Cambiar número</LinkBtn>
           </form>
@@ -113,7 +114,7 @@ export default function CustomerLogin() {
             <p className="text-sm text-gray-600">{firstName ? `¡Hola ${firstName}! ` : ''}Ingresa tu contraseña.</p>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña" autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm" />
+              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 shadow-soft transition focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 text-sm" />
             <Btn loading={loading}>Iniciar sesión</Btn>
             <LinkBtn onClick={back}>Cambiar número</LinkBtn>
           </form>
@@ -126,7 +127,7 @@ export default function CustomerLogin() {
 
 const Btn = ({ loading, children }) => (
   <button type="submit" disabled={loading}
-    className="w-full bg-brand-600 text-white rounded-lg py-2.5 font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors">
+    className="w-full bg-brand-gradient text-white rounded-xl py-3 font-semibold shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0 transition-all">
     {loading ? 'Un momento…' : children}
   </button>
 );
