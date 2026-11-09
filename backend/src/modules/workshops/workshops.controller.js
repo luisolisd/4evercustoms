@@ -48,15 +48,17 @@ const listUsers = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-// Técnicos activos (para asignar órdenes). Disponible para supervisor y admin.
+// Personal asignable a órdenes: técnicos y administrador (trabajos especiales). Disponible para supervisor y admin.
 const listTechnicians = async (req, res, next) => {
   try {
     const rows = await prisma.workshopUser.findMany({
-      where: { workshopId: req.params.workshopId, role: TECHNICIAN, isActive: true, user: { isActive: true } },
+      where: { workshopId: req.params.workshopId, role: { in: [TECHNICIAN, 'WORKSHOP_ADMIN'] }, isActive: true, user: { isActive: true } },
       include: { user: { select: { id: true, firstName: true, lastName: true } } },
       orderBy: { createdAt: 'asc' },
     });
-    ok(res, rows.map((r) => r.user));
+    // técnicos primero, el administrador al final
+    const sorted = [...rows].sort((a, b) => Number(a.role === 'WORKSHOP_ADMIN') - Number(b.role === 'WORKSHOP_ADMIN'));
+    ok(res, sorted.map((r) => ({ ...r.user, role: r.role })));
   } catch (e) { next(e); }
 };
 

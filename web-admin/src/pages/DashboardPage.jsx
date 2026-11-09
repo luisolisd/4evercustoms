@@ -295,7 +295,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-semibold text-gray-900 truncate">{r.customer?.firstName} {r.customer?.lastName}</p>
                       <p className="text-xs text-gray-500 truncate">{r.serviceType}{r.vehicle ? ` · ${r.vehicle.make} ${r.vehicle.model}` : ''}</p>
                       <p className={clsx('text-xs', overdue ? 'text-red-600 font-medium' : 'text-gray-400')}>
-                        {overdue ? 'Venció ' : ''}{fDate(r.dueDate)}{r.status === 'CONTACTED' ? ' · mensaje enviado' : ''}
+                        {overdue ? 'Venció ' : ''}{fDate(r.dueDate)}{r.nextMileage ? ` · ${r.nextMileage.toLocaleString('es-MX')} km` : ''}{r.status === 'CONTACTED' ? ' · mensaje enviado' : ''}
                       </p>
                     </div>
                     <button onClick={() => whatsappReminder(r)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] text-white px-3 py-1.5 text-xs font-semibold hover:brightness-95 shrink-0">

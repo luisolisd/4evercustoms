@@ -12,6 +12,7 @@ import Pagination from '../components/ui/Pagination';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import WorkOrderForm from '../components/forms/WorkOrderForm';
 import AssignTechniciansModal from '../components/AssignTechniciansModal';
+import { getTechnicians } from '../services/team';
 import Select from '../components/ui/Select';
 import SearchInput from '../components/ui/SearchInput';
 import { useToast } from '../hooks/useToast';
@@ -30,13 +31,23 @@ export default function WorkOrdersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
+  const [techFilter, setTechFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [assigning, setAssigning] = useState(null);
+  const { data: crewRes } = useQuery({
+    queryKey: ['technicians', workshopId],
+    queryFn: () => getTechnicians(workshopId).then((r) => r.data),
+    enabled: !!workshopId,
+  });
+  const techOpts = [
+    { value: '', label: 'Todos los técnicos' },
+    ...(crewRes || []).map((u) => ({ value: u.id, label: `${u.firstName} ${u.lastName}${u.role === 'WORKSHOP_ADMIN' ? ' (admin)' : ''}`.trim() })),
+  ];
 
   const { data, isLoading } = useQuery({
-    queryKey: ['work-orders', workshopId, statusFilter, search, page],
-    queryFn: () => getWorkOrders(workshopId, { status: statusFilter || undefined, search: search || undefined, page, limit: 15 }),
+    queryKey: ['work-orders', workshopId, statusFilter, techFilter, search, page],
+    queryFn: () => getWorkOrders(workshopId, { status: statusFilter || undefined, technicianId: techFilter || undefined, search: search || undefined, page, limit: 15 }),
     enabled: !!workshopId,
     keepPreviousData: true,
   });
@@ -74,6 +85,7 @@ export default function WorkOrdersPage() {
       <div className="flex gap-3 flex-wrap">
         <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por número, cliente..." className="flex-1 min-w-[200px] max-w-sm" />
         <Select options={STATUS_OPTS} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="w-[220px]" />
+        <Select options={techOpts} value={techFilter} onChange={(e) => { setTechFilter(e.target.value); setPage(1); }} className="w-[220px]" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

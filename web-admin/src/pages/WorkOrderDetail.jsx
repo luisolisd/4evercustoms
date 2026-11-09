@@ -18,6 +18,7 @@ import PaymentsModal from '../components/PaymentsModal';
 import PhotoSlotsPanel from '../components/PhotoSlotsPanel';
 import DamagePanel from '../components/DamagePanel';
 import AssignTechniciansModal from '../components/AssignTechniciansModal';
+import NextServiceModal from '../components/NextServiceModal';
 import { compressImage } from '../utils/image';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -77,6 +78,7 @@ export default function WorkOrderDetail() {
   const initialTab = { recepcion: 'reception', fotos: 'photos' }[searchParams.get('tab')] || 'info';
   const [tab, setTab] = useState(initialTab);
   const [assignModal, setAssignModal] = useState(false);
+  const [nextServiceModal, setNextServiceModal] = useState(false);
   const [addPartModal, setAddPartModal] = useState(false);
   const [quoteModal, setQuoteModal] = useState(false);
   const [linkModal, setLinkModal] = useState(false);
@@ -119,7 +121,7 @@ export default function WorkOrderDetail() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['work-order', id] });
 
-  const statusMut  = useMutation({ mutationFn: (s) => updateWOStatus(workshopId, id, s), onSuccess: () => { invalidate(); toast.success('Estado actualizado'); }, onError: (e) => toast.error(e.message) });
+  const statusMut  = useMutation({ mutationFn: (s) => updateWOStatus(workshopId, id, s), onSuccess: (_, s) => { invalidate(); toast.success('Estado actualizado'); if (s === 'DELIVERED') setNextServiceModal(true); }, onError: (e) => toast.error(e.message) });
   const photoMut   = useMutation({ mutationFn: (fd) => uploadWOPhotos(workshopId, id, fd), onSuccess: () => { invalidate(); toast.success('Fotos subidas'); }, onError: (e) => toast.error(e.message || 'Error al subir fotos') });
   const delPhotoMut= useMutation({ mutationFn: (pid) => deletePhoto(workshopId, pid), onSuccess: () => { invalidate(); toast.success('Foto eliminada'); }, onError: (e) => toast.error(e.message || 'No se pudo eliminar') });
   const addPartMut = useMutation({
@@ -209,6 +211,9 @@ export default function WorkOrderDetail() {
             <p className="text-gray-500 mt-1">Recibido {fDateTime(order.receivedAt)}{order.technicians?.length ? ` · Técnico(s): ${order.technicians.map((t) => `${t.firstName} ${t.lastName}`).join(', ')}` : ' · Sin técnico asignado'}</p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            {order.status === 'DELIVERED' && (
+              <Button variant="secondary" icon={Clock} size="sm" onClick={() => setNextServiceModal(true)}>Próximo servicio</Button>
+            )}
             <Button variant="secondary" icon={FileDown} size="sm" loading={pdfBusy} onClick={handlePdf}>PDF</Button>
             <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Cobros</Button>
             <Button variant="secondary" icon={Edit2} size="sm" onClick={() => setEditModal(true)}>Editar</Button>
@@ -471,6 +476,8 @@ export default function WorkOrderDetail() {
           <div className="flex justify-end"><Button type="submit" loading={editMut.isPending}>Guardar</Button></div>
         </form>
       </Modal>
+
+      <NextServiceModal open={nextServiceModal} onClose={() => setNextServiceModal(false)} order={order} workshopId={workshopId} />
 
       <AssignTechniciansModal open={assignModal} onClose={() => setAssignModal(false)} order={order} onSaved={invalidate} />
 

@@ -4,7 +4,7 @@ const { parsePagination } = require('../../utils/pagination');
 const { notifyCustomer } = require('../../utils/notify');
 const { recalcOrderTotal, recalcPaid } = require('../../utils/orderTotals');
 const { RECEPTION_SLOTS } = require('../../utils/photoSlots');
-const { TECHNICIAN } = require('../../utils/roles');
+const { TECHNICIAN, ADMIN } = require('../../utils/roles');
 const { destroyCloudPhotos } = require('../photos/photos.upload');
 const { CUSTOMER_PUBLIC, z, pick, ensure, dateStr, num, optionalInt, optionalStr, httpError } = require('../../utils/guards');
 
@@ -43,15 +43,15 @@ const parseDate = (v, name) => {
   return d;
 };
 
-// Todos los técnicos asignados deben ser TECHNICIAN activos del mismo taller
+// Los asignados deben ser técnicos o el administrador (trabajos especiales), activos y del mismo taller
 const ensureTechnicians = async (ids, workshopId) => {
   if (!Array.isArray(ids)) throw httpError('Lista de técnicos inválida', 400);
   const unique = [...new Set(ids.map(String))];
   if (!unique.length) return unique;
   const found = await prisma.workshopUser.count({
-    where: { userId: { in: unique }, workshopId, role: TECHNICIAN, isActive: true, user: { isActive: true } },
+    where: { userId: { in: unique }, workshopId, role: { in: [TECHNICIAN, ADMIN] }, isActive: true, user: { isActive: true } },
   });
-  if (found !== unique.length) throw httpError('Algún técnico seleccionado no es válido', 400);
+  if (found !== unique.length) throw httpError('Alguna persona seleccionada no es válida para asignar', 400);
   return unique;
 };
 

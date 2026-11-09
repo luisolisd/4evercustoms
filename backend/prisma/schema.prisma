@@ -647,6 +647,7 @@ model ServiceReminder {
   serviceType String
   dueDate     DateTime
   notes       String?
+  nextMileage Int?
   status      ReminderStatus @default(PENDING)
   contactedAt DateTime?
   confirmedAt DateTime?

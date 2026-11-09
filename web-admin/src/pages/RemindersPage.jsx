@@ -19,6 +19,7 @@ import Pagination from '../components/ui/Pagination';
 import SearchInput from '../components/ui/SearchInput';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../hooks/useToast';
+import { SERVICES } from '../constants/services';
 import { fDate } from '../utils/formatters';
 
 const VIEWS = [
@@ -36,12 +37,7 @@ const STATUS = {
   CANCELLED: { label: 'Cancelado', color: 'gray' },
 };
 
-const SERVICES = [
-  'Cambio de aceite', 'Afinación', 'Frenos', 'Suspensión', 'Transmisión', 'Neumáticos / alineación',
-  'Batería', 'A/C', 'Revisión general', 'Otro',
-];
-
-const EMPTY = { customerId: '', vehicleId: '', service: SERVICES[0], other: '', dueDate: '', notes: '' };
+const EMPTY = { customerId: '', vehicleId: '', service: SERVICES[0], other: '', dueDate: '', nextMileage: '', notes: '' };
 
 export default function RemindersPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
@@ -85,6 +81,7 @@ export default function RemindersPage() {
       vehicleId: form.vehicleId || undefined,
       serviceType: form.service === 'Otro' ? form.other.trim() : form.service,
       dueDate: new Date(`${form.dueDate}T12:00:00`).toISOString(),
+      nextMileage: form.nextMileage ? Number(form.nextMileage) : undefined,
       notes: form.notes || undefined,
     }),
     onSuccess: () => { refresh(); setModal(false); setForm(EMPTY); toast.success('Recordatorio creado'); },
@@ -151,7 +148,7 @@ export default function RemindersPage() {
                     <p className="font-semibold text-gray-900">{r.customer?.firstName} {r.customer?.lastName}</p>
                     <p className="text-sm text-gray-600">{r.serviceType}{r.vehicle ? ` · ${r.vehicle.make} ${r.vehicle.model} ${r.vehicle.year}` : ''}</p>
                     <p className={clsx('text-xs', overdue ? 'text-red-600 font-medium' : 'text-gray-400')}>
-                      {overdue ? 'Venció el ' : 'Programado para '}{fDate(r.dueDate)}{r.notes ? ` · ${r.notes}` : ''}
+                      {overdue ? 'Venció el ' : 'Programado para '}{fDate(r.dueDate)}{r.nextMileage ? ` · ${r.nextMileage.toLocaleString('es-MX')} km` : ''}{r.notes ? ` · ${r.notes}` : ''}
                     </p>
                   </div>
                   <Badge color={st.color}>{st.label}</Badge>
@@ -192,7 +189,10 @@ export default function RemindersPage() {
           />
           <Select label="Servicio *" options={SERVICES.map((s) => ({ value: s, label: s }))} value={form.service} onChange={set('service')} />
           {form.service === 'Otro' && <Input label="Especifica el servicio *" value={form.other} onChange={set('other')} maxLength={100} />}
-          <Input label="Fecha del próximo servicio *" type="date" value={form.dueDate} onChange={set('dueDate')} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Fecha del próximo servicio *" type="date" value={form.dueDate} onChange={set('dueDate')} />
+            <Input label="Kilometraje estimado" type="number" min="0" value={form.nextMileage} onChange={set('nextMileage')} placeholder="Ej. 15000" />
+          </div>
           <Textarea label="Notas" rows={2} value={form.notes} onChange={set('notes')} placeholder="Ej. toca a los 10,000 km" />
           <div className="flex justify-end">
             <Button type="submit" loading={createMut.isPending} disabled={!formValid}>Crear recordatorio</Button>

@@ -1,7 +1,7 @@
 const prisma = require('../../config/database');
 const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
-const { z, pick, ensure, dateStr, optionalStr } = require('../../utils/guards');
+const { z, pick, ensure, dateStr, optionalStr, optionalInt } = require('../../utils/guards');
 
 const STATUSES = ['PENDING', 'CONTACTED', 'CONFIRMED', 'DONE', 'CANCELLED'];
 
@@ -9,6 +9,7 @@ const schema = z.object({
   serviceType: z.string().trim().min(1, 'Requerido').max(100),
   dueDate: dateStr,
   notes: optionalStr,
+  nextMileage: optionalInt,
 });
 
 const INCLUDE = {
@@ -28,9 +29,10 @@ const buildMessage = (r, workshop) => {
     day: 'numeric', month: 'long', year: 'numeric', timeZone: workshop.timezone || 'America/Mexico_City',
   });
   const car = r.vehicle ? ` ${r.vehicle.make} ${r.vehicle.model} ${r.vehicle.year}` : '';
+  const km = r.nextMileage ? ` o a los ${r.nextMileage.toLocaleString('es-MX')} km, lo que ocurra primero` : '';
   return (
     `Hola ${r.customer.firstName}, te saluda ${workshop.name}. ` +
-    `Te recordamos que tu vehículo${car} tiene próximo servicio: ${r.serviceType} (${when}). ` +
+    `Te recordamos que tu vehículo${car} tiene próximo servicio: ${r.serviceType} (${when}${km}). ` +
     `¿Te agendamos una cita? Responde a este mensaje para confirmar. ¡Gracias!`
   );
 };
@@ -98,7 +100,7 @@ const create = async (req, res, next) => {
     await ensure.customer(customerId, workshopId);
     if (vehicleId) await ensure.vehicle(vehicleId, workshopId, customerId);
     if (workOrderId) await ensure.workOrder(workOrderId, workshopId);
-    const data = schema.parse(pick(req.body, ['serviceType', 'dueDate', 'notes']));
+    const data = schema.parse(pick(req.body, ['serviceType', 'dueDate', 'notes', 'nextMileage']));
 
     const reminder = await prisma.serviceReminder.create({
       data: {
@@ -119,7 +121,7 @@ const update = async (req, res, next) => {
     });
     if (!found) return notFound(res);
     if (req.body.vehicleId) await ensure.vehicle(req.body.vehicleId, req.params.workshopId, found.customerId);
-    const data = schema.partial().parse(pick(req.body, ['serviceType', 'dueDate', 'notes']));
+    const data = schema.partial().parse(pick(req.body, ['serviceType', 'dueDate', 'notes', 'nextMileage']));
     const reminder = await prisma.serviceReminder.update({
       where: { id: found.id },
       data: { ...data, ...(req.body.vehicleId && { vehicleId: req.body.vehicleId }) },
