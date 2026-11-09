@@ -113,9 +113,9 @@ async function main() {
 
   if (!isProd) {
     const customer = await prisma.customer.upsert({
-      where: { workshopId_phone: { workshopId: workshop.id, phone: '+526641111111' } },
+      where: { workshopId_phone: { workshopId: workshop.id, phone: '6641111111' } },
       update: {},
-      create: { workshopId: workshop.id, firstName: 'Juan', lastName: 'Pérez', phone: '+526641111111', email: 'juan.perez@email.com' },
+      create: { workshopId: workshop.id, firstName: 'Juan', lastName: 'Pérez', phone: '6641111111', email: 'juan.perez@email.com' },
     });
     await prisma.vehicle.upsert({
       where: { id: '00000000-0000-0000-0000-000000000001' },

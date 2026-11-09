@@ -24,11 +24,15 @@ export default function CustomerForm({ defaultValues, onSubmit, loading }) {
       </div>
       <Input
         label="Teléfono *"
-        placeholder="+526641234567"
+        placeholder="10 dígitos, ej. 4721234567"
+        type="tel"
+        inputMode="numeric"
+        maxLength={10}
         error={errors.phone?.message}
         {...register('phone', {
           required: 'Requerido',
-          pattern: { value: /^\+\d{10,15}$/, message: 'Formato: +526641234567' },
+          setValueAs: (v) => String(v ?? '').replace(/\D/g, '').slice(0, 10),
+          pattern: { value: /^\d{10}$/, message: 'Escribe los 10 dígitos, sin +52' },
         })}
       />
       <Input

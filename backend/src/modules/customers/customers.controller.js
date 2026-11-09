@@ -9,7 +9,11 @@ const emptyToUndef = (v) => (v === '' || v === null ? undefined : v);
 const createSchema = z.object({
   firstName: z.string().trim().min(1, 'Requerido'),
   lastName: z.string().trim().min(1, 'Requerido'),
-  phone: z.string().trim().regex(/^\+?\d{10,15}$/, 'Teléfono inválido'),
+  // Se guarda solo el número de 10 dígitos (sin +52); si llega con lada, se recorta
+  phone: z.string().trim().transform((v) => {
+    const d = v.replace(/\D/g, '');
+    return d.length > 10 && d.startsWith('52') ? d.slice(2) : d;
+  }).refine((d) => /^\d{10}$/.test(d), 'El teléfono debe tener 10 dígitos'),
   email: z.preprocess(emptyToUndef, z.string().trim().email('Email inválido').optional()),
   address: z.preprocess(emptyToUndef, z.string().trim().optional()),
   notes: z.preprocess(emptyToUndef, z.string().trim().optional()),

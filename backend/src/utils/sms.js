@@ -24,7 +24,8 @@ const sendOtp = async (phone, code) => {
   await getClient().messages.create({
     body: `Tu código de verificación 4EVRcustoms es: ${code}. Válido por 10 minutos.`,
     from: cfg.phoneNumber,
-    to: phone,
+    // Los teléfonos de clientes se guardan con 10 dígitos; Twilio exige formato internacional
+    to: /^\d{10}$/.test(phone) ? `+52${phone}` : phone,
   });
 };
 
