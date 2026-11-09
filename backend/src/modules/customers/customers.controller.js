@@ -41,7 +41,9 @@ const list = async (req, res, next) => {
         skip,
         take: limit,
         orderBy: { firstName: 'asc' },
-        select: { ...CUSTOMER_PUBLIC, _count: { select: { vehicles: true, workOrders: true } } },
+        // Los vehículos se eliminan de forma lógica (isActive=false): el contador solo cuenta los activos,
+        // igual que la lista de vehículos del cliente.
+        select: { ...CUSTOMER_PUBLIC, _count: { select: { vehicles: { where: { isActive: true } }, workOrders: true } } },
       }),
       prisma.customer.count({ where }),
     ]);
