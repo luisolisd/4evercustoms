@@ -17,6 +17,7 @@ import { useAuthStore, selectIsAdmin } from '../store/authStore';
 import PaymentsModal from '../components/PaymentsModal';
 import PhotoSlotsPanel from '../components/PhotoSlotsPanel';
 import DamagePanel from '../components/DamagePanel';
+import OrderProgress from '../components/OrderProgress';
 import AssignTechniciansModal from '../components/AssignTechniciansModal';
 import NextServiceModal from '../components/NextServiceModal';
 import { compressImage } from '../utils/image';
@@ -222,10 +223,19 @@ export default function WorkOrderDetail() {
         </div>
       </div>
 
-      {/* Status stepper */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Estatus del vehículo</p>
-        <StatusStepper current={order.status} onSelect={(s) => statusMut.mutate(s)} loading={statusMut.isPending} />
+      {/* Avance de la orden: se actualiza solo con notas, fotos y cotizaciones */}
+      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avance de la orden</p>
+          <span className="text-[11px] text-gray-400">Avanza solo con notas, fotos y cotizaciones</span>
+        </div>
+        <OrderProgress status={order.status} flow={order.flow} />
+        <details className="group">
+          <summary className="cursor-pointer select-none text-xs font-semibold text-brand-600 hover:text-brand-700">Cambiar estatus manualmente</summary>
+          <div className="mt-3">
+            <StatusStepper current={order.status} onSelect={(s) => statusMut.mutate(s)} loading={statusMut.isPending} />
+          </div>
+        </details>
       </div>
 
       {/* Info cards */}

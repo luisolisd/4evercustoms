@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, Phone, Mail, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Users, Phone, Mail, Eye, Edit2, Trash2, QrCode } from 'lucide-react';
 import { useAuthStore, selectIsAdmin } from '../store/authStore';
+import PortalQrModal from '../components/PortalQrModal';
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../services/customers';
 import Button from '../components/ui/Button';
 import SearchInput from '../components/ui/SearchInput';
@@ -26,6 +27,7 @@ export default function CustomersPage() {
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null); // null | 'create' | { mode:'edit', customer }
   const [deleting, setDeleting] = useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers', workshopId, search, page],
@@ -73,7 +75,10 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
           <p className="text-sm text-gray-500 mt-1">{pagination?.total ?? 0} clientes registrados</p>
         </div>
-        <Button icon={Plus} onClick={() => setModal('create')}>Nuevo cliente</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" icon={QrCode} onClick={() => setQrOpen(true)}>QR del portal</Button>
+          <Button icon={Plus} onClick={() => setModal('create')}>Nuevo cliente</Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -161,6 +166,8 @@ export default function CustomersPage() {
         title="Eliminar cliente"
         message={`¿Deseas eliminar a ${deleting?.firstName} ${deleting?.lastName}? Esta acción no se puede deshacer.`}
       />
+
+      <PortalQrModal open={qrOpen} onClose={() => setQrOpen(false)} />
     </div>
   );
 }

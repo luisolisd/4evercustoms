@@ -54,7 +54,15 @@ services:
       - key: VITE_API_URL
         sync: false
     routes:
+      # El portal de clientes tiene su propio HTML (manifiesto de PWA propio)
+      - type: rewrite
+        source: /cliente
+        destination: /cliente.html
+      - type: rewrite
+        source: /cliente/*
+        destination: /cliente.html
       - type: rewrite
         source: /*
         destination: /index.html
+
 

@@ -4,6 +4,7 @@ const { parsePagination } = require('../../utils/pagination');
 const { z, pick, ensure, dateStr, optionalStr, optionalInt } = require('../../utils/guards');
 const { recalcOrderTotal } = require('../../utils/orderTotals');
 const { syncQuoteReminder } = require('../../utils/quoteReminders');
+const { autoAdvanceSafe } = require('../../utils/orderFlow');
 
 const STATUSES = ['PENDING', 'CONTACTED', 'CONFIRMED', 'DONE', 'CANCELLED'];
 
@@ -200,6 +201,7 @@ const quoteDecision = async (req, res, next) => {
     const quote = await prisma.quote.findUnique({ where: { id: reminder.quoteId }, select: { workOrderId: true } });
     if (quote?.workOrderId) await recalcOrderTotal(quote.workOrderId); // solo cuentan las aprobadas
     await syncQuoteReminder(reminder.quoteId);
+    if (quote?.workOrderId) await autoAdvanceSafe(quote.workOrderId);
     ok(res, { message: decision === 'APPROVED' ? 'Cotización confirmada' : 'Cotización cancelada' });
   } catch (e) { next(e); }
 };

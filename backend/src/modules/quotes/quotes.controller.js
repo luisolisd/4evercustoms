@@ -4,6 +4,8 @@ const { parsePagination } = require('../../utils/pagination');
 const { recalcOrderTotal } = require('../../utils/orderTotals');
 const { notifyCustomer } = require('../../utils/notify');
 const { syncQuoteReminder } = require('../../utils/quoteReminders');
+const { autoAdvanceSafe } = require('../../utils/orderFlow');
+const { createOrderRecord } = require('../workorders/workorders.controller');
 const { CUSTOMER_PUBLIC, z, pick, ensure, dateStr, num, optionalStr, httpError } = require('../../utils/guards');
 
 const STATUSES = ['DRAFT', 'SENT', 'APPROVED', 'REJECTED', 'EXPIRED'];
@@ -153,6 +155,7 @@ const updateStatus = async (req, res, next) => {
 
     const updated = await prisma.quote.update({ where: { id: quote.id }, data });
     await syncQuoteReminder(quote.id); // seguimiento si quedó enviada; se cierra en cualquier otro estado
+    if (quote.workOrderId) await autoAdvanceSafe(quote.workOrderId); // enviada → esperando autorización · aprobada → en reparación
 
     // Si la cotización está ligada a una orden, recalcula su total (solo cuentan las aprobadas)
     if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
@@ -218,6 +221,42 @@ const removeItem = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// Genera una orden de trabajo desde una cotización. Regla: solo cotizaciones APROBADAS y sin orden.
+const createOrder = async (req, res, next) => {
+  try {
+    const { workshopId, quoteId } = req.params;
+    const quote = await prisma.quote.findFirst({
+      where: { id: quoteId, workshopId },
+      include: { items: { select: { description: true } } },
+    });
+    if (!quote) return notFound(res);
+    if (quote.status !== 'APPROVED') {
+      return error(res, 'Solo una cotización aprobada puede generar una orden. Confirma primero con el cliente.', 409);
+    }
+    if (quote.workOrderId) return error(res, 'Esta cotización ya tiene una orden', 409);
+
+    // El vehículo debe ser del cliente de la cotización
+    await ensure.vehicle(req.body.vehicleId, workshopId, quote.customerId);
+
+    const summary = quote.items.map((i) => i.description).join(', ');
+    const description = `Cotización ${quote.quoteNumber}${summary ? `: ${summary}` : ''}`.slice(0, 500);
+    const order = await createOrderRecord({
+      workshopId, customerId: quote.customerId, vehicleId: req.body.vehicleId, data: { description },
+    });
+
+    // Ligar con condición: si dos personas hacen clic a la vez, solo una orden queda ligada
+    const linked = await prisma.quote.updateMany({ where: { id: quote.id, workOrderId: null }, data: { workOrderId: order.id } });
+    if (linked.count === 0) {
+      await prisma.serviceHistory.deleteMany({ where: { workOrderId: order.id } });
+      await prisma.workOrder.delete({ where: { id: order.id } });
+      return error(res, 'Esta cotización ya tiene una orden', 409);
+    }
+    await recalcOrderTotal(order.id); // la cotización aprobada define el total
+    await autoAdvanceSafe(order.id);   // aprobada → la orden entra en reparación
+    created(res, order);
+  } catch (e) { next(e); }
+};
+
 const remove = async (req, res, next) => {
   try {
     const quote = await prisma.quote.findFirst({
@@ -231,4 +270,4 @@ const remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, addItem, removeItem, remove };
+module.exports = { list, create, getOne, update, updateStatus, addItem, removeItem, createOrder, remove };

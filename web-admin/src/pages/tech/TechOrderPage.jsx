@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { getWorkOrder, updateWOStatus, updateWorkOrder } from '../../services/workOrders';
 import { WorkOrderBadge } from '../../components/ui/Badge';
 import PhotoSlotsPanel from '../../components/PhotoSlotsPanel';
+import OrderProgress from '../../components/OrderProgress';
 import Button from '../../components/ui/Button';
 import Textarea from '../../components/ui/Textarea';
 import { useToast } from '../../hooks/useToast';
@@ -79,9 +80,14 @@ export default function TechOrderPage() {
         )}
       </div>
 
+      <div className="card p-4 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avance de la orden</p>
+        <OrderProgress status={order.status} flow={order.flow} compact />
+      </div>
+
       {!closed && (
         <div className="card p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Avance del trabajo</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Marcar avance manualmente</p>
           <div className="grid grid-cols-2 gap-2">
             {TECH_STEPS.map((s) => (
               <button

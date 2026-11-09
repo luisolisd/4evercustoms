@@ -6,6 +6,7 @@ const { recalcOrderTotal, recalcPaid } = require('../../utils/orderTotals');
 const { RECEPTION_SLOTS } = require('../../utils/photoSlots');
 const { TECHNICIAN, ADMIN } = require('../../utils/roles');
 const { destroyCloudPhotos } = require('../photos/photos.upload');
+const { getFacts, autoAdvanceSafe } = require('../../utils/orderFlow');
 const { CUSTOMER_PUBLIC, z, pick, ensure, dateStr, num, optionalInt, optionalStr, httpError } = require('../../utils/guards');
 
 const STATUSES = ['RECEIVED', 'DIAGNOSIS', 'AWAITING_AUTH', 'IN_REPAIR', 'FINAL_TESTING', 'READY_FOR_PICKUP', 'DELIVERED', 'CANCELLED'];
@@ -95,6 +96,12 @@ const forTechnician = (o) => {
   return rest;
 };
 
+// Resumen del avance automático para mostrar en la orden (sin dinero)
+const getFlowView = async (orderId) => {
+  const f = await getFacts(orderId);
+  return f ? { facts: f.facts, suggested: f.target } : null;
+};
+
 const list = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
@@ -160,6 +167,44 @@ const list = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// Crea la orden con su número, las fotos de recepción obligatorias y su historial de servicio.
+// El número se calcula como último+1; si dos órdenes chocan (unique), se reintenta.
+const createOrderRecord = async ({ workshopId, customerId, vehicleId, data }) => {
+  let order;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const orderNumber = await generateOrderNumber(workshopId);
+    try {
+      order = await prisma.workOrder.create({
+        data: {
+          workshopId, orderNumber, customerId, vehicleId,
+          ...data,
+          // Fotos de recepción obligatorias (las toma supervisor/admin al levantar la orden)
+          photoSlots: { create: RECEPTION_SLOTS.map((label) => ({ label, kind: 'RECEPTION' })) },
+        },
+        include: {
+          customer: { select: { id: true, firstName: true, lastName: true } },
+          vehicle: { select: { id: true, make: true, model: true, year: true } },
+        },
+      });
+      break;
+    } catch (e) {
+      if (e.code !== 'P2002' || attempt === 3) throw e;
+    }
+  }
+
+  await prisma.serviceHistory.create({
+    data: {
+      workshopId,
+      vehicleId: order.vehicleId,
+      workOrderId: order.id,
+      serviceDate: order.receivedAt,
+      description: order.description || `Orden ${order.orderNumber} iniciada`,
+      mileage: order.mileageIn,
+    },
+  });
+  return order;
+};
+
 const create = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
@@ -168,41 +213,7 @@ const create = async (req, res, next) => {
     const data = orderSchema.parse(
       pick(req.body, ['description', 'diagnosis', 'recommendations', 'technicianNotes', 'estimatedReady', 'mileageIn'])
     );
-
-    // El número se calcula como último+1; si dos órdenes chocan (unique), se reintenta.
-    let order;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const orderNumber = await generateOrderNumber(workshopId);
-      try {
-        order = await prisma.workOrder.create({
-          data: {
-            workshopId, orderNumber, customerId: req.body.customerId, vehicleId: req.body.vehicleId,
-            ...data,
-            // Fotos de recepción obligatorias (las toma supervisor/admin al levantar la orden)
-            photoSlots: { create: RECEPTION_SLOTS.map((label) => ({ label, kind: 'RECEPTION' })) },
-          },
-          include: {
-            customer: { select: { id: true, firstName: true, lastName: true } },
-            vehicle: { select: { id: true, make: true, model: true, year: true } },
-          },
-        });
-        break;
-      } catch (e) {
-        if (e.code !== 'P2002' || attempt === 3) throw e;
-      }
-    }
-
-    await prisma.serviceHistory.create({
-      data: {
-        workshopId,
-        vehicleId: order.vehicleId,
-        workOrderId: order.id,
-        serviceDate: order.receivedAt,
-        description: order.description || `Orden ${order.orderNumber} iniciada`,
-        mileage: order.mileageIn,
-      },
-    });
-
+    const order = await createOrderRecord({ workshopId, customerId: req.body.customerId, vehicleId: req.body.vehicleId, data });
     created(res, order);
   } catch (e) { next(e); }
 };
@@ -224,7 +235,7 @@ const getOne = async (req, res, next) => {
       },
     });
     if (!order) return notFound(res);
-    const shaped = shapeTechs(order);
+    const shaped = { ...shapeTechs(order), flow: await getFlowView(order.id) };
     ok(res, tech ? forTechnician(shaped) : shaped);
   } catch (e) { next(e); }
 };
@@ -254,6 +265,7 @@ const update = async (req, res, next) => {
       }
       return tx.workOrder.update({ where: { id: order.id }, data });
     });
+    await autoAdvanceSafe(order.id); // un diagnóstico o nota del técnico inicia el diagnóstico
     ok(res, isTech(req) ? forTechnician(updated) : updated);
   } catch (e) { next(e); }
 };
@@ -381,6 +393,7 @@ const linkQuote = async (req, res, next) => {
     }
     await prisma.quote.update({ where: { id: quote.id }, data: { workOrderId: order.id } });
     await recalcOrderTotal(order.id); // por si la cotización ya está aprobada
+    await autoAdvanceSafe(order.id);
     ok(res, { message: 'Cotización vinculada' });
   } catch (e) { next(e); }
 };
@@ -449,6 +462,7 @@ const remove = async (req, res, next) => {
 };
 
 module.exports = {
-  list, create, getOne, update, updateStatus, updatePayment, linkQuote,
+  createOrderRecord, list, create, getOne, update, updateStatus, updatePayment, linkQuote,
   listPayments, addPayment, removePayment, addPart, removePart, remove,
 };
+

@@ -4,6 +4,7 @@ import { Home, Calendar, LogOut, Tag, Bell } from 'lucide-react';
 import clsx from 'clsx';
 import { useCustomerStore } from '../../store/customerAuthStore';
 import { APP_VERSION } from '../../version';
+import InstallPrompt from '../../components/InstallPrompt';
 
 const tabs = [
   { to: '/cliente/inicio', icon: Home, label: 'Inicio' },
@@ -46,6 +47,8 @@ export default function CustomerLayout() {
         </Suspense>
         <p className="text-center text-[10px] text-gray-400 pt-6">4EVRcustoms {APP_VERSION}</p>
       </main>
+
+      <InstallPrompt offset="bottom-24" />
 
       {/* Bottom nav */}
       <nav

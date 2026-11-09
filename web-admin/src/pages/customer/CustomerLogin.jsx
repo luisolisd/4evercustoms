@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { customerStatus, customerSetPassword, customerLogin } from '../../services/customer';
 import { useCustomerStore } from '../../store/customerAuthStore';
 import { APP_VERSION } from '../../version';
+import InstallPrompt from '../../components/InstallPrompt';
 
 export default function CustomerLogin() {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ export default function CustomerLogin() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tu número de teléfono</label>
               <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50 text-gray-600 text-sm font-semibold">+52</span>
+                <span className="inline-flex items-center shrink-0 whitespace-nowrap px-3 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50 text-gray-600 text-sm font-semibold">+52</span>
                 <input
                   type="tel" inputMode="numeric" value={phone}
                   onChange={(e) => setPhone(onlyDigits(e.target.value))}
@@ -121,6 +122,7 @@ export default function CustomerLogin() {
         )}
         <p className="text-center text-[10px] text-gray-400 mt-5">{APP_VERSION}</p>
       </div>
+      <InstallPrompt />
     </div>
   );
 }
@@ -137,3 +139,4 @@ const LinkBtn = ({ onClick, children }) => (
     {children}
   </button>
 );
+

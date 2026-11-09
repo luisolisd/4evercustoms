@@ -8,6 +8,8 @@ import {
 } from '../services/quotes';
 import { getCustomers } from '../services/customers';
 import Button from '../components/ui/Button';
+import CreateOrderFromQuoteModal from '../components/CreateOrderFromQuoteModal';
+import { Link } from 'react-router-dom';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import EmptyState from '../components/ui/EmptyState';
@@ -32,6 +34,7 @@ const STATUS_OPTS = [
 
 function QuoteRow({ quote, workshopId, onDelete }) {
   const [expanded, setExpanded] = useState(false);
+  const [orderModal, setOrderModal] = useState(false);
   const qc = useQueryClient();
   const toast = useToast();
   const invalidate = () => qc.invalidateQueries({ queryKey: ['quotes', workshopId] });
@@ -79,11 +82,22 @@ function QuoteRow({ quote, workshopId, onDelete }) {
               <Button size="xs" variant="danger" onClick={() => statusMut.mutate('REJECTED')}>Rechazar</Button>
             </>
           )}
+          {quote.status === 'APPROVED' && !quote.workOrderId && (
+            <Button size="xs" onClick={() => setOrderModal(true)}>Crear orden</Button>
+          )}
+          {quote.workOrderId && (
+            <Link to={`/work-orders/${quote.workOrderId}`} className="inline-flex items-center rounded-xl border border-gray-200 px-3 py-2 sm:py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50">Ver orden</Link>
+          )}
+          {!quote.workOrderId && quote.status !== 'APPROVED' && ['DRAFT', 'SENT'].includes(quote.status) && (
+            <span className="text-[11px] text-gray-400">Se podrá crear la orden cuando el cliente la apruebe</span>
+          )}
           <button onClick={() => onDelete(quote)} className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2 sm:py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors">
             <Trash2 size={14} /> Eliminar
           </button>
         </div>
       </div>
+
+      <CreateOrderFromQuoteModal open={orderModal} onClose={() => setOrderModal(false)} quote={quote} workshopId={workshopId} />
 
       {expanded && (
         <div className="border-t border-gray-100">

@@ -6,6 +6,7 @@ const { parsePagination } = require('../../utils/pagination');
 const { ensureTemplates, addSlotsToOrder } = require('../../utils/photoSlots');
 const { TECHNICIAN } = require('../../utils/roles');
 const { z, ensure, httpError } = require('../../utils/guards');
+const { autoAdvanceSafe } = require('../../utils/orderFlow');
 
 const cloudinaryReady = () =>
   cloudCfg.cloudName && cloudCfg.cloudName !== 'DEV_SKIP' &&
@@ -92,6 +93,7 @@ const upload = async (req, res, next) => {
       )
     );
 
+    await autoAdvanceSafe(req.params.orderId); // la primera foto del técnico / checklist completo avanzan el estatus
     created(res, photos);
   } catch (e) { next(e); }
 };
@@ -190,6 +192,7 @@ const addSlots = async (req, res, next) => {
       .object({ templateIds: z.array(z.string()).default([]), custom: z.array(z.string()).default([]) })
       .parse(req.body);
     const added = await addSlotsToOrder(workshopId, orderId, body);
+    await autoAdvanceSafe(orderId);
     created(res, { added });
   } catch (e) { next(e); }
 };
@@ -199,10 +202,11 @@ const removeSlot = async (req, res, next) => {
     const slot = await prisma.orderPhotoSlot.findFirst({
       // Las fotos de recepción son obligatorias y no se pueden quitar; solo las pedidas al técnico
       where: { id: req.params.slotId, kind: 'TECH', workOrder: { workshopId: req.params.workshopId } },
-      select: { id: true },
+      select: { id: true, workOrderId: true },
     });
     if (!slot) return notFound(res);
-    await prisma.orderPhotoSlot.delete({ where: { id: slot.id } }); // las fotos quedan en la orden (slotId → null)
+    await prisma.orderPhotoSlot.delete({ where: { id: slot.id } });
+    await autoAdvanceSafe(slot.workOrderId); // las fotos quedan en la orden (slotId → null)
     ok(res, { message: 'Requerimiento eliminado' });
   } catch (e) { next(e); }
 };
