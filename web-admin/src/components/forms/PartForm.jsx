@@ -14,7 +14,7 @@ export default function PartForm({ defaultValues, onSubmit, loading }) {
         error={errors.name?.message}
         {...register('name', { required: 'Requerido' })}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input label="SKU / Código" placeholder="FILT-001" {...register('sku')} />
         <Input label="Marca" placeholder="Bosch" {...register('brand')} />
       </div>
@@ -26,7 +26,7 @@ export default function PartForm({ defaultValues, onSubmit, loading }) {
         error={errors.unitPrice?.message}
         {...register('unitPrice', { required: 'Requerido', valueAsNumber: true, min: 0 })}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {!defaultValues?.id && (
           <Input
             label="Cantidad inicial"
@@ -45,7 +45,7 @@ export default function PartForm({ defaultValues, onSubmit, loading }) {
       <Input label="Ubicación en almacén" placeholder="Estante A, Cajón 3" {...register('location')} />
       <Textarea label="Descripción" placeholder="Detalles adicionales..." rows={2} {...register('description')} />
       <div className="flex justify-end pt-2">
-        <Button type="submit" loading={loading}>
+        <Button type="submit" className="w-full sm:w-auto" loading={loading}>
           {defaultValues?.id ? 'Guardar cambios' : 'Agregar refacción'}
         </Button>
       </div>

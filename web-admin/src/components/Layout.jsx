@@ -4,7 +4,7 @@ import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, CalendarDays, ClipboardList,
   FileText, Package, BarChart3, LogOut, Menu,
-  ChevronRight, Megaphone, BellRing, Wallet, Images, UserCog,
+  ChevronRight, Megaphone, BellRing, Wallet, Images, UserCog, User, LayoutGrid,
 } from 'lucide-react';
 import { useAuthStore, ROLE_LABELS, selectRole } from '../store/authStore';
 import { getWorkshop } from '../services/workshop';
@@ -30,6 +30,48 @@ const nav = [
   { to: '/users',        icon: UserCog,         label: 'Usuarios',      roles: 'A' },
 ];
 const ROLE_CODE = { WORKSHOP_ADMIN: 'A', SUPERVISOR: 'S', TECHNICIAN: 'T' };
+
+// Barra inferior del celular: accesos directos según el rol (lo demás está en "Menú")
+const TAB_BAR = {
+  A: [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
+    { to: '/work-orders', icon: ClipboardList, label: 'Órdenes' },
+    { to: '/appointments', icon: CalendarDays, label: 'Citas' },
+    { to: '/reminders', icon: BellRing, label: 'Avisos' },
+  ],
+  T: [
+    { to: '/mis-ordenes', icon: ClipboardList, label: 'Mis órdenes' },
+    { to: '/profile', icon: User, label: 'Perfil' },
+  ],
+};
+TAB_BAR.S = TAB_BAR.A;
+
+function MobileTabBar({ code, onMenu }) {
+  const items = TAB_BAR[code] || [];
+  const base = 'flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold transition-colors';
+  return (
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 glass border-t border-gray-200/70 shadow-[0_-8px_24px_-12px_rgba(16,18,27,0.18)] pb-safe">
+      <div className="flex">
+        {items.map((it) => (
+          <NavLink key={it.to} to={it.to} className={({ isActive }) => clsx(base, isActive ? 'text-brand-600' : 'text-gray-400')}>
+            {({ isActive }) => (
+              <>
+                <span className={clsx('flex h-7 w-12 items-center justify-center rounded-full transition-all', isActive && 'bg-brand-50')}>
+                  <it.icon size={20} />
+                </span>
+                <span className="truncate max-w-full px-1">{it.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+        <button type="button" onClick={onMenu} className={clsx(base, 'text-gray-400')}>
+          <span className="flex h-7 w-12 items-center justify-center rounded-full"><LayoutGrid size={20} /></span>
+          <span>Menú</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
 
 function NavItem({ to, icon: Icon, label, onClick }) {
   return (
@@ -75,7 +117,7 @@ function Sidebar({ mobile = false, onNavigate }) {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className={clsx('relative flex flex-col h-full bg-ink-gradient', mobile ? 'w-72' : 'w-64')}>
+    <div className={clsx('relative flex flex-col h-full bg-ink-gradient', mobile ? 'w-72 max-w-full' : 'w-64')}>
       {/* Halo de marca en la parte superior */}
       <div className="pointer-events-none absolute inset-0 bg-mesh opacity-70" />
       <div className="relative flex flex-col h-full">
@@ -124,10 +166,10 @@ function Sidebar({ mobile = false, onNavigate }) {
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const close = () => setSidebarOpen(false);
-
+  const code = ROLE_CODE[useAuthStore(selectRole)] || '';
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-[100dvh] bg-gray-50 overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex shrink-0">
         <Sidebar />
@@ -137,7 +179,7 @@ export default function Layout() {
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-ink-950/60 backdrop-blur-sm animate-fade-in" onClick={close} />
-          <div className="relative z-50 animate-slide-in-right">
+          <div className="relative z-50 max-w-[86vw] animate-slide-in-right">
             <Sidebar mobile onNavigate={close} />
           </div>
         </div>
@@ -155,8 +197,8 @@ export default function Layout() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto p-5 sm:p-6 lg:p-8 animate-fade-up">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+          <div className="max-w-7xl mx-auto p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 lg:pb-8 animate-fade-up">
             <Suspense fallback={<div className="flex justify-center py-24"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>}>
               <Outlet />
             </Suspense>
@@ -164,6 +206,7 @@ export default function Layout() {
         </main>
       </div>
 
+      <MobileTabBar code={code} onMenu={() => setSidebarOpen(true)} />
       <ToastContainer />
     </div>
   );

@@ -68,9 +68,9 @@ function Gallery() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
-        <SearchInput value={search} onChange={reset(setSearch)} placeholder="Buscar por orden o cliente…" className="flex-1 min-w-[200px] max-w-sm" />
-        <div className="w-40"><Input label="Desde" type="date" value={from} onChange={(e) => reset(setFrom)(e.target.value)} /></div>
-        <div className="w-40"><Input label="Hasta" type="date" value={to} onChange={(e) => reset(setTo)(e.target.value)} /></div>
+        <SearchInput value={search} onChange={reset(setSearch)} placeholder="Buscar por orden o cliente…" className="w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm" />
+        <div className="flex-1 min-w-[140px] sm:flex-none sm:w-40"><Input label="Desde" type="date" value={from} onChange={(e) => reset(setFrom)(e.target.value)} /></div>
+        <div className="flex-1 min-w-[140px] sm:flex-none sm:w-40"><Input label="Hasta" type="date" value={to} onChange={(e) => reset(setTo)(e.target.value)} /></div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm">

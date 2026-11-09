@@ -18,6 +18,7 @@ import SearchInput from '../components/ui/SearchInput';
 import { useToast } from '../hooks/useToast';
 import { fDate, fMoney } from '../utils/formatters';
 import { WORK_ORDER_FLOW_OPTS } from '../constants/statuses';
+import ResponsiveTable, { RowAction } from '../components/ui/ResponsiveTable';
 
 const STATUS_OPTS = [{ value: '', label: 'Todos los estados' }, ...WORK_ORDER_FLOW_OPTS];
 
@@ -74,8 +75,8 @@ export default function WorkOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Órdenes de Trabajo</h1>
           <p className="text-sm text-gray-500 mt-1">{pagination?.total ?? 0} órdenes</p>
         </div>
@@ -83,9 +84,9 @@ export default function WorkOrdersPage() {
       </div>
 
       <div className="flex gap-3 flex-wrap">
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por número, cliente..." className="flex-1 min-w-[200px] max-w-sm" />
-        <Select options={STATUS_OPTS} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="w-[220px]" />
-        <Select options={techOpts} value={techFilter} onChange={(e) => { setTechFilter(e.target.value); setPage(1); }} className="w-[220px]" />
+        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por número, cliente..." className="w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm" />
+        <Select options={STATUS_OPTS} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="w-full sm:w-[220px]" />
+        <Select options={techOpts} value={techFilter} onChange={(e) => { setTechFilter(e.target.value); setPage(1); }} className="w-full sm:w-[220px]" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -95,63 +96,37 @@ export default function WorkOrdersPage() {
           <EmptyState icon={ClipboardList} title="No hay órdenes" description="Crea la primera orden de trabajo." action="Nueva orden" onAction={() => setShowCreate(true)} />
         ) : (
           <>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-5 py-3">Orden</th>
-                  <th className="text-left px-5 py-3">Cliente / Vehículo</th>
-                  <th className="text-left px-5 py-3">Técnico</th>
-                  <th className="text-center px-5 py-3">Estado</th>
-                  <th className="text-center px-5 py-3">Pago</th>
-                  <th className="text-right px-5 py-3">Total</th>
-                  <th className="text-left px-5 py-3">Recibido</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {orders.map((o) => (
-                  <tr
-                    key={o.id}
-                    onClick={() => navigate(`/work-orders/${o.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-5 py-4">
-                      <p className="font-mono font-bold text-gray-900">{o.orderNumber}</p>
-                      <p className="text-xs text-gray-400">{o._count?.photos ?? 0} fotos · {o._count?.quotes ?? 0} cot.</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-gray-900">{o.customer?.firstName} {o.customer?.lastName}</p>
-                      <p className="text-xs text-gray-500">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? ` · ${o.vehicle.licensePlate}` : ''}</p>
-                    </td>
-                    <td className="px-5 py-4 text-sm">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setAssigning(o); }}
-                          title="Asignar técnico"
-                          className={o.technicians?.length ? 'text-gray-700 hover:text-brand-600 hover:underline' : 'inline-flex rounded-full bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-2.5 py-0.5 text-xs font-semibold hover:bg-amber-100'}
-                        >
-                          {o.technicians?.length ? o.technicians.map((t) => t.firstName).join(', ') : 'Asignar'}
-                        </button>
-                      </td>
-                    <td className="px-5 py-4 text-center"><WorkOrderBadge status={o.status} /></td>
-                    <td className="px-5 py-4 text-center"><PaymentBadge status={o.paymentStatus} /></td>
-                    <td className="px-5 py-4 text-right font-semibold text-gray-900">{fMoney(o.totalAmount)}</td>
-                    <td className="px-5 py-4 text-gray-500">{fDate(o.receivedAt)}</td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={(e) => { e.stopPropagation(); navigate(`/work-orders/${o.id}`); }} className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50">
-                          <Eye size={15} />
-                        </button>
-                        {isAdmin && (
-<button onClick={(e) => { e.stopPropagation(); setDeleting(o); }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
-                          <Trash2 size={15} />
-                        </button>
-)}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
+            <ResponsiveTable
+  rows={orders}
+  onRowClick={(o) => navigate(`/work-orders/${o.id}`)}
+  columns={[
+    { key: 'num', header: 'Orden', mobile: 'title', cell: (o) => (
+      <div><p className="font-mono font-bold text-gray-900">{o.orderNumber}</p><p className="text-xs text-gray-400">{o._count?.photos ?? 0} fotos · {o._count?.quotes ?? 0} cot.</p></div>
+    ) },
+    { key: 'status', header: 'Estado', align: 'center', mobile: 'badge', cell: (o) => <WorkOrderBadge status={o.status} /> },
+    { key: 'pay', header: 'Pago', align: 'center', mobile: 'badge', cell: (o) => <PaymentBadge status={o.paymentStatus} /> },
+    { key: 'who', header: 'Cliente / Vehículo', mobileLabel: 'Cliente', cell: (o) => (
+      <div><p className="font-medium text-gray-900">{o.customer?.firstName} {o.customer?.lastName}</p><p className="text-xs text-gray-500">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? ` · ${o.vehicle.licensePlate}` : ''}</p></div>
+    ) },
+    { key: 'tech', header: 'Técnico', cell: (o) => (
+      <button
+        onClick={(e) => { e.stopPropagation(); setAssigning(o); }}
+        title="Asignar técnico"
+        className={o.technicians?.length ? 'text-gray-700 hover:text-brand-600 hover:underline text-sm' : 'inline-flex rounded-full bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-3 py-1 text-xs font-semibold hover:bg-amber-100'}
+      >
+        {o.technicians?.length ? o.technicians.map((t) => t.firstName).join(', ') : 'Asignar técnico'}
+      </button>
+    ) },
+    { key: 'total', header: 'Total', align: 'right', cell: (o) => <span className="font-semibold text-gray-900">{fMoney(o.totalAmount)}</span> },
+    { key: 'recv', header: 'Recibido', cell: (o) => <span className="text-gray-500">{fDate(o.receivedAt)}</span> },
+  ]}
+  actions={(o, { mobile }) => (
+    <>
+      <RowAction mobile={mobile} icon={Eye} label="Abrir orden" tone="brand" onClick={() => navigate(`/work-orders/${o.id}`)} />
+      {isAdmin && <RowAction mobile={mobile} icon={Trash2} label="Eliminar" tone="red" onClick={() => setDeleting(o)} />}
+    </>
+  )}
+/>
             {pagination && <Pagination {...pagination} onPageChange={setPage} />}
           </>
         )}

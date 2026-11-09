@@ -4,6 +4,7 @@ import { Plus, Users, Edit2, KeyRound, UserX, UserCheck } from 'lucide-react';
 import { useAuthStore, ROLE_LABELS } from '../store/authStore';
 import { getUsers, createUser, updateUser, resetUserPassword } from '../services/team';
 import Button from '../components/ui/Button';
+import ResponsiveTable, { RowAction } from '../components/ui/ResponsiveTable';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -79,8 +80,8 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="eyebrow mb-1">Equipo</p>
           <h1 className="page-title">Usuarios</h1>
           <p className="page-subtitle">Administradores, supervisores y técnicos del taller</p>
@@ -94,50 +95,28 @@ export default function UsersPage() {
         ) : rows.length === 0 ? (
           <EmptyState icon={Users} title="Sin usuarios" description="Crea el primer usuario del equipo." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[720px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-5 py-3">Nombre</th>
-                  <th className="text-left px-5 py-3">Acceso</th>
-                  <th className="text-left px-5 py-3">Rol</th>
-                  <th className="text-left px-5 py-3">Último acceso</th>
-                  <th className="text-right px-5 py-3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {rows.map((r) => {
-                  const isMe = r.userId === me?.id;
-                  return (
-                    <tr key={r.id} className={r.isActive ? '' : 'opacity-50'}>
-                      <td className="px-5 py-4 font-medium text-gray-900">{r.user.firstName} {r.user.lastName}{isMe && <span className="ml-2 text-xs text-gray-400">(tú)</span>}</td>
-                      <td className="px-5 py-4 text-gray-600">
-                        <p>{r.user.email || '—'}</p>
-                        <p className="text-xs text-gray-400">{r.user.phone}</p>
-                      </td>
-                      <td className="px-5 py-4"><Badge color={ROLE_COLOR[r.role] || 'gray'}>{ROLE_LABELS[r.role] || r.role}</Badge></td>
-                      <td className="px-5 py-4 text-gray-500">{r.user.lastLoginAt ? fDateTime(r.user.lastLoginAt) : 'Nunca'}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1 justify-end">
-                          <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" title="Editar"><Edit2 size={15} /></button>
-                          <button onClick={() => openPassword(r)} className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50" title="Cambiar contraseña"><KeyRound size={15} /></button>
-                          {!isMe && (
-                            <button
-                              onClick={() => activeMut.mutate({ userId: r.userId, isActive: !r.isActive })}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"
-                              title={r.isActive ? 'Desactivar' : 'Activar'}
-                            >
-                              {r.isActive ? <UserX size={15} /> : <UserCheck size={15} />}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+  rows={rows}
+  rowKey="id"
+  rowClassName={(r) => (r.isActive ? '' : 'opacity-50')}
+  columns={[
+    { key: 'name', header: 'Nombre', mobile: 'title', cell: (r) => (
+      <p className="font-semibold md:font-medium text-gray-900">{r.user.firstName} {r.user.lastName}{r.userId === me?.id && <span className="ml-2 text-xs font-normal text-gray-400">(tú)</span>}</p>
+    ) },
+    { key: 'role', header: 'Rol', mobile: 'badge', cell: (r) => <Badge color={ROLE_COLOR[r.role] || 'gray'}>{ROLE_LABELS[r.role] || r.role}</Badge> },
+    { key: 'access', header: 'Acceso', cell: (r) => <div className="text-gray-600"><p>{r.user.email || '—'}</p><p className="text-xs text-gray-400">{r.user.phone}</p></div> },
+    { key: 'last', header: 'Último acceso', cell: (r) => <span className="text-gray-500">{r.user.lastLoginAt ? fDateTime(r.user.lastLoginAt) : 'Nunca'}</span> },
+  ]}
+  actions={(r, { mobile }) => (
+    <>
+      <RowAction mobile={mobile} icon={Edit2} label="Editar" tone="blue" onClick={() => openEdit(r)} />
+      <RowAction mobile={mobile} icon={KeyRound} label="Contraseña" tone="amber" onClick={() => openPassword(r)} />
+      {r.userId !== me?.id && (
+        <RowAction mobile={mobile} icon={r.isActive ? UserX : UserCheck} label={r.isActive ? 'Desactivar' : 'Activar'} tone="red" onClick={() => activeMut.mutate({ userId: r.userId, isActive: !r.isActive })} />
+      )}
+    </>
+  )}
+/>
         )}
       </div>
 
@@ -146,7 +125,7 @@ export default function UsersPage() {
           onSubmit={(e) => { e.preventDefault(); (modal.mode === 'edit' ? editMut : createMut).mutate(); }}
           className="space-y-4"
         >
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Nombre *" value={form.firstName} onChange={set('firstName')} required />
             <Input label="Apellido" value={form.lastName} onChange={set('lastName')} />
           </div>
@@ -163,7 +142,7 @@ export default function UsersPage() {
             <b>Administrador:</b> todo. <b>Supervisor:</b> clientes, órdenes, cotizaciones, cobros, fotos y recordatorios. <b>Técnico:</b> solo sus órdenes asignadas (estatus, notas y fotos).
           </p>
           <div className="flex justify-end">
-            <Button type="submit" loading={createMut.isPending || editMut.isPending}>{modal?.mode === 'edit' ? 'Guardar' : 'Crear usuario'}</Button>
+            <Button type="submit" className="w-full sm:w-auto" loading={createMut.isPending || editMut.isPending}>{modal?.mode === 'edit' ? 'Guardar' : 'Crear usuario'}</Button>
           </div>
         </form>
       </Modal>
@@ -174,7 +153,7 @@ export default function UsersPage() {
           <Input label="Nueva contraseña *" value={form.password} onChange={set('password')} required minLength={8} />
           <div className="flex justify-between">
             <Button type="button" variant="secondary" onClick={() => setForm((f) => ({ ...f, password: randomPassword() }))}>Generar</Button>
-            <Button type="submit" loading={pwMut.isPending}>Guardar</Button>
+            <Button type="submit" className="w-full sm:w-auto" loading={pwMut.isPending}>Guardar</Button>
           </div>
         </form>
       </Modal>

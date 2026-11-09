@@ -7,6 +7,7 @@ import {
   getInventory, createMovement,
 } from '../services/inventory';
 import Button from '../components/ui/Button';
+import ResponsiveTable, { RowAction } from '../components/ui/ResponsiveTable';
 import SearchInput from '../components/ui/SearchInput';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -95,8 +96,8 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
           <p className="text-sm text-gray-500 mt-1">{pagination?.total ?? 0} refacciones</p>
         </div>
@@ -104,7 +105,7 @@ export default function InventoryPage() {
       </div>
 
       <div className="flex gap-3 flex-wrap items-center">
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por nombre, SKU, marca..." className="flex-1 min-w-[200px] max-w-sm" />
+        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por nombre, SKU, marca..." className="w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm" />
         <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 select-none">
           <input
             type="checkbox"
@@ -124,73 +125,39 @@ export default function InventoryPage() {
           <EmptyState icon={Package} title="Sin refacciones" description={search ? 'Ninguna refacción coincide.' : 'Agrega la primera refacción al inventario.'} action={!search ? 'Agregar refacción' : undefined} onAction={() => setPartModal('create')} />
         ) : (
           <>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[640px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-5 py-3">Refacción</th>
-                  <th className="text-right px-5 py-3">Precio unit. (IVA incl.)</th>
-                  <th className="text-right px-5 py-3">Stock</th>
-                  <th className="text-right px-5 py-3">Mínimo</th>
-                  <th className="text-center px-5 py-3">Estado</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {inventory.map((item) => {
-                  const qty = Number(item.quantity);
-                  const min = Number(item.minQuantity);
-                  const isLow = qty <= min;
-                  return (
-                    <tr key={item.id} className={clsx('hover:bg-gray-50 transition-colors', isLow && qty > 0 && 'bg-yellow-50/40', qty === 0 && 'bg-red-50/30')}>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          {isLow && <AlertTriangle size={13} className={qty === 0 ? 'text-red-500' : 'text-yellow-500'} />}
-                          <div>
-                            <p className="font-semibold text-gray-900">{item.part?.name}</p>
-                            <p className="text-xs text-gray-400 font-mono">{item.part?.sku || '—'}{item.part?.brand ? ` · ${item.part.brand}` : ''}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-right font-medium text-gray-900">{fMoney(item.part?.unitPrice)}</td>
-                      <td className={clsx('px-5 py-4 text-right font-bold text-lg', qty === 0 ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-green-700')}>
-                        {fNumber(qty)}
-                      </td>
-                      <td className="px-5 py-4 text-right text-gray-500">{fNumber(min)}</td>
-                      <td className="px-5 py-4 text-center">
-                        <StockBadge quantity={qty} minQuantity={min} />
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1 justify-end">
-                          <button
-                            onClick={() => { movForm.setValue('type', 'IN'); setMovementModal({ part: item.part, inventoryId: item.id }); }}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                            title="Registrar movimiento"
-                          >
-                            <ArrowUpDown size={14} />
-                          </button>
-                          <button
-                            onClick={() => setPartModal({ mode: 'edit', part: { ...item.part, minQuantity: item.minQuantity, quantity: item.quantity, location: item.location } })}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Editar"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          {isAdmin && (
-<button
-                            onClick={() => setDeleting(item.part)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-)}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table></div>
+            <ResponsiveTable
+  rows={inventory}
+  rowKey="id"
+  rowClassName={(item) => (Number(item.quantity) === 0 ? 'bg-red-50/30' : Number(item.quantity) <= Number(item.minQuantity) ? 'bg-yellow-50/40' : '')}
+  columns={[
+    { key: 'part', header: 'Refacción', mobile: 'title', cell: (item) => {
+      const qty = Number(item.quantity); const low = qty <= Number(item.minQuantity);
+      return (
+        <div className="flex items-center gap-2 min-w-0">
+          {low && <AlertTriangle size={14} className={clsx('shrink-0', qty === 0 ? 'text-red-500' : 'text-yellow-500')} />}
+          <div className="min-w-0">
+            <p className="font-semibold text-gray-900">{item.part?.name}</p>
+            <p className="text-xs text-gray-400 font-mono">{item.part?.sku || '—'}{item.part?.brand ? ` · ${item.part.brand}` : ''}</p>
+          </div>
+        </div>
+      );
+    } },
+    { key: 'state', header: 'Estado', align: 'center', mobile: 'badge', cell: (item) => <StockBadge quantity={Number(item.quantity)} minQuantity={Number(item.minQuantity)} /> },
+    { key: 'price', header: 'Precio unit. (IVA incl.)', mobileLabel: 'Precio (IVA incl.)', align: 'right', cell: (item) => <span className="font-medium text-gray-900">{fMoney(item.part?.unitPrice)}</span> },
+    { key: 'stock', header: 'Stock', align: 'right', cell: (item) => {
+      const qty = Number(item.quantity); const low = qty <= Number(item.minQuantity);
+      return <span className={clsx('font-bold md:text-lg', qty === 0 ? 'text-red-600' : low ? 'text-yellow-600' : 'text-green-700')}>{fNumber(qty)}</span>;
+    } },
+    { key: 'min', header: 'Mínimo', align: 'right', cell: (item) => <span className="text-gray-500">{fNumber(Number(item.minQuantity))}</span> },
+  ]}
+  actions={(item, { mobile }) => (
+    <>
+      <RowAction mobile={mobile} icon={ArrowUpDown} label="Movimiento" tone="brand" onClick={() => { movForm.setValue('type', 'IN'); setMovementModal({ part: item.part, inventoryId: item.id }); }} />
+      <RowAction mobile={mobile} icon={Edit2} label="Editar" tone="blue" onClick={() => setPartModal({ mode: 'edit', part: { ...item.part, minQuantity: item.minQuantity, quantity: item.quantity, location: item.location } })} />
+      {isAdmin && <RowAction mobile={mobile} icon={Trash2} label="Eliminar" tone="red" onClick={() => setDeleting(item.part)} />}
+    </>
+  )}
+/>
             {pagination && <Pagination {...pagination} onPageChange={setPage} />}
           </>
         )}

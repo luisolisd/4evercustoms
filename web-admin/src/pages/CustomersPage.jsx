@@ -13,6 +13,7 @@ import Pagination from '../components/ui/Pagination';
 import CustomerForm from '../components/forms/CustomerForm';
 import { useToast } from '../hooks/useToast';
 import { fDate } from '../utils/formatters';
+import ResponsiveTable, { RowAction } from '../components/ui/ResponsiveTable';
 
 export default function CustomersPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
@@ -67,8 +68,8 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
           <p className="text-sm text-gray-500 mt-1">{pagination?.total ?? 0} clientes registrados</p>
         </div>
@@ -99,87 +100,37 @@ export default function CustomersPage() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-5 py-3">Cliente</th>
-                  <th className="text-left px-5 py-3">Contacto</th>
-                  <th className="text-center px-5 py-3">Vehículos</th>
-                  <th className="text-center px-5 py-3">Órdenes</th>
-                  <th className="text-left px-5 py-3">Registrado</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {customers.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm shrink-0">
-                          {c.firstName[0]}{c.lastName[0]}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{c.firstName} {c.lastName}</p>
-                          {c.notes && <p className="text-xs text-gray-400 truncate max-w-[200px]">{c.notes}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <Phone size={12} className="text-gray-400" />
-                          <span>{c.phone}</span>
-                        </div>
-                        {c.email && (
-                          <div className="flex items-center gap-1.5 text-gray-600">
-                            <Mail size={12} className="text-gray-400" />
-                            <span className="truncate max-w-[180px]">{c.email}</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-center">
-                      <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
-                        {c._count?.vehicles ?? 0}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-center">
-                      <span className="inline-flex items-center justify-center w-7 h-7 bg-brand-50 text-brand-700 rounded-full text-xs font-bold">
-                        {c._count?.workOrders ?? 0}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-gray-500">{fDate(c.createdAt)}</td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button
-                          onClick={() => navigate(`/customers/${c.id}`)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                          title="Ver detalle"
-                        >
-                          <Eye size={15} />
-                        </button>
-                        <button
-                          onClick={() => setModal({ mode: 'edit', customer: c })}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="Editar"
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                        {isAdmin && (
-<button
-                          onClick={() => setDeleting(c)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Eliminar"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-)}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
+            <ResponsiveTable
+  rows={customers}
+  onRowClick={(c) => navigate(`/customers/${c.id}`)}
+  columns={[
+    { key: 'name', header: 'Cliente', mobile: 'title', cell: (c) => (
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-10 h-10 md:w-9 md:h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm shrink-0">{c.firstName[0]}{c.lastName[0]}</div>
+        <div className="min-w-0">
+          <p className="font-semibold md:font-medium text-gray-900 truncate">{c.firstName} {c.lastName}</p>
+          {c.notes && <p className="text-xs text-gray-400 truncate md:max-w-[200px]">{c.notes}</p>}
+        </div>
+      </div>
+    ) },
+    { key: 'contact', header: 'Contacto', cell: (c) => (
+      <div className="space-y-1 md:text-left">
+        <div className="flex items-center md:justify-start justify-end gap-1.5 text-gray-600"><Phone size={12} className="text-gray-400 shrink-0" /><span>{c.phone}</span></div>
+        {c.email && <div className="flex items-center md:justify-start justify-end gap-1.5 text-gray-600"><Mail size={12} className="text-gray-400 shrink-0" /><span className="truncate md:max-w-[180px]">{c.email}</span></div>}
+      </div>
+    ) },
+    { key: 'vehicles', header: 'Vehículos', align: 'center', cell: (c) => <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">{c._count?.vehicles ?? 0}</span> },
+    { key: 'orders', header: 'Órdenes', align: 'center', cell: (c) => <span className="inline-flex items-center justify-center w-7 h-7 bg-brand-50 text-brand-700 rounded-full text-xs font-bold">{c._count?.workOrders ?? 0}</span> },
+    { key: 'created', header: 'Registrado', cell: (c) => <span className="text-gray-500">{fDate(c.createdAt)}</span> },
+  ]}
+  actions={(c, { mobile }) => (
+    <>
+      <RowAction mobile={mobile} icon={Eye} label="Ver" tone="brand" onClick={() => navigate(`/customers/${c.id}`)} />
+      <RowAction mobile={mobile} icon={Edit2} label="Editar" tone="blue" onClick={() => setModal({ mode: 'edit', customer: c })} />
+      {isAdmin && <RowAction mobile={mobile} icon={Trash2} label="Eliminar" tone="red" onClick={() => setDeleting(c)} />}
+    </>
+  )}
+/>
             {pagination && (
               <Pagination {...pagination} onPageChange={setPage} />
             )}

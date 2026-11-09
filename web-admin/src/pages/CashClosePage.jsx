@@ -5,6 +5,7 @@ import { Wallet, Printer, Banknote, CreditCard, ArrowLeftRight, CircleDollarSign
 import { useAuthStore } from '../store/authStore';
 import { previewCashCut, createCashCut, getCashCuts } from '../services/cashCuts';
 import Button from '../components/ui/Button';
+import ResponsiveTable from '../components/ui/ResponsiveTable';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -81,7 +82,7 @@ export default function CashClosePage() {
 
       <section className="space-y-5">
         <div className="flex flex-wrap items-end gap-3 print:hidden">
-          <div className="w-56"><Input label="Desde" type="datetime-local" value={fromLocal} onChange={(e) => setFromLocal(e.target.value)} /></div>
+          <div className="w-full sm:w-56"><Input label="Desde" type="datetime-local" value={fromLocal} onChange={(e) => setFromLocal(e.target.value)} /></div>
           <Button variant="secondary" onClick={() => refetch()} loading={isFetching}>Actualizar</Button>
           {preview?.clamped && <p className="text-xs text-amber-600">Se ajustó al último corte para no contar cobros dos veces.</p>}
         </div>
@@ -110,7 +111,7 @@ export default function CashClosePage() {
 
             <div className="card p-5 space-y-4 print:hidden">
               <p className="text-sm font-semibold text-gray-800">Arqueo de efectivo</p>
-              <div className="grid sm:grid-cols-3 gap-4 items-end">
+              <div className="grid sm:grid-cols-3 gap-3 sm:gap-4 items-end">
                 <div className="rounded-xl bg-gray-50 p-3"><p className="text-xs text-gray-500">Efectivo esperado</p><p className="font-bold">{fMoney(totals.CASH)}</p></div>
                 <Input label="Efectivo contado" type="number" step="0.01" min="0" value={counted} onChange={(e) => setCounted(e.target.value)} />
                 <div className={`rounded-xl p-3 ${difference === null ? 'bg-gray-50' : difference === 0 ? 'bg-emerald-50' : 'bg-amber-50'}`}>
@@ -125,35 +126,19 @@ export default function CashClosePage() {
             </div>
 
             <div className="card overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[640px]">
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                      <th className="text-left px-4 py-3">Hora</th>
-                      <th className="text-left px-4 py-3">Orden</th>
-                      <th className="text-left px-4 py-3">Cliente</th>
-                      <th className="text-left px-4 py-3">Método</th>
-                      <th className="text-left px-4 py-3">Recibió</th>
-                      <th className="text-right px-4 py-3">Monto</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {preview.payments.length === 0 && (
-                      <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No hay cobros en este periodo.</td></tr>
-                    )}
-                    {preview.payments.map((p) => (
-                      <tr key={p.id}>
-                        <td className="px-4 py-3 text-gray-500">{fDateTime(p.createdAt)}</td>
-                        <td className="px-4 py-3"><Link to={`/work-orders/${p.workOrderId}`} className="font-medium text-brand-700">{p.workOrder?.orderNumber}</Link></td>
-                        <td className="px-4 py-3">{p.workOrder?.customer?.firstName} {p.workOrder?.customer?.lastName}</td>
-                        <td className="px-4 py-3">{methodLabel(p.method)}{p.note ? <span className="text-xs text-gray-400"> · {p.note}</span> : null}</td>
-                        <td className="px-4 py-3 text-gray-500">{p.receivedByName || '—'}</td>
-                        <td className="px-4 py-3 text-right font-semibold">{fMoney(p.amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ResponsiveTable
+  rows={preview.payments}
+  minWidth={640}
+  columns={[
+    { key: 'amount', header: 'Monto', align: 'right', mobile: 'title', cell: (p) => <span className="font-bold text-gray-900 text-base md:text-sm">{fMoney(p.amount)}</span> },
+    { key: 'method', header: 'Método', mobile: 'badge', cell: (p) => <span className="text-xs md:text-sm text-gray-600">{methodLabel(p.method)}{p.note ? <span className="text-xs text-gray-400"> · {p.note}</span> : null}</span> },
+    { key: 'time', header: 'Hora', cell: (p) => <span className="text-gray-500">{fDateTime(p.createdAt)}</span> },
+    { key: 'order', header: 'Orden', cell: (p) => <Link to={`/work-orders/${p.workOrderId}`} className="font-medium text-brand-700">{p.workOrder?.orderNumber}</Link> },
+    { key: 'client', header: 'Cliente', cell: (p) => <span>{p.workOrder?.customer?.firstName} {p.workOrder?.customer?.lastName}</span> },
+    { key: 'by', header: 'Recibió', cell: (p) => <span className="text-gray-500">{p.receivedByName || '—'}</span> },
+  ]}
+/>
+{preview.payments.length === 0 && <p className="px-4 py-8 text-center text-gray-400 text-sm">No hay cobros en este periodo.</p>}
             </div>
           </>
         )}
@@ -162,35 +147,19 @@ export default function CashClosePage() {
       <section className="space-y-3 print:hidden">
         <h2 className="font-display font-bold text-gray-900">Cortes anteriores</h2>
         <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[680px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-4 py-3">Periodo</th>
-                  <th className="text-right px-4 py-3">Efectivo</th>
-                  <th className="text-right px-4 py-3">Tarjeta</th>
-                  <th className="text-right px-4 py-3">Transf.</th>
-                  <th className="text-right px-4 py-3">Total</th>
-                  <th className="text-right px-4 py-3">Diferencia</th>
-                  <th className="text-left px-4 py-3">Realizó</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {(history?.data || []).length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-400">Sin cortes todavía.</td></tr>}
-                {(history?.data || []).map((c) => (
-                  <tr key={c.id}>
-                    <td className="px-4 py-3 text-gray-600">{fDateTime(c.fromAt)} → {fDateTime(c.toAt)}{c.notes ? <p className="text-xs text-gray-400">{c.notes}</p> : null}</td>
-                    <td className="px-4 py-3 text-right">{fMoney(c.totals.CASH)}</td>
-                    <td className="px-4 py-3 text-right">{fMoney(c.totals.CARD)}</td>
-                    <td className="px-4 py-3 text-right">{fMoney(c.totals.TRANSFER)}</td>
-                    <td className="px-4 py-3 text-right font-semibold">{fMoney(c.totals.total)}</td>
-                    <td className={`px-4 py-3 text-right ${c.difference && Number(c.difference) !== 0 ? 'text-amber-600 font-semibold' : 'text-gray-500'}`}>{c.difference === null ? '—' : fMoney(c.difference)}</td>
-                    <td className="px-4 py-3 text-gray-500">{c.closedByName || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+  rows={history?.data || []}
+  columns={[
+    { key: 'period', header: 'Periodo', mobile: 'title', cell: (c) => <div className="text-gray-600 text-sm">{fDateTime(c.fromAt)} → {fDateTime(c.toAt)}{c.notes ? <p className="text-xs text-gray-400">{c.notes}</p> : null}</div> },
+    { key: 'total', header: 'Total', align: 'right', mobile: 'badge', cell: (c) => <span className="font-bold text-gray-900">{fMoney(c.totals.total)}</span> },
+    { key: 'cash', header: 'Efectivo', align: 'right', cell: (c) => fMoney(c.totals.CASH) },
+    { key: 'card', header: 'Tarjeta', align: 'right', cell: (c) => fMoney(c.totals.CARD) },
+    { key: 'transfer', header: 'Transf.', align: 'right', cell: (c) => fMoney(c.totals.TRANSFER) },
+    { key: 'diff', header: 'Diferencia', align: 'right', cell: (c) => <span className={c.difference && Number(c.difference) !== 0 ? 'text-amber-600 font-semibold' : 'text-gray-500'}>{c.difference === null ? '—' : fMoney(c.difference)}</span> },
+    { key: 'by', header: 'Realizó', cell: (c) => <span className="text-gray-500">{c.closedByName || '—'}</span> },
+  ]}
+/>
+{(history?.data || []).length === 0 && <p className="px-4 py-6 text-center text-gray-400 text-sm">Sin cortes todavía.</p>}
           {history?.pagination && <Pagination {...history.pagination} onPageChange={setHistPage} />}
         </div>
       </section>

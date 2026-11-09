@@ -71,7 +71,7 @@ export default function NextServiceModal({ open, onClose, order, workshopId }) {
         <Select label="Servicio a recordar *" options={SERVICES.map((s) => ({ value: s, label: s }))} value={service} onChange={(e) => setService(e.target.value)} />
         {service === 'Otro' && <Input label="Especifica el servicio *" value={other} onChange={(e) => setOther(e.target.value)} maxLength={100} />}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label="Kilometraje estimado" type="number" min="0" value={km} onChange={(e) => setKm(e.target.value)} placeholder="Ej. 15000" />
           <Input label="Fecha del recordatorio *" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
@@ -79,7 +79,7 @@ export default function NextServiceModal({ open, onClose, order, workshopId }) {
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={onClose}>Omitir</Button>
-          <Button type="submit" loading={createMut.isPending} disabled={!valid}>Crear recordatorio</Button>
+          <Button type="submit" className="w-full sm:w-auto" loading={createMut.isPending} disabled={!valid}>Crear recordatorio</Button>
         </div>
       </form>
     </Modal>

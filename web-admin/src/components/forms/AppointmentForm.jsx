@@ -70,7 +70,7 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
         error={errors.serviceType?.message}
         {...register('serviceType', { required: 'Requerido' })}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Fecha y hora *"
           type="datetime-local"
@@ -86,7 +86,7 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
       </div>
       <Textarea label="Notas" placeholder="Instrucciones especiales..." rows={2} {...register('notes')} />
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="submit" loading={loading}>
+        <Button type="submit" className="w-full sm:w-auto" loading={loading}>
           {defaultValues?.id ? 'Guardar cambios' : 'Crear cita'}
         </Button>
       </div>

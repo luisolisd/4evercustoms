@@ -110,7 +110,7 @@ export default function RemindersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="eyebrow mb-1">Seguimiento</p>
           <h1 className="page-title">Recordatorios de servicio</h1>
@@ -128,7 +128,7 @@ export default function RemindersPage() {
             </button>
           ))}
         </div>
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar cliente o teléfono…" className="flex-1 min-w-[200px] max-w-sm" />
+        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar cliente o teléfono…" className="w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm" />
       </div>
 
       <div className="card overflow-hidden">
@@ -155,18 +155,18 @@ export default function RemindersPage() {
                   {isOpen && (
                     <div className="flex items-center gap-1.5">
                       <button onClick={() => sendWhatsApp(r)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] text-white px-3 py-1.5 text-xs font-semibold hover:brightness-95">
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] text-white px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-semibold hover:brightness-95">
                         <MessageCircle size={14} /> WhatsApp
                       </button>
                       {r.status !== 'CONFIRMED' && (
                         <button onClick={() => statusMut.mutate({ id: r.id, status: 'CONFIRMED' })} title="Marcar como confirmado"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"><Check size={16} /></button>
+                          className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"><Check size={18} /></button>
                       )}
                       <button onClick={() => statusMut.mutate({ id: r.id, status: 'DONE' })} title="Marcar como realizado"
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50"><CheckCheck size={16} /></button>
+                        className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50"><CheckCheck size={18} /></button>
                     </div>
                   )}
-                  <button onClick={() => setDeleting(r)} title="Eliminar" className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"><Trash2 size={15} /></button>
+                  <button onClick={() => setDeleting(r)} title="Eliminar" className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"><Trash2 size={16} /></button>
                 </div>
               );
             })}
@@ -189,13 +189,13 @@ export default function RemindersPage() {
           />
           <Select label="Servicio *" options={SERVICES.map((s) => ({ value: s, label: s }))} value={form.service} onChange={set('service')} />
           {form.service === 'Otro' && <Input label="Especifica el servicio *" value={form.other} onChange={set('other')} maxLength={100} />}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Fecha del próximo servicio *" type="date" value={form.dueDate} onChange={set('dueDate')} />
             <Input label="Kilometraje estimado" type="number" min="0" value={form.nextMileage} onChange={set('nextMileage')} placeholder="Ej. 15000" />
           </div>
           <Textarea label="Notas" rows={2} value={form.notes} onChange={set('notes')} placeholder="Ej. toca a los 10,000 km" />
           <div className="flex justify-end">
-            <Button type="submit" loading={createMut.isPending} disabled={!formValid}>Crear recordatorio</Button>
+            <Button type="submit" className="w-full sm:w-auto" loading={createMut.isPending} disabled={!formValid}>Crear recordatorio</Button>
           </div>
         </form>
       </Modal>

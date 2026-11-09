@@ -18,6 +18,7 @@ export default [
     settings: { react: { version: '18.3' } },
     rules: {
       'react/jsx-uses-vars': 'error',
+      'react/jsx-no-undef': 'error',
       'react/jsx-uses-react': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
@@ -27,3 +28,4 @@ export default [
   },
   { files: ['*.config.js'], languageOptions: { globals: globals.node } },
 ];
+

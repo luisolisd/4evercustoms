@@ -12,6 +12,7 @@ import { updateAppStatus } from '../services/appointments';
 import { contactReminder } from '../services/reminders';
 import { getWorkshop } from '../services/workshop';
 import { WorkOrderBadge } from '../components/ui/Badge';
+import ResponsiveTable from '../components/ui/ResponsiveTable';
 import AssignTechniciansModal from '../components/AssignTechniciansModal';
 import { useState } from 'react';
 import { WORK_ORDER_FLOW } from '../constants/statuses';
@@ -114,7 +115,7 @@ function AppointmentRow({ a, actions }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{a.customer?.firstName} {a.customer?.lastName}</p>
-        <p className="text-xs text-gray-500 truncate">{a.serviceType} · {a.vehicle?.make} {a.vehicle?.model} {a.vehicle?.year}</p>
+        <p className="text-xs text-gray-500 line-clamp-2">{a.serviceType} · {a.vehicle?.make} {a.vehicle?.model} {a.vehicle?.year}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">{actions}</div>
     </div>
@@ -179,7 +180,7 @@ export default function DashboardPage() {
       {/* Encabezado */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="eyebrow mb-1 capitalize">{today}</p>
+          <p className="eyebrow mb-1">{today}</p>
           <h1 className="page-title">{greeting}, {user?.firstName}</h1>
           <p className="page-subtitle">Resumen operativo del taller{workshop?.name ? ` · ${workshop.name}` : ''}</p>
         </div>
@@ -210,49 +211,36 @@ export default function DashboardPage() {
         ) : !data?.inWork.length ? (
           <Empty text="No hay vehículos en servicio en este momento." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[860px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-5 py-2.5">Orden</th>
-                  <th className="text-left px-5 py-2.5">Vehículo / cliente</th>
-                  <th className="text-left px-5 py-2.5 w-52">Estatus</th>
-                  <th className="text-left px-5 py-2.5">Técnico(s)</th>
-                  <th className="text-left px-5 py-2.5">Fotos</th>
-                  <th className="text-left px-5 py-2.5">En taller</th>
-                  <th className="text-left px-5 py-2.5">Entrega estimada</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {data.inWork.map((o) => (
-                  <tr key={o.id} onClick={() => navigate(`/work-orders/${o.id}`)} className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3.5 font-mono font-semibold text-gray-900">{o.orderNumber}</td>
-                    <td className="px-5 py-3.5">
-                      <p className="font-medium text-gray-900">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? <span className="ml-1.5 text-xs font-normal text-gray-400">{o.vehicle.licensePlate}</span> : null}</p>
-                      <p className="text-xs text-gray-500 truncate max-w-[260px]">{o.customer?.firstName} {o.customer?.lastName}{o.description ? ` · ${o.description}` : ''}</p>
-                    </td>
-                    <td className="px-5 py-3.5"><WorkOrderBadge status={o.status} /><StageBar status={o.status} /></td>
-                    <td className="px-5 py-3.5"><Technicians list={o.technicians} onAssign={() => setAssigning(o)} /></td>
-                    <td className="px-5 py-3.5">
-                      {o.photos.total ? (
-                        <span className={clsx('inline-flex items-center gap-1 text-xs font-medium', o.photos.done === o.photos.total ? 'text-emerald-600' : 'text-gray-500')}>
-                          <Camera size={13} /> {o.photos.done}/{o.photos.total}
-                        </span>
-                      ) : <span className="text-xs text-gray-300">—</span>}
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{o.daysInShop === 0 ? 'Hoy' : `${o.daysInShop} d`}</td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      {o.estimatedReady ? (
-                        <span className={clsx('inline-flex items-center gap-1 text-xs font-medium', o.late ? 'text-red-600' : 'text-gray-600')}>
-                          <Clock size={13} /> {fDate(o.estimatedReady)}{o.late ? ' · vencida' : ''}
-                        </span>
-                      ) : <span className="text-xs text-gray-300">Sin fecha</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+  rows={data.inWork}
+  minWidth={860}
+  onRowClick={(o) => navigate(`/work-orders/${o.id}`)}
+  columns={[
+    { key: 'num', header: 'Orden', mobile: 'title', cell: (o) => (
+      <div>
+        <p className="font-mono font-semibold text-gray-900">{o.orderNumber}</p>
+        <p className="font-medium text-gray-900 md:hidden">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? <span className="ml-1.5 text-xs font-normal text-gray-400">{o.vehicle.licensePlate}</span> : null}</p>
+        <p className="text-xs text-gray-500 md:hidden">{o.customer?.firstName} {o.customer?.lastName}</p>
+      </div>
+    ) },
+    { key: 'status', header: 'Estatus', mobile: 'badge', className: 'w-52', cell: (o) => <div className="md:min-w-[150px]"><WorkOrderBadge status={o.status} /><StageBar status={o.status} /></div> },
+    { key: 'veh', header: 'Vehículo / cliente', mobile: 'hide', cell: (o) => (
+      <div>
+        <p className="font-medium text-gray-900">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? <span className="ml-1.5 text-xs font-normal text-gray-400">{o.vehicle.licensePlate}</span> : null}</p>
+        <p className="text-xs text-gray-500 truncate max-w-[260px]">{o.customer?.firstName} {o.customer?.lastName}{o.description ? ` · ${o.description}` : ''}</p>
+      </div>
+    ) },
+    { key: 'desc', header: 'Servicio', mobile: 'field', desktop: false, cell: (o) => <span className="text-gray-600">{o.description || '—'}</span> },
+    { key: 'tech', header: 'Técnico(s)', cell: (o) => <Technicians list={o.technicians} onAssign={() => setAssigning(o)} /> },
+    { key: 'photos', header: 'Fotos', cell: (o) => o.photos.total ? (
+      <span className={clsx('inline-flex items-center gap-1 text-xs font-medium', o.photos.done === o.photos.total ? 'text-emerald-600' : 'text-gray-500')}><Camera size={13} /> {o.photos.done}/{o.photos.total}</span>
+    ) : <span className="text-xs text-gray-300">—</span> },
+    { key: 'days', header: 'En taller', cell: (o) => <span className="text-gray-600 whitespace-nowrap">{o.daysInShop === 0 ? 'Hoy' : `${o.daysInShop} d`}</span> },
+    { key: 'eta', header: 'Entrega estimada', mobileLabel: 'Entrega', cell: (o) => o.estimatedReady ? (
+      <span className={clsx('inline-flex items-center gap-1 text-xs font-medium', o.late ? 'text-red-600' : 'text-gray-600')}><Clock size={13} /> {fDate(o.estimatedReady)}{o.late ? ' · vencida' : ''}</span>
+    ) : <span className="text-xs text-gray-300">Sin fecha</span> },
+  ]}
+/>
         )}
       </Section>
 
@@ -262,7 +250,7 @@ export default function DashboardPage() {
           {!data?.toEnter.length ? <Empty text="No hay citas confirmadas próximas." /> : (
             <div className="divide-y divide-gray-50">
               {data.toEnter.map((a) => <AppointmentRow key={a.id} a={a} actions={
-                <button onClick={() => whatsappAppointment(a)} title="WhatsApp" className="p-2 rounded-lg text-[#25D366] hover:bg-emerald-50"><MessageCircle size={16} /></button>
+                <button onClick={() => whatsappAppointment(a)} title="WhatsApp" className="p-2.5 rounded-lg text-[#25D366] hover:bg-emerald-50"><MessageCircle size={16} /></button>
               } />)}
             </div>
           )}
@@ -274,9 +262,9 @@ export default function DashboardPage() {
             <div className="divide-y divide-gray-50">
               {data.toConfirm.map((a) => <AppointmentRow key={a.id} a={a} actions={
                 <>
-                  <button onClick={() => whatsappAppointment(a)} title="Preguntar por WhatsApp" className="p-2 rounded-lg text-[#25D366] hover:bg-emerald-50"><MessageCircle size={16} /></button>
-                  <button onClick={() => statusMut.mutate({ id: a.id, status: 'CONFIRMED' })} disabled={statusMut.isPending} title="Confirmar" className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50"><Check size={16} /></button>
-                  <button onClick={() => statusMut.mutate({ id: a.id, status: 'CANCELLED' })} disabled={statusMut.isPending} title="Cancelar" className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"><X size={16} /></button>
+                  <button onClick={() => whatsappAppointment(a)} title="Preguntar por WhatsApp" className="p-2.5 rounded-lg text-[#25D366] hover:bg-emerald-50"><MessageCircle size={16} /></button>
+                  <button onClick={() => statusMut.mutate({ id: a.id, status: 'CONFIRMED' })} disabled={statusMut.isPending} title="Confirmar" className="p-2.5 rounded-lg text-emerald-600 hover:bg-emerald-50"><Check size={16} /></button>
+                  <button onClick={() => statusMut.mutate({ id: a.id, status: 'CANCELLED' })} disabled={statusMut.isPending} title="Cancelar" className="p-2.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"><X size={16} /></button>
                 </>
               } />)}
             </div>
@@ -326,3 +314,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

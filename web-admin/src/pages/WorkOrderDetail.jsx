@@ -22,6 +22,7 @@ import NextServiceModal from '../components/NextServiceModal';
 import { compressImage } from '../utils/image';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
+import ResponsiveTable from '../components/ui/ResponsiveTable';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Select from '../components/ui/Select';
@@ -277,13 +278,13 @@ export default function WorkOrderDetail() {
 
       {/* Tabs */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex border-b">
+        <div className="flex border-b overflow-x-auto overscroll-x-contain [scrollbar-width:none]">
           {['info', 'reception', 'photos', 'parts', 'quotes'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={clsx(
-                'flex-1 py-3.5 text-sm font-medium transition-colors',
+                'flex-1 shrink-0 whitespace-nowrap px-4 py-3.5 text-sm font-medium transition-colors',
                 tab === t ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500 hover:text-gray-700'
               )}
             >
@@ -292,7 +293,7 @@ export default function WorkOrderDetail() {
           ))}
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* INFO */}
           {tab === 'info' && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -343,35 +344,33 @@ export default function WorkOrderDetail() {
               {!order.workOrderParts?.length ? (
                 <p className="text-center text-gray-400 py-8 text-sm">No hay refacciones agregadas</p>
               ) : (
-                <div className="overflow-x-auto"><table className="w-full text-sm min-w-[520px]">
-                  <thead><tr className="text-gray-500 text-xs uppercase border-b"><th className="text-left py-2">Refacción</th><th className="text-right py-2">Cant.</th><th className="text-right py-2">P.U.</th><th className="text-right py-2">Total</th><th className="py-2" /></tr></thead>
-                  <tbody className="divide-y">
-                    {order.workOrderParts.map((p) => (
-                      <tr key={p.id} className="hover:bg-gray-50">
-                        <td className="py-3 font-medium">{p.part?.name}<span className="text-xs text-gray-400 ml-2">{p.part?.sku}</span></td>
-                        <td className="py-3 text-right">{p.quantity}</td>
-                        <td className="py-3 text-right">{fMoney(Number(p.unitPrice) / IVA_FACTOR)}</td>
-                        <td className="py-3 text-right font-bold">{fMoney(Number(p.total) / IVA_FACTOR)}</td>
-                        <td className="py-3 text-right">
-                          <button onClick={() => setRemovePart(p)} className="p-1 text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    {(() => {
-                      const totalIva = order.workOrderParts.reduce((s, p) => s + Number(p.total), 0); // ya incluye IVA
-                      const subtotal = totalIva / IVA_FACTOR;
-                      return (
-                        <>
-                          <tr><td colSpan={3} className="pt-4 text-right text-gray-500">Subtotal</td><td className="pt-4 text-right text-gray-700">{fMoney(subtotal)}</td><td /></tr>
-                          <tr><td colSpan={3} className="py-0.5 text-right text-gray-500">IVA (16%)</td><td className="py-0.5 text-right text-gray-700">{fMoney(totalIva - subtotal)}</td><td /></tr>
-                          <tr><td colSpan={3} className="pb-4 pt-1 text-right font-semibold text-gray-700">Total refacciones (IVA incl.)</td><td className="pb-4 pt-1 text-right font-bold text-lg text-gray-900">{fMoney(totalIva)}</td><td /></tr>
-                        </>
-                      );
-                    })()}
-                  </tfoot>
-                </table></div>
+                <>
+                <ResponsiveTable
+  rows={order.workOrderParts}
+  columns={[
+    { key: 'part', header: 'Refacción', mobile: 'title', cell: (p) => <span className="font-medium">{p.part?.name}<span className="block text-xs text-gray-400 font-normal">{p.part?.sku}</span></span> },
+    { key: 'qty', header: 'Cant.', align: 'right', cell: (p) => p.quantity },
+    { key: 'pu', header: 'P.U.', align: 'right', cell: (p) => fMoney(Number(p.unitPrice) / IVA_FACTOR) },
+    { key: 'total', header: 'Total', align: 'right', cell: (p) => <span className="font-bold">{fMoney(Number(p.total) / IVA_FACTOR)}</span> },
+  ]}
+  actions={(p, { mobile }) => (
+    <button onClick={() => setRemovePart(p)} className={mobile ? 'inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'p-1 text-gray-400 hover:text-red-600'}>
+      <Trash2 size={14} />{mobile && 'Quitar'}
+    </button>
+  )}
+/>
+{(() => {
+  const totalIva = order.workOrderParts.reduce((s, p) => s + Number(p.total), 0); // ya incluye IVA
+  const subtotal = totalIva / IVA_FACTOR;
+  return (
+    <div className="mt-4 ml-auto max-w-xs space-y-1 text-sm">
+      <div className="flex justify-between text-gray-500"><span>Subtotal</span><span className="text-gray-700">{fMoney(subtotal)}</span></div>
+      <div className="flex justify-between text-gray-500"><span>IVA (16%)</span><span className="text-gray-700">{fMoney(totalIva - subtotal)}</span></div>
+      <div className="flex justify-between font-semibold text-gray-700"><span>Total refacciones (IVA incl.)</span><span className="font-bold text-lg text-gray-900">{fMoney(totalIva)}</span></div>
+    </div>
+  );
+})()}
+                </>
               )}
             </div>
           )}
@@ -432,27 +431,25 @@ export default function WorkOrderDetail() {
                         )}
                       </div>
                     </div>
-                    <div className="overflow-x-auto"><table className="w-full text-xs min-w-[480px]">
-                      <thead><tr className="text-gray-400 border-b"><th className="text-left px-4 py-2">Descripción</th><th className="text-right px-4 py-2">Cant.</th><th className="text-right px-4 py-2">P.U.</th><th className="text-right px-4 py-2">Total</th><th className="px-4 py-2" /></tr></thead>
-                      <tbody>
-                        {q.items?.map((item) => (
-                          <tr key={item.id} className="border-b hover:bg-gray-50">
-                            <td className="px-4 py-2">{item.description}{item.isLabor && <span className="ml-1 text-gray-400">(M.O.)</span>}</td>
-                            <td className="px-4 py-2 text-right">{item.quantity}</td>
-                            <td className="px-4 py-2 text-right">{fMoney(Number(item.unitPrice) / IVA_FACTOR)}</td>
-                            <td className="px-4 py-2 text-right font-semibold">{fMoney(Number(item.total) / IVA_FACTOR)}</td>
-                            <td className="px-4 py-2 text-right">
-                              <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} className="text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr><td colSpan={3} className="px-4 pt-3 text-right text-gray-500">Subtotal</td><td className="px-4 pt-3 text-right text-gray-700">{fMoney(Number(q.total) / IVA_FACTOR)}</td><td /></tr>
-                        <tr><td colSpan={3} className="px-4 py-0.5 text-right text-gray-500">IVA (16%)</td><td className="px-4 py-0.5 text-right text-gray-700">{fMoney(Number(q.total) - Number(q.total) / IVA_FACTOR)}</td><td /></tr>
-                        <tr className="font-bold text-sm"><td colSpan={3} className="px-4 pb-3 pt-1 text-right text-gray-900">Total (IVA incl.)</td><td className="px-4 pb-3 pt-1 text-right text-gray-900">{fMoney(q.total)}</td><td /></tr>
-                      </tfoot>
-                    </table></div>
+                    <ResponsiveTable
+  rows={q.items || []}
+  columns={[
+    { key: 'd', header: 'Descripción', mobile: 'title', cell: (item) => <span>{item.description}{item.isLabor && <span className="ml-1 text-gray-400">(M.O.)</span>}</span> },
+    { key: 'q', header: 'Cant.', align: 'right', cell: (item) => item.quantity },
+    { key: 'pu', header: 'P.U.', align: 'right', cell: (item) => fMoney(Number(item.unitPrice) / IVA_FACTOR) },
+    { key: 't', header: 'Total', align: 'right', cell: (item) => <span className="font-semibold">{fMoney(Number(item.total) / IVA_FACTOR)}</span> },
+  ]}
+  actions={(item, { mobile }) => (
+    <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} className={mobile ? 'inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'text-gray-400 hover:text-red-500'}>
+      <Trash2 size={13} />{mobile && 'Quitar'}
+    </button>
+  )}
+/>
+<div className="px-4 py-3 ml-auto max-w-xs space-y-0.5 text-xs">
+  <div className="flex justify-between text-gray-500"><span>Subtotal</span><span className="text-gray-700">{fMoney(Number(q.total) / IVA_FACTOR)}</span></div>
+  <div className="flex justify-between text-gray-500"><span>IVA (16%)</span><span className="text-gray-700">{fMoney(Number(q.total) - Number(q.total) / IVA_FACTOR)}</span></div>
+  <div className="flex justify-between font-bold text-sm text-gray-900"><span>Total (IVA incl.)</span><span>{fMoney(q.total)}</span></div>
+</div>
                     {['DRAFT','SENT'].includes(q.status) && (
                       <div className="px-4 pb-4">
                         <QuoteItemForm onSubmit={(d) => addQuoteItemMut.mutate({ qid: q.id, data: d })} loading={addQuoteItemMut.isPending} />

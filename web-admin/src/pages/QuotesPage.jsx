@@ -58,37 +58,36 @@ function QuoteRow({ quote, workshopId, onDelete }) {
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
       <div
-        className="flex items-center justify-between px-4 py-3 bg-white hover:bg-gray-50 cursor-pointer select-none"
+        className="px-4 py-3 bg-white hover:bg-gray-50 cursor-pointer select-none"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {expanded ? <ChevronUp size={14} className="text-gray-400 shrink-0" /> : <ChevronDown size={14} className="text-gray-400 shrink-0" />}
+        <div className="flex items-center gap-2 min-w-0">
+          {expanded ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
           <span className="font-mono font-bold text-gray-900 shrink-0">{quote.quoteNumber}</span>
           <QuoteBadge status={quote.status} />
-          <span className="text-sm text-gray-500 truncate">{quote.customer?.firstName} {quote.customer?.lastName}</span>
+          <span className="ml-auto font-bold text-gray-900 shrink-0">{fMoney(quote.total)}</span>
         </div>
-        <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-          <span className="text-sm text-gray-400 hidden sm:block">{fDate(quote.createdAt)}</span>
-          <span className="font-bold text-gray-900">{fMoney(quote.total)}</span>
-          <div className="flex gap-1">
-            {quote.status === 'DRAFT' && (
-              <Button size="xs" variant="secondary" onClick={() => statusMut.mutate('SENT')}>Enviar</Button>
-            )}
-            {quote.status === 'SENT' && (
-              <>
-                <Button size="xs" variant="success" onClick={() => statusMut.mutate('APPROVED')}>Aprobar</Button>
-                <Button size="xs" variant="danger" onClick={() => statusMut.mutate('REJECTED')}>Rechazar</Button>
-              </>
-            )}
-            <button onClick={() => onDelete(quote)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors">
-              <Trash2 size={13} />
-            </button>
-          </div>
+        <div className="mt-1 pl-6 flex items-center justify-between gap-3">
+          <span className="text-sm text-gray-500 truncate">{quote.customer?.firstName} {quote.customer?.lastName}</span>
+          <span className="text-xs text-gray-400 shrink-0">{fDate(quote.createdAt)}</span>
+        </div>
+        <div className="mt-2.5 pl-6 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          {quote.status === 'DRAFT' && <Button size="xs" variant="secondary" onClick={() => statusMut.mutate('SENT')}>Enviar al cliente</Button>}
+          {quote.status === 'SENT' && (
+            <>
+              <Button size="xs" variant="success" onClick={() => statusMut.mutate('APPROVED')}>Aprobar</Button>
+              <Button size="xs" variant="danger" onClick={() => statusMut.mutate('REJECTED')}>Rechazar</Button>
+            </>
+          )}
+          <button onClick={() => onDelete(quote)} className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2 sm:py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors">
+            <Trash2 size={14} /> Eliminar
+          </button>
         </div>
       </div>
 
       {expanded && (
         <div className="border-t border-gray-100">
+          <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50 text-gray-400 uppercase tracking-wide">
@@ -132,6 +131,27 @@ function QuoteRow({ quote, workshopId, onDelete }) {
               </tr>
             </tfoot>
           </table>
+          </div>
+
+          {/* Celular: cada ítem como tarjeta */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {(!quote.items || quote.items.length === 0) && <p className="text-center py-5 text-xs text-gray-400">Sin ítems aún</p>}
+            {quote.items?.map((item) => (
+              <div key={item.id} className="px-4 py-3 flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-gray-900">{item.description}{item.isLabor && <span className="ml-1.5 px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px]">M.O.</span>}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{item.quantity} × {fMoney(item.unitPrice)}{item.discount > 0 ? ` · -${item.discount}%` : ''}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-semibold text-gray-900">{fMoney(item.total)}</p>
+                  {editable && (
+                    <button onClick={() => removeItemMut.mutate(item.id)} className="mt-1 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><Trash2 size={12} /> Quitar</button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className="px-4 py-3 flex justify-between bg-gray-50 text-sm font-bold text-gray-900"><span>Total (IVA incl.)</span><span>{fMoney(quote.total)}</span></div>
+          </div>
 
           {editable && (
             <div className="border-t border-gray-100 px-4 pb-5 pt-4">
@@ -190,8 +210,8 @@ export default function QuotesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Cotizaciones</h1>
           <p className="text-sm text-gray-500 mt-1">{pagination?.total ?? 0} cotizaciones</p>
         </div>
@@ -199,8 +219,8 @@ export default function QuotesPage() {
       </div>
 
       <div className="flex gap-3 flex-wrap">
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por número, cliente..." className="flex-1 min-w-[200px] max-w-sm" />
-        <Select options={STATUS_OPTS} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="w-[200px]" />
+        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por número, cliente..." className="w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm" />
+        <Select options={STATUS_OPTS} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="w-full sm:w-[200px]" />
       </div>
 
       {isLoading ? (

@@ -26,7 +26,7 @@ function Toast({ id, type, message }) {
   }, [id, remove]);
 
   return (
-    <div className={clsx('flex items-start gap-3 px-4 py-3 rounded-2xl border shadow-elevated max-w-sm animate-slide-in-right', STYLES[type])}>
+    <div className={clsx('flex items-start gap-3 px-4 py-3 rounded-2xl border shadow-elevated w-full sm:max-w-sm animate-slide-in-right', STYLES[type])}>
       <Icon size={18} className="shrink-0 mt-0.5" />
       <p className="text-sm flex-1">{message}</p>
       <button onClick={() => remove(id)} className="shrink-0 opacity-60 hover:opacity-100">
@@ -40,7 +40,7 @@ export default function ToastContainer() {
   const toasts = useToastStore((s) => s.toasts);
 
   return createPortal(
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2">
+    <div className="fixed top-3 inset-x-3 sm:inset-x-auto sm:top-4 sm:right-4 z-[100] flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
       {toasts.map((t) => <Toast key={t.id} {...t} />)}
     </div>,
     document.body

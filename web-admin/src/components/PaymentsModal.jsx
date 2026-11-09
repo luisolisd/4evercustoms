@@ -63,7 +63,7 @@ export default function PaymentsModal({ open, onClose, order, workshopId, isAdmi
           className="space-y-3 rounded-xl border border-gray-200 p-4"
         >
           <p className="text-sm font-semibold text-gray-800">Registrar cobro</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Monto (MXN)" type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
             <Select label="Método" options={PAYMENT_METHODS} value={method} onChange={(e) => setMethod(e.target.value)} />
           </div>

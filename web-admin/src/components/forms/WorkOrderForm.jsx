@@ -49,7 +49,7 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
         error={errors.vehicleId?.message}
         {...register('vehicleId', { required: 'Requerido' })}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Kilometraje entrada"
           type="number"
@@ -77,7 +77,7 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
       />
       <p className="text-xs text-gray-500 rounded-lg bg-gray-50 p-3">Al crear la orden podrás tomar las fotos de recepción del vehículo. Después asignas técnico(s) y eliges las fotos que se les pedirán.</p>
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="submit" loading={loading}>Crear orden y tomar fotos</Button>
+        <Button type="submit" className="w-full sm:w-auto" loading={loading}>Crear orden y tomar fotos</Button>
       </div>
     </form>
   );

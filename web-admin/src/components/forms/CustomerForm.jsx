@@ -8,7 +8,7 @@ export default function CustomerForm({ defaultValues, onSubmit, loading }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Nombre *"
           placeholder="Juan"
@@ -43,7 +43,7 @@ export default function CustomerForm({ defaultValues, onSubmit, loading }) {
       <Input label="Dirección" placeholder="Av. Principal 123" {...register('address')} />
       <Textarea label="Notas" placeholder="Información adicional..." rows={2} {...register('notes')} />
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="submit" loading={loading}>
+        <Button type="submit" className="w-full sm:w-auto" loading={loading}>
           {defaultValues?.id ? 'Guardar cambios' : 'Crear cliente'}
         </Button>
       </div>

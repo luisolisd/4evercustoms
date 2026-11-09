@@ -62,7 +62,7 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
           {...register('customerId', { required: 'Requerido' })}
         />
       )}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
           label="Marca *"
           placeholder="Seleccionar"
@@ -96,7 +96,7 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
           <BrandLogo make={makeVal} size={20} /> Emblema de {makeVal}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input label="Placa" placeholder="ABC-123" {...register('licensePlate')} />
         <Select
           label="Color"
@@ -105,7 +105,7 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
           {...register('color')}
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input label="VIN / No. Serie" placeholder="1HGBH41JXMN109186" {...register('vin')} />
         <Input
           label="Kilometraje"
@@ -117,7 +117,7 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
       <Input label="Tipo de motor" placeholder="2.0L 4-cilindros" {...register('engineType')} />
       <Textarea label="Notas" placeholder="Condiciones especiales, accesorios..." rows={2} {...register('notes')} />
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="submit" loading={loading}>
+        <Button type="submit" className="w-full sm:w-auto" loading={loading}>
           {defaultValues?.id ? 'Guardar cambios' : 'Registrar vehículo'}
         </Button>
       </div>

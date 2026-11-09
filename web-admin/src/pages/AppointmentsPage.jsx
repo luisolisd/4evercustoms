@@ -14,6 +14,7 @@ import AppointmentForm from '../components/forms/AppointmentForm';
 import Select from '../components/ui/Select';
 import { useToast } from '../hooks/useToast';
 import { fDateTime } from '../utils/formatters';
+import ResponsiveTable, { RowAction } from '../components/ui/ResponsiveTable';
 
 const STATUS_OPTS = [
   { value: '', label: 'Todos los estados' },
@@ -47,7 +48,7 @@ function StatusSelect({ value, onChange, disabled }) {
         onChange={(e) => onChange(e.target.value)}
         title="Cambiar estado de la cita"
         className={clsx(
-          'appearance-none cursor-pointer rounded-full pl-3 pr-7 py-1 text-xs font-semibold ring-1 ring-inset transition',
+          'appearance-none cursor-pointer rounded-full pl-3 pr-8 py-2 md:py-1 text-xs font-semibold ring-1 ring-inset transition',
           'focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-60 disabled:cursor-wait',
           SELECT_COLORS[color]
         )}
@@ -115,8 +116,8 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="eyebrow mb-1">Agenda</p>
           <h1 className="page-title">Citas</h1>
           <p className="page-subtitle">{pagination?.total ?? 0} citas</p>
@@ -129,7 +130,7 @@ export default function AppointmentsPage() {
           options={STATUS_OPTS}
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="max-w-[220px]"
+          className="w-full sm:max-w-[220px]"
         />
       </div>
 
@@ -140,54 +141,28 @@ export default function AppointmentsPage() {
           <EmptyState icon={CalendarDays} title="No hay citas" description="Agenda la primera cita del día." action="Nueva cita" onAction={() => setModal('create')} />
         ) : (
           <>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-5 py-3">Fecha y hora</th>
-                  <th className="text-left px-5 py-3">Cliente / Vehículo</th>
-                  <th className="text-left px-5 py-3">Servicio</th>
-                  <th className="text-center px-5 py-3">Estado</th>
-                  <th className="text-right px-5 py-3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {appointments.map((a) => (
-                  <tr key={a.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-gray-900">{fDateTime(a.scheduledAt)}</p>
-                      <p className="text-xs text-gray-500">{a.duration} min</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-gray-900">{a.customer?.firstName} {a.customer?.lastName}</p>
-                      <p className="text-xs text-gray-500">{a.vehicle?.year} {a.vehicle?.make} {a.vehicle?.model}</p>
-                    </td>
-                    <td className="px-5 py-4 text-gray-700">{a.serviceType}</td>
-                    <td className="px-5 py-4 text-center">
-                      <StatusSelect
-                        value={a.status}
-                        disabled={statusMut.isPending}
-                        onChange={(status) => statusMut.mutate({ id: a.id, status })}
-                      />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button onClick={() => setModal({ mode: 'edit', appointment: a })} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50">
-                          <Edit2 size={15} />
-                        </button>
-                        {!['CANCELLED','COMPLETED'].includes(a.status) && (
-                          <button onClick={() => setCancelling(a)} className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50" title="Cancelar">
-                            <XCircle size={15} />
-                          </button>
-                        )}
-                        <button onClick={() => setDeleting(a)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" title="Eliminar">
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
+            <ResponsiveTable
+  rows={appointments}
+  columns={[
+    { key: 'when', header: 'Fecha y hora', mobile: 'title', cell: (a) => (
+      <div><p className="font-semibold text-gray-900">{fDateTime(a.scheduledAt)}</p><p className="text-xs text-gray-500">{a.duration} min</p></div>
+    ) },
+    { key: 'status', header: 'Estado', align: 'center', mobile: 'badge', cell: (a) => (
+      <StatusSelect value={a.status} disabled={statusMut.isPending} onChange={(status) => statusMut.mutate({ id: a.id, status })} />
+    ) },
+    { key: 'who', header: 'Cliente / Vehículo', cell: (a) => (
+      <div><p className="font-medium text-gray-900">{a.customer?.firstName} {a.customer?.lastName}</p><p className="text-xs text-gray-500">{a.vehicle?.year} {a.vehicle?.make} {a.vehicle?.model}</p></div>
+    ) },
+    { key: 'service', header: 'Servicio', cell: (a) => <span className="text-gray-700">{a.serviceType}</span> },
+  ]}
+  actions={(a, { mobile }) => (
+    <>
+      <RowAction mobile={mobile} icon={Edit2} label="Editar" tone="blue" onClick={() => setModal({ mode: 'edit', appointment: a })} />
+      {!['CANCELLED', 'COMPLETED'].includes(a.status) && <RowAction mobile={mobile} icon={XCircle} label="Cancelar" tone="amber" onClick={() => setCancelling(a)} />}
+      <RowAction mobile={mobile} icon={Trash2} label="Eliminar" tone="red" onClick={() => setDeleting(a)} />
+    </>
+  )}
+/>
             {pagination && <Pagination {...pagination} onPageChange={setPage} />}
           </>
         )}

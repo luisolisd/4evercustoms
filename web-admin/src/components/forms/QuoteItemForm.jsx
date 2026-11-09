@@ -50,7 +50,7 @@ export default function QuoteItemForm({ onSubmit, loading }) {
         error={errors.description?.message}
         {...register('description', { required: 'Requerido' })}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Cantidad *"
           type="number"
@@ -67,7 +67,7 @@ export default function QuoteItemForm({ onSubmit, loading }) {
         />
       </div>
       <div className="flex justify-end pt-2">
-        <Button type="submit" loading={loading}>Agregar línea</Button>
+        <Button type="submit" className="w-full sm:w-auto" loading={loading}>Agregar línea</Button>
       </div>
     </form>
   );

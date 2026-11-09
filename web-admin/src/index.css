@@ -11,11 +11,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
   body {
+    /* Los textos largos se parten en vez de salirse de su recuadro */
+    overflow-wrap: anywhere;
     @apply bg-gray-50 text-gray-900 font-sans antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
   h1, h2, h3, h4 {
     @apply font-display tracking-tight;
+  }
+  /* En el celular los campos usan 16px: más legibles y sin saltos de pantalla al enfocar */
+  @media (max-width: 639px) {
+    input:not([type='checkbox']):not([type='radio']), select, textarea { font-size: 16px; }
   }
   /* Selección con color de marca */
   ::selection {
@@ -42,6 +48,8 @@
 }
 
 @layer utilities {
+  /* Respeta la barra inferior de iPhone / gestos de Android */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   /* Skeleton shimmer */
   .skeleton {
     @apply relative overflow-hidden bg-gray-200/70 rounded-md;

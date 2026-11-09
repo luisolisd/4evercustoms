@@ -14,6 +14,7 @@ import BrandLogo from '../components/ui/BrandLogo';
 import { useToast } from '../hooks/useToast';
 import { fNumber } from '../utils/formatters';
 import clsx from 'clsx';
+import ResponsiveTable, { RowAction } from '../components/ui/ResponsiveTable';
 
 export default function VehiclesPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
@@ -71,8 +72,8 @@ export default function VehiclesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Vehículos</h1>
           <p className="text-sm text-gray-500 mt-1">{pagination?.total ?? 0} vehículos registrados</p>
         </div>
@@ -93,70 +94,40 @@ export default function VehiclesPage() {
           <EmptyState icon={Car} title="No hay vehículos" description="Registra el primer vehículo." action={!search ? 'Agregar vehículo' : undefined} onAction={() => setModal('create')} />
         ) : (
           <>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                  <th className="text-left px-5 py-3">Vehículo</th>
-                  <th className="text-left px-5 py-3">Propietario</th>
-                  <th className="text-left px-5 py-3">Placa / VIN</th>
-                  <th className="text-right px-5 py-3">Kilometraje</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {vehicles.map((v) => (
-                  <tr key={v.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-1.5 bg-white border border-gray-100 rounded-xl w-9 h-9 flex items-center justify-center">
-                          <BrandLogo make={v.make} size={22} />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{v.year} {v.make} {v.model}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {v.color && (
-                              <span className="flex items-center gap-1 text-xs text-gray-500">
-                                <span className={clsx('w-2.5 h-2.5 rounded-full inline-block', colorDot(v.color))} />
-                                {v.color}
-                              </span>
-                            )}
-                            {v.engineType && <span className="text-xs text-gray-400">{v.engineType}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-gray-900">{v.customer?.firstName} {v.customer?.lastName}</p>
-                      <p className="text-xs text-gray-500">{v.customer?.phone}</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      {v.licensePlate && <p className="font-mono font-medium text-gray-900">{v.licensePlate}</p>}
-                      {v.vin && <p className="font-mono text-xs text-gray-500 truncate max-w-[140px]">{v.vin}</p>}
-                      {!v.licensePlate && !v.vin && <span className="text-gray-400">—</span>}
-                    </td>
-                    <td className="px-5 py-4 text-right text-gray-700 font-medium">
-                      {v.mileage ? `${fNumber(v.mileage)} km` : '—'}
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => setModal({ mode: 'edit', vehicle: v })}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                        <button
-                          onClick={() => setDeleting(v)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
+            <ResponsiveTable
+  rows={vehicles}
+  columns={[
+    { key: 'vehicle', header: 'Vehículo', mobile: 'title', cell: (v) => (
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="p-1.5 bg-white border border-gray-100 rounded-xl w-10 h-10 md:w-9 md:h-9 flex items-center justify-center shrink-0"><BrandLogo make={v.make} size={22} /></div>
+        <div className="min-w-0">
+          <p className="font-semibold text-gray-900 truncate">{v.year} {v.make} {v.model}</p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            {v.color && <span className="flex items-center gap-1 text-xs text-gray-500"><span className={clsx('w-2.5 h-2.5 rounded-full inline-block', colorDot(v.color))} />{v.color}</span>}
+            {v.engineType && <span className="text-xs text-gray-400">{v.engineType}</span>}
+          </div>
+        </div>
+      </div>
+    ) },
+    { key: 'owner', header: 'Propietario', cell: (v) => (
+      <div><p className="font-medium text-gray-900">{v.customer?.firstName} {v.customer?.lastName}</p><p className="text-xs text-gray-500">{v.customer?.phone}</p></div>
+    ) },
+    { key: 'plate', header: 'Placa / VIN', cell: (v) => (
+      <div>
+        {v.licensePlate && <p className="font-mono font-medium text-gray-900">{v.licensePlate}</p>}
+        {v.vin && <p className="font-mono text-xs text-gray-500 truncate md:max-w-[140px]">{v.vin}</p>}
+        {!v.licensePlate && !v.vin && <span className="text-gray-400">—</span>}
+      </div>
+    ) },
+    { key: 'km', header: 'Kilometraje', align: 'right', cell: (v) => <span className="font-medium text-gray-700">{v.mileage ? `${fNumber(v.mileage)} km` : '—'}</span> },
+  ]}
+  actions={(v, { mobile }) => (
+    <>
+      <RowAction mobile={mobile} icon={Edit2} label="Editar" tone="blue" onClick={() => setModal({ mode: 'edit', vehicle: v })} />
+      <RowAction mobile={mobile} icon={Trash2} label="Eliminar" tone="red" onClick={() => setDeleting(v)} />
+    </>
+  )}
+/>
             {pagination && <Pagination {...pagination} onPageChange={setPage} />}
           </>
         )}
