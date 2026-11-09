@@ -19,6 +19,22 @@ const stockSchema = z.object({
 
 const num0 = (v) => (v === '' || v === null || v === undefined || Number.isNaN(v) ? undefined : v);
 
+// Invariante: toda refacción activa tiene su registro de existencias. Las listas de refacciones
+// (cotizaciones, órdenes) y la de inventario salen de tablas distintas; si una refacción quedó sin
+// registro de existencias (datos de ejemplo, cargas antiguas) no aparecería en Inventario.
+const ensureInventoryRows = async (workshopId) => {
+  const orphans = await prisma.part.findMany({
+    where: { workshopId, inventory: { is: null } },
+    select: { id: true },
+  });
+  if (orphans.length) {
+    await prisma.inventory.createMany({
+      data: orphans.map((p) => ({ workshopId, partId: p.id })),
+      skipDuplicates: true,
+    });
+  }
+};
+
 // IDs de inventario con existencia <= mínimo (comparación entre columnas: requiere SQL)
 const lowStockIds = async (workshopId) => {
   const rows = await prisma.$queryRaw`
@@ -126,6 +142,7 @@ const listInventory = async (req, res, next) => {
     const { workshopId } = req.params;
     const { search, lowStock } = req.query;
     const { page, limit, skip } = parsePagination(req.query);
+    await ensureInventoryRows(workshopId);
 
     const where = {
       workshopId,
@@ -201,6 +218,7 @@ const addMovement = async (req, res, next) => {
 
 const lowStock = async (req, res, next) => {
   try {
+    await ensureInventoryRows(req.params.workshopId);
     const ids = await lowStockIds(req.params.workshopId);
     const items = await prisma.inventory.findMany({
       where: { id: { in: ids }, part: { isActive: true } },

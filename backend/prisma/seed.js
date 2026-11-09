@@ -87,6 +87,13 @@ async function main() {
   }
   if (legacy.length) console.log(`[seed] ${legacy.length} pago(s) histórico(s) migrado(s).`);
 
+  // Repara refacciones sin registro de existencias (no aparecían en Inventario). Idempotente.
+  const orphans = await prisma.part.findMany({ where: { inventory: { is: null } }, select: { id: true, workshopId: true } });
+  if (orphans.length) {
+    await prisma.inventory.createMany({ data: orphans.map((p) => ({ workshopId: p.workshopId, partId: p.id })), skipDuplicates: true });
+    console.log(`[seed] ${orphans.length} refacción(es) sin existencias reparada(s).`);
+  }
+
   if (!isProd) {
     const customer = await prisma.customer.upsert({
       where: { workshopId_phone: { workshopId: workshop.id, phone: '+526641111111' } },
@@ -109,7 +116,10 @@ async function main() {
       await prisma.part.upsert({
         where: { workshopId_sku: { workshopId: workshop.id, sku } },
         update: {},
-        create: { workshopId: workshop.id, sku, name, brand, unitPrice },
+        create: {
+          workshopId: workshop.id, sku, name, brand, unitPrice,
+          inventory: { create: { workshopId: workshop.id, quantity: 10, minQuantity: 3 } },
+        },
       });
     }
     console.log('[seed] Datos de ejemplo creados (solo desarrollo).');
