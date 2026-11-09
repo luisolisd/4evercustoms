@@ -11,6 +11,7 @@ router.post('/', ...staff, ctrl.create);
 router.put('/:id', ...staff, ctrl.update);
 router.post('/:id/contact', ...staff, ctrl.contact);
 router.patch('/:id/status', ...staff, ctrl.setStatus);
+router.post('/:id/quote-decision', ...staff, ctrl.quoteDecision);
 router.delete('/:id', ...staff, ctrl.remove);
 
 module.exports = router;

@@ -87,6 +87,23 @@ async function main() {
   }
   if (legacy.length) console.log(`[seed] ${legacy.length} pago(s) histórico(s) migrado(s).`);
 
+  // Cotizaciones enviadas y sin respuesta que aún no tienen recordatorio de seguimiento (anteriores a esta función)
+  const pendingQuotes = await prisma.quote.findMany({
+    where: { status: 'SENT', reminders: { none: { status: { in: ['PENDING', 'CONTACTED', 'CONFIRMED'] } } } },
+    select: { id: true, workshopId: true, customerId: true, workOrderId: true, quoteNumber: true, validUntil: true },
+  });
+  for (const q of pendingQuotes) {
+    const followUp = Date.now() + 2 * 24 * 60 * 60 * 1000;
+    const due = q.validUntil && q.validUntil.getTime() > Date.now() ? Math.min(q.validUntil.getTime(), followUp) : followUp;
+    await prisma.serviceReminder.create({
+      data: {
+        workshopId: q.workshopId, customerId: q.customerId, workOrderId: q.workOrderId, quoteId: q.id,
+        type: 'QUOTE', serviceType: `Confirmar cotización ${q.quoteNumber}`, dueDate: new Date(due),
+      },
+    });
+  }
+  if (pendingQuotes.length) console.log(`[seed] ${pendingQuotes.length} recordatorio(s) de cotización creado(s).`);
+
   // Repara refacciones sin registro de existencias (no aparecían en Inventario). Idempotente.
   const orphans = await prisma.part.findMany({ where: { inventory: { is: null } }, select: { id: true, workshopId: true } });
   if (orphans.length) {

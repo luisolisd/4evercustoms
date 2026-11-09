@@ -12,9 +12,9 @@ const COLORS = {
   brand:  'bg-brand-50 text-brand-700 ring-brand-200',
 };
 
-export default function Badge({ color = 'gray', children, className }) {
+export default function Badge({ color = 'gray', children, className, square = false }) {
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset', COLORS[color], className)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ring-1 ring-inset', square ? 'rounded' : 'rounded-full', COLORS[color], className)}>
       {children}
     </span>
   );
@@ -57,9 +57,9 @@ export const PAYMENT_STATUS = {
   REFUNDED: { label: 'Reembolsado', color: 'gray' },
 };
 
-export function WorkOrderBadge({ status }) {
+export function WorkOrderBadge({ status, square = false }) {
   const s = WORK_ORDER_STATUS[status] || { label: status, color: 'gray' };
-  return <Badge color={s.color}>{s.label}</Badge>;
+  return <Badge color={s.color} square={square}>{s.label}</Badge>;
 }
 
 
@@ -72,3 +72,4 @@ export function PaymentBadge({ status }) {
   const s = PAYMENT_STATUS[status] || { label: status, color: 'gray' };
   return <Badge color={s.color}>{s.label}</Badge>;
 }
+

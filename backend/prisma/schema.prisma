@@ -333,10 +333,11 @@ model Quote {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  workshop  Workshop    @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  customer  Customer    @relation(fields: [customerId], references: [id])
-  workOrder WorkOrder?  @relation(fields: [workOrderId], references: [id])
+  workshop  Workshop          @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer  Customer          @relation(fields: [customerId], references: [id])
+  workOrder WorkOrder?        @relation(fields: [workOrderId], references: [id])
   items     QuoteItem[]
+  reminders ServiceReminder[]
 
   @@unique([workshopId, quoteNumber])
   @@index([workshopId])
@@ -644,6 +645,8 @@ model ServiceReminder {
   customerId  String
   vehicleId   String?
   workOrderId String?
+  quoteId     String?
+  type        String         @default("SERVICE") // SERVICE (próximo servicio) | QUOTE (seguimiento de cotización)
   serviceType String
   dueDate     DateTime
   notes       String?
@@ -659,6 +662,7 @@ model ServiceReminder {
   customer  Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
   vehicle   Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   workOrder WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+  quote     Quote?     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
   @@index([workshopId, status, dueDate])
   @@map("service_reminders")

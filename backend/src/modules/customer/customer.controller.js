@@ -1,6 +1,7 @@
 const prisma = require('../../config/database');
 const { ok, error, notFound } = require('../../utils/response');
 const { recalcOrderTotal } = require('../../utils/orderTotals');
+const { syncQuoteReminder } = require('../../utils/quoteReminders');
 
 // ── Perfil + taller ──────────────────────────────────────────────────────────
 const me = async (req, res, next) => {
@@ -233,6 +234,7 @@ const respondQuote = async (req, res, next) => {
     });
     if (res2.count === 0) return error(res, 'Esta cotización ya no admite cambios', 400);
     const updated = { id: quote.id, status: decision };
+    await syncQuoteReminder(quote.id);
     // Al aprobar/rechazar, el total de la orden cambia (solo cuentan las aprobadas)
     if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
     ok(res, updated);

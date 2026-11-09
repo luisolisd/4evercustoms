@@ -30,13 +30,13 @@ export default function ResponsiveTable({
     <>
       {/* Escritorio / tablet */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm" style={{ minWidth }}>
+        <table className="w-full text-sm [overflow-wrap:normal]" style={{ minWidth }}>
           <thead>
             <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
               {deskCols.map((c) => (
-                <th key={c.key} className={clsx('px-5 py-3 font-semibold', align[c.align || 'left'], c.headerClassName)}>{c.header}</th>
+                <th key={c.key} className={clsx('px-4 py-3 font-semibold whitespace-nowrap', align[c.align || 'left'], c.headerClassName)}>{c.header}</th>
               ))}
-              {actions && <th className="px-5 py-3 text-right">{actionsHeader}</th>}
+              {actions && <th className="px-4 py-3 text-right whitespace-nowrap">{actionsHeader}</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -47,10 +47,10 @@ export default function ResponsiveTable({
                 className={clsx('transition-colors hover:bg-gray-50', onRowClick && 'cursor-pointer', rowClassName?.(r))}
               >
                 {deskCols.map((c) => (
-                  <td key={c.key} className={clsx('px-5 py-4 align-middle', align[c.align || 'left'], c.className)}>{c.cell(r)}</td>
+                  <td key={c.key} className={clsx('px-4 py-3.5 align-middle', align[c.align || 'left'], c.className)}>{c.cell(r)}</td>
                 ))}
                 {actions && (
-                  <td className="px-5 py-4" onClick={stop}>
+                  <td className="px-4 py-3.5" onClick={stop}>
                     <div className="flex items-center justify-end gap-1">{actions(r, { mobile: false })}</div>
                   </td>
                 )}
@@ -119,3 +119,4 @@ export function RowAction({ icon: Icon, label, onClick, tone = 'gray', mobile, t
     </button>
   );
 }
+

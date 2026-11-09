@@ -2,6 +2,8 @@ const prisma = require('../../config/database');
 const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { z, pick, ensure, dateStr, optionalStr, optionalInt } = require('../../utils/guards');
+const { recalcOrderTotal } = require('../../utils/orderTotals');
+const { syncQuoteReminder } = require('../../utils/quoteReminders');
 
 const STATUSES = ['PENDING', 'CONTACTED', 'CONFIRMED', 'DONE', 'CANCELLED'];
 
@@ -15,6 +17,7 @@ const schema = z.object({
 const INCLUDE = {
   customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
   vehicle: { select: { id: true, make: true, model: true, year: true, licensePlate: true } },
+  quote: { select: { id: true, quoteNumber: true, status: true, total: true, validUntil: true, workOrderId: true } },
 };
 
 // 10 dígitos → agrega lada de México; wa.me exige número internacional sin "+"
@@ -24,7 +27,22 @@ const waNumber = (phone) => {
   return d;
 };
 
+const money = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(n || 0));
+
+// Mensaje de seguimiento de una cotización enviada y sin respuesta
+const buildQuoteMessage = (r, workshop) => {
+  const valid = r.quote.validUntil
+    ? ` (válida hasta el ${new Date(r.quote.validUntil).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', timeZone: workshop.timezone || 'America/Mexico_City' })})`
+    : '';
+  return (
+    `Hola ${r.customer.firstName}, te saluda ${workshop.name}. ` +
+    `Te enviamos la cotización ${r.quote.quoteNumber} por ${money(r.quote.total)}${valid}. ` +
+    '¿Nos confirmas si la autorizas para comenzar el trabajo? Quedamos pendientes. ¡Gracias!'
+  );
+};
+
 const buildMessage = (r, workshop) => {
+  if (r.type === 'QUOTE' && r.quote) return buildQuoteMessage(r, workshop);
   const when = new Date(r.dueDate).toLocaleDateString('es-MX', {
     day: 'numeric', month: 'long', year: 'numeric', timeZone: workshop.timezone || 'America/Mexico_City',
   });
@@ -47,7 +65,7 @@ const withWhatsApp = (r, workshop) => {
 const list = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
-    const { status, view, search } = req.query;
+    const { status, view, search, type } = req.query;
     const { page, limit, skip } = parsePagination(req.query);
     if (status && !STATUSES.includes(status)) return error(res, 'Estado inválido');
 
@@ -64,6 +82,7 @@ const list = async (req, res, next) => {
     const where = {
       workshopId,
       ...viewWhere,
+      ...(['SERVICE', 'QUOTE'].includes(type) && { type }),
       ...(status && { status }),
       ...(search && {
         customer: {
@@ -156,6 +175,35 @@ const setStatus = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// Desde el recordatorio de una cotización: confirmarla (aprobada) o cancelarla, y cerrar el seguimiento
+const quoteDecision = async (req, res, next) => {
+  try {
+    const { decision } = req.body;
+    if (!['APPROVED', 'REJECTED'].includes(decision)) return error(res, 'Decisión inválida');
+    const reminder = await prisma.serviceReminder.findFirst({
+      where: { id: req.params.id, workshopId: req.params.workshopId, type: 'QUOTE' },
+      select: { quoteId: true },
+    });
+    if (!reminder?.quoteId) return notFound(res, 'Recordatorio de cotización no encontrado');
+
+    // Actualización condicionada: solo si la cotización sigue enviada y sin respuesta
+    const upd = await prisma.quote.updateMany({
+      where: { id: reminder.quoteId, workshopId: req.params.workshopId, status: 'SENT' },
+      data: decision === 'APPROVED'
+        ? { status: 'APPROVED', approvedAt: new Date() }
+        : { status: 'REJECTED', rejectedAt: new Date(), rejectionReason: 'Cancelada por el taller (sin confirmación del cliente)' },
+    });
+    if (upd.count === 0) {
+      await syncQuoteReminder(reminder.quoteId);
+      return error(res, 'La cotización ya no está pendiente de confirmar', 409);
+    }
+    const quote = await prisma.quote.findUnique({ where: { id: reminder.quoteId }, select: { workOrderId: true } });
+    if (quote?.workOrderId) await recalcOrderTotal(quote.workOrderId); // solo cuentan las aprobadas
+    await syncQuoteReminder(reminder.quoteId);
+    ok(res, { message: decision === 'APPROVED' ? 'Cotización confirmada' : 'Cotización cancelada' });
+  } catch (e) { next(e); }
+};
+
 const remove = async (req, res, next) => {
   try {
     await prisma.serviceReminder.deleteMany({ where: { id: req.params.id, workshopId: req.params.workshopId } });
@@ -163,5 +211,5 @@ const remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, update, contact, setStatus, remove, withWhatsApp, INCLUDE };
+module.exports = { list, create, update, contact, setStatus, quoteDecision, remove, withWhatsApp, INCLUDE };
 

@@ -19,8 +19,9 @@ import Pagination from '../components/ui/Pagination';
 import SearchInput from '../components/ui/SearchInput';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../hooks/useToast';
+import QuoteDecision from '../components/QuoteDecision';
 import { SERVICES } from '../constants/services';
-import { fDate } from '../utils/formatters';
+import { fDate, fMoney } from '../utils/formatters';
 
 const VIEWS = [
   { key: 'overdue', label: 'Vencidos' },
@@ -45,6 +46,7 @@ export default function RemindersPage() {
   const toast = useToast();
 
   const [view, setView] = useState('upcoming');
+  const [type, setType] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(false);
@@ -53,8 +55,8 @@ export default function RemindersPage() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const { data, isLoading } = useQuery({
-    queryKey: ['reminders', workshopId, view, search, page],
-    queryFn: () => getReminders(workshopId, { view, search: search || undefined, page, limit: 15 }),
+    queryKey: ['reminders', workshopId, view, type, search, page],
+    queryFn: () => getReminders(workshopId, { view, type: type || undefined, search: search || undefined, page, limit: 15 }),
     enabled: !!workshopId,
     keepPreviousData: true,
   });
@@ -113,8 +115,8 @@ export default function RemindersPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="eyebrow mb-1">Seguimiento</p>
-          <h1 className="page-title">Recordatorios de servicio</h1>
-          <p className="page-subtitle">Avisa a tus clientes de su próximo servicio por WhatsApp con un clic</p>
+          <h1 className="page-title">Recordatorios</h1>
+          <p className="page-subtitle">Próximos servicios y cotizaciones sin confirmar: avisa al cliente por WhatsApp con un clic</p>
         </div>
         <Button icon={Plus} onClick={() => { setForm(EMPTY); setModal(true); }}>Nuevo</Button>
       </div>
@@ -125,6 +127,14 @@ export default function RemindersPage() {
             <button key={v.key} onClick={() => { setView(v.key); setPage(1); }}
               className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition', view === v.key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
               {v.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+          {[['', 'Todos'], ['SERVICE', 'Servicios'], ['QUOTE', 'Cotizaciones']].map(([k, l]) => (
+            <button key={k} onClick={() => { setType(k); setPage(1); }}
+              className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition', type === k ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
+              {l}
             </button>
           ))}
         </div>
@@ -146,11 +156,12 @@ export default function RemindersPage() {
                 <div key={r.id} className="flex flex-wrap items-center gap-3 px-5 py-4">
                   <div className="flex-1 min-w-[220px]">
                     <p className="font-semibold text-gray-900">{r.customer?.firstName} {r.customer?.lastName}</p>
-                    <p className="text-sm text-gray-600">{r.serviceType}{r.vehicle ? ` · ${r.vehicle.make} ${r.vehicle.model} ${r.vehicle.year}` : ''}</p>
+                    <p className="text-sm text-gray-600">{r.serviceType}{r.type === 'QUOTE' && r.quote ? ` · ${fMoney(r.quote.total)}` : ''}{r.vehicle ? ` · ${r.vehicle.make} ${r.vehicle.model} ${r.vehicle.year}` : ''}</p>
                     <p className={clsx('text-xs', overdue ? 'text-red-600 font-medium' : 'text-gray-400')}>
-                      {overdue ? 'Venció el ' : 'Programado para '}{fDate(r.dueDate)}{r.nextMileage ? ` · ${r.nextMileage.toLocaleString('es-MX')} km` : ''}{r.notes ? ` · ${r.notes}` : ''}
+                      {overdue ? 'Venció el ' : r.type === 'QUOTE' ? 'Dar seguimiento el ' : 'Programado para '}{fDate(r.dueDate)}{r.nextMileage ? ` · ${r.nextMileage.toLocaleString('es-MX')} km` : ''}{r.notes ? ` · ${r.notes}` : ''}
                     </p>
                   </div>
+                  {r.type === 'QUOTE' && <Badge color="blue" square>Cotización</Badge>}
                   <Badge color={st.color}>{st.label}</Badge>
                   {isOpen && (
                     <div className="flex items-center gap-1.5">
@@ -158,12 +169,18 @@ export default function RemindersPage() {
                         className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] text-white px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-semibold hover:brightness-95">
                         <MessageCircle size={14} /> WhatsApp
                       </button>
-                      {r.status !== 'CONFIRMED' && (
-                        <button onClick={() => statusMut.mutate({ id: r.id, status: 'CONFIRMED' })} title="Marcar como confirmado"
-                          className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"><Check size={18} /></button>
+                      {r.type === 'QUOTE' ? (
+                        r.quote?.status === 'SENT' && <QuoteDecision reminder={r} workshopId={workshopId} />
+                      ) : (
+                        <>
+                          {r.status !== 'CONFIRMED' && (
+                            <button onClick={() => statusMut.mutate({ id: r.id, status: 'CONFIRMED' })} title="Marcar como confirmado"
+                              className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"><Check size={18} /></button>
+                          )}
+                          <button onClick={() => statusMut.mutate({ id: r.id, status: 'DONE' })} title="Marcar como realizado"
+                            className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50"><CheckCheck size={18} /></button>
+                        </>
                       )}
-                      <button onClick={() => statusMut.mutate({ id: r.id, status: 'DONE' })} title="Marcar como realizado"
-                        className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50"><CheckCheck size={18} /></button>
                     </div>
                   )}
                   <button onClick={() => setDeleting(r)} title="Eliminar" className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"><Trash2 size={16} /></button>

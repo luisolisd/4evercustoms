@@ -3,6 +3,7 @@ const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { recalcOrderTotal } = require('../../utils/orderTotals');
 const { notifyCustomer } = require('../../utils/notify');
+const { syncQuoteReminder } = require('../../utils/quoteReminders');
 const { CUSTOMER_PUBLIC, z, pick, ensure, dateStr, num, optionalStr, httpError } = require('../../utils/guards');
 
 const STATUSES = ['DRAFT', 'SENT', 'APPROVED', 'REJECTED', 'EXPIRED'];
@@ -151,6 +152,7 @@ const updateStatus = async (req, res, next) => {
     };
 
     const updated = await prisma.quote.update({ where: { id: quote.id }, data });
+    await syncQuoteReminder(quote.id); // seguimiento si quedó enviada; se cierra en cualquier otro estado
 
     // Si la cotización está ligada a una orden, recalcula su total (solo cuentan las aprobadas)
     if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
