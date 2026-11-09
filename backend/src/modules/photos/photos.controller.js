@@ -14,6 +14,9 @@ const cloudinaryReady = () =>
 
 const PHASES = ['RECEPTION', 'DELIVERY'];
 
+// ¿El servidor puede guardar fotos? (Cloudinary configurado). La app lo consulta para avisar antes de fallar.
+const storageStatus = (req, res) => ok(res, { ready: !!cloudinaryReady() });
+
 // La orden debe ser del taller; un técnico solo accede a las que tiene asignadas
 const accessibleOrder = async (req) => {
   const order = await prisma.workOrder.findFirst({
@@ -263,7 +266,7 @@ const removeTemplate = async (req, res, next) => {
 };
 
 module.exports = {
-  list, upload, remove, bulkRemove, gallery,
+  storageStatus, list, upload, remove, bulkRemove, gallery,
   addSlots, removeSlot,
   listTemplates, createTemplate, updateTemplate, removeTemplate,
 };

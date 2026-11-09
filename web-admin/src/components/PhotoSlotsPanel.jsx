@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { Camera, CheckCircle2, Circle, Eye, Trash2, Plus, X, Loader2 } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Camera, CheckCircle2, Circle, Eye, Trash2, Plus, X, Loader2, AlertTriangle, RotateCw } from 'lucide-react';
 import clsx from 'clsx';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import ConfirmDialog from './ui/ConfirmDialog';
 import PhotoPicker from './PhotoPicker';
 import { uploadWOPhotos, deletePhoto } from '../services/workOrders';
-import { addPhotoSlots, removePhotoSlot } from '../services/photos';
+import { addPhotoSlots, removePhotoSlot, getPhotoStatus } from '../services/photos';
 import { compressImage } from '../utils/image';
 import { useToast } from '../hooks/useToast';
 
@@ -25,12 +25,22 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
   const [pickerOpen, setPickerOpen] = useState(false);
   const [spec, setSpec] = useState({ templateIds: [], custom: [] });
   const [deletingPhoto, setDeletingPhoto] = useState(null);
+  // Fotos que no se pudieron subir: se conservan en el teléfono para reintentar (no se pierden)
+  const [failed, setFailed] = useState({});
+
+  const { data: storage } = useQuery({
+    queryKey: ['photo-status', workshopId],
+    queryFn: () => getPhotoStatus(workshopId).then((r) => r.data),
+    staleTime: 5 * 60_000,
+  });
+  const storageDown = storage && storage.ready === false;
 
   const slots = (order.photoSlots || []).filter((s) => (s.kind || 'TECH') === kind);
   const done = slots.filter((s) => s.photos?.length > 0).length;
 
   const upload = async (files, slotId) => {
     setUploadingSlot(slotId);
+    setFailed((f) => { const n = { ...f }; delete n[slotId]; return n; });
     try {
       const fd = new FormData();
       for (const f of files) fd.append('photos', await compressImage(f));
@@ -39,13 +49,18 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
       toast.success('Foto guardada');
       onChanged();
     } catch (e) {
-      toast.error(e.message || 'No se pudo subir la foto');
+      const message = e?.message && e.message !== 'Network Error' ? e.message : 'Sin conexión con el servidor';
+      setFailed((f) => ({ ...f, [slotId]: { files, message } }));
     } finally {
       setUploadingSlot(null);
     }
   };
 
-  const pick = (slotId) => { activeSlot.current = slotId; inputRef.current?.click(); };
+  const pick = (slotId) => {
+    if (storageDown) return toast.error('El servidor no tiene configurado el almacenamiento de fotos. Avisa al administrador.');
+    activeSlot.current = slotId;
+    inputRef.current?.click();
+  };
   const onFiles = (e) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
@@ -82,6 +97,13 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
         )}
       </div>
 
+      {storageDown && (
+        <div className="flex items-start gap-2 rounded-md border border-red-200 border-l-[3px] border-l-red-500 bg-red-50 px-3 py-2.5 text-xs text-red-800">
+          <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+          <p><b>No se pueden guardar fotos todavía.</b> Falta configurar el almacenamiento (Cloudinary) en el servidor. Avisa al administrador; mientras tanto no se perderá nada de lo escrito.</p>
+        </div>
+      )}
+
       {slots.length > 0 && (
         <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
           <div className="h-full bg-brand-600 transition-all" style={{ width: `${(done / slots.length) * 100}%` }} />
@@ -112,6 +134,15 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
                   </button>
                 )}
               </div>
+              {failed[s.id] && (
+                <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-800">
+                  <p className="flex items-start gap-1.5"><AlertTriangle size={14} className="mt-0.5 shrink-0" /><span><b>No se pudo subir la foto.</b> {failed[s.id].message}. La foto sigue guardada en tu teléfono.</span></p>
+                  <div className="mt-2 flex gap-2">
+                    <button type="button" onClick={() => upload(failed[s.id].files, s.id)} className="inline-flex items-center gap-1.5 rounded bg-red-600 px-3 py-1.5 font-semibold text-white"><RotateCw size={13} /> Reintentar</button>
+                    <button type="button" onClick={() => setFailed((f) => { const n = { ...f }; delete n[s.id]; return n; })} className="rounded border border-red-200 bg-white px-3 py-1.5 font-medium">Descartar</button>
+                  </div>
+                </div>
+              )}
               {ok && (
                 <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {s.photos.map((p) => (

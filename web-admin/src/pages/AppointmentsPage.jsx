@@ -15,6 +15,7 @@ import Select from '../components/ui/Select';
 import { useToast } from '../hooks/useToast';
 import { fDateTime } from '../utils/formatters';
 import ResponsiveTable, { RowAction } from '../components/ui/ResponsiveTable';
+import AssignAppointmentModal from '../components/AssignAppointmentModal';
 
 const STATUS_OPTS = [
   { value: '', label: 'Todos los estados' },
@@ -72,6 +73,7 @@ export default function AppointmentsPage() {
   const [modal, setModal] = useState(null);
   const [cancelling, setCancelling] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [assigning, setAssigning] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['appointments', workshopId, statusFilter, page],
@@ -154,6 +156,15 @@ export default function AppointmentsPage() {
       <div><p className="font-medium text-gray-900">{a.customer?.firstName} {a.customer?.lastName}</p><p className="text-xs text-gray-500">{a.vehicle?.year} {a.vehicle?.make} {a.vehicle?.model}</p></div>
     ) },
     { key: 'service', header: 'Servicio', cell: (a) => <span className="text-gray-700">{a.serviceType}</span> },
+    { key: 'tech', header: 'Técnico', cell: (a) => (
+      <button
+        onClick={(e) => { e.stopPropagation(); setAssigning(a); }}
+        title="Asignar técnico"
+        className={a.assignedTo ? 'text-sm text-gray-700 hover:text-brand-600 hover:underline' : 'inline-flex rounded bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-3 py-1 text-xs font-semibold hover:bg-amber-100'}
+      >
+        {a.assignedTo ? `${a.assignedTo.firstName} ${a.assignedTo.lastName}` : 'Asignar técnico'}
+      </button>
+    ) },
   ]}
   actions={(a, { mobile }) => (
     <>
@@ -193,6 +204,8 @@ export default function AppointmentsPage() {
         title="Eliminar cita"
         message={`¿Eliminar definitivamente la cita de ${deleting?.customer?.firstName} ${deleting?.customer?.lastName}? Esta acción no se puede deshacer.`}
       />
+
+      <AssignAppointmentModal open={!!assigning} onClose={() => setAssigning(null)} appointment={assigning} onSaved={invalidate} />
     </div>
   );
 }

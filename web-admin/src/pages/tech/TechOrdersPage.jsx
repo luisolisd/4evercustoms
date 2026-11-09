@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Car, Camera, ClipboardList, ChevronRight } from 'lucide-react';
+import { Car, Camera, ClipboardList, ChevronRight, CalendarClock } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { getWorkOrders } from '../../services/workOrders';
+import { getMyAppointments } from '../../services/appointments';
 import { WorkOrderBadge } from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
-import { fDate } from '../../utils/formatters';
+import { fDate, fDateTime } from '../../utils/formatters';
 import clsx from 'clsx';
 
 const TABS = [
@@ -27,6 +28,14 @@ export default function TechOrdersPage() {
     refetchOnWindowFocus: true,
   });
 
+  const { data: appts } = useQuery({
+    queryKey: ['tech-appointments', workshopId],
+    queryFn: () => getMyAppointments(workshopId).then((r) => r.data),
+    enabled: !!workshopId,
+    refetchOnWindowFocus: true,
+  });
+  const toEnter = appts || [];
+
   const all = data || [];
   const isDone = (o) => ['DELIVERED', 'CANCELLED'].includes(o.status);
   const rows = all.filter((o) => (tab === 'open' ? !isDone(o) : isDone(o)));
@@ -41,6 +50,22 @@ export default function TechOrdersPage() {
         </div>
         <button onClick={() => refetch()} className="text-xs text-gray-500 underline">{isFetching ? 'Actualizando…' : 'Actualizar'}</button>
       </div>
+
+      {toEnter.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Por ingresar · {toEnter.length}</p>
+          {toEnter.map((a) => (
+            <div key={a.id} className="card flex items-center gap-3 p-4 border-l-[3px] border-l-blue-500">
+              <div className="p-2.5 bg-blue-50 rounded-xl shrink-0"><CalendarClock size={20} className="text-blue-600" /></div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-gray-900">{fDateTime(a.scheduledAt)}</p>
+                <p className="text-sm text-gray-700 truncate">{a.vehicle?.year} {a.vehicle?.make} {a.vehicle?.model}{a.vehicle?.licensePlate ? ` · ${a.vehicle.licensePlate}` : ''}</p>
+                <p className="text-xs text-gray-500 truncate">{a.serviceType} · {a.customer?.firstName}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
         {TABS.map((t) => (

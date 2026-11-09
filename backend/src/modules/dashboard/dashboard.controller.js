@@ -54,6 +54,7 @@ const getDashboard = async (req, res, next) => {
           include: {
             customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
             vehicle: { select: { make: true, model: true, year: true, licensePlate: true } },
+            assignedTo: { select: { id: true, firstName: true, lastName: true } },
           },
         }),
         // Por confirmar: citas pendientes (incluye las que pide el cliente desde su portal)

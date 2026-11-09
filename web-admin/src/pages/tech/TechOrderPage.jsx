@@ -31,8 +31,14 @@ export default function TechOrderPage() {
   const order = data;
 
   const [notes, setNotes] = useState({ diagnosis: '', recommendations: '', technicianNotes: '' });
+  const [baseline, setBaseline] = useState(null); // lo último guardado, para saber si hay cambios
+  const [savedAt, setSavedAt] = useState(null);
   useEffect(() => {
-    if (order) setNotes({ diagnosis: order.diagnosis || '', recommendations: order.recommendations || '', technicianNotes: order.technicianNotes || '' });
+    if (order) {
+      const n = { diagnosis: order.diagnosis || '', recommendations: order.recommendations || '', technicianNotes: order.technicianNotes || '' };
+      setNotes(n);
+      setBaseline(n);
+    }
   }, [order?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refresh = () => {
@@ -47,7 +53,7 @@ export default function TechOrderPage() {
   });
   const notesMut = useMutation({
     mutationFn: () => updateWorkOrder(workshopId, id, notes),
-    onSuccess: () => { refresh(); toast.success('Notas guardadas'); },
+    onSuccess: () => { refresh(); setBaseline(notes); setSavedAt(new Date()); toast.success('Reporte guardado'); },
     onError: (e) => toast.error(e.message || 'No se pudo guardar'),
   });
 
@@ -55,6 +61,7 @@ export default function TechOrderPage() {
   if (!order) return <p className="text-center text-gray-500 py-16">Orden no encontrada o no asignada a ti.</p>;
 
   const closed = ['DELIVERED', 'CANCELLED'].includes(order.status);
+  const dirty = baseline && JSON.stringify(baseline) !== JSON.stringify(notes);
 
   return (
     <div className="space-y-5">
@@ -115,7 +122,12 @@ export default function TechOrderPage() {
         <Textarea label="Observaciones / diagnóstico" rows={3} value={notes.diagnosis} onChange={(e) => setNotes((n) => ({ ...n, diagnosis: e.target.value }))} />
         <Textarea label="Recomendaciones" rows={3} value={notes.recommendations} onChange={(e) => setNotes((n) => ({ ...n, recommendations: e.target.value }))} />
         <Textarea label="Notas internas" rows={2} value={notes.technicianNotes} onChange={(e) => setNotes((n) => ({ ...n, technicianNotes: e.target.value }))} />
-        <div className="flex justify-end"><Button onClick={() => notesMut.mutate()} loading={notesMut.isPending}>Guardar reporte</Button></div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className={dirty ? 'text-xs font-medium text-amber-600' : 'text-xs text-gray-400'}>
+            {dirty ? 'Tienes cambios sin guardar' : savedAt ? `Guardado a las ${savedAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })}` : 'Sin cambios'}
+          </p>
+          <Button onClick={() => notesMut.mutate()} loading={notesMut.isPending} disabled={!dirty}>Guardar reporte</Button>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 const prisma = require('../../config/database');
 const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
-const { notifyCustomer } = require('../../utils/notify');
+const { notifyCustomer, notifyUser, orderUrlFor } = require('../../utils/notify');
 const { recalcOrderTotal, recalcPaid } = require('../../utils/orderTotals');
 const { RECEPTION_SLOTS } = require('../../utils/photoSlots');
 const { TECHNICIAN, ADMIN } = require('../../utils/roles');
@@ -100,6 +100,29 @@ const forTechnician = (o) => {
 const getFlowView = async (orderId) => {
   const f = await getFacts(orderId);
   return f ? { facts: f.facts, suggested: f.target } : null;
+};
+
+// Avisa (en la app y por push) a quien recibe o pierde una orden. No se avisa a quien hace el cambio.
+const notifyAssignment = async ({ actorId, workshopId, orderId, before, after }) => {
+  const added = after.filter((id) => !before.includes(id) && id !== actorId);
+  const removed = before.filter((id) => !after.includes(id) && id !== actorId);
+  if (!added.length && !removed.length) return;
+  const o = await prisma.workOrder.findUnique({
+    where: { id: orderId },
+    select: { orderNumber: true, description: true, vehicle: { select: { make: true, model: true, year: true, licensePlate: true } } },
+  });
+  const car = o?.vehicle ? `${o.vehicle.year} ${o.vehicle.make} ${o.vehicle.model}${o.vehicle.licensePlate ? ` (${o.vehicle.licensePlate})` : ''}` : '';
+  const brief = o?.description ? ` · ${o.description.slice(0, 80)}` : '';
+  await Promise.all([
+    ...added.map(async (userId) => notifyUser({
+      userId, workshopId, title: 'Nueva orden asignada', body: `${o.orderNumber} · ${car}${brief}`,
+      url: await orderUrlFor(workshopId, userId, orderId), data: { orderId },
+    })),
+    ...removed.map(async (userId) => notifyUser({
+      userId, workshopId, title: 'Orden reasignada', body: `Ya no tienes asignada la orden ${o.orderNumber} (${car}).`,
+      url: '/', data: { orderId }, // Inicio lleva a cada rol a su pantalla
+    })),
+  ]);
 };
 
 const list = async (req, res, next) => {
@@ -256,6 +279,9 @@ const update = async (req, res, next) => {
     if (!isTech(req) && 'technicianIds' in req.body) {
       technicianIds = await ensureTechnicians(req.body.technicianIds, order.workshopId);
     }
+    const before = technicianIds
+      ? (await prisma.workOrderTechnician.findMany({ where: { workOrderId: order.id }, select: { userId: true } })).map((t) => t.userId)
+      : [];
     const updated = await prisma.$transaction(async (tx) => {
       if (technicianIds) {
         await tx.workOrderTechnician.deleteMany({ where: { workOrderId: order.id } });
@@ -266,6 +292,9 @@ const update = async (req, res, next) => {
       return tx.workOrder.update({ where: { id: order.id }, data });
     });
     await autoAdvanceSafe(order.id); // un diagnóstico o nota del técnico inicia el diagnóstico
+    if (technicianIds) {
+      notifyAssignment({ actorId: req.user.id, workshopId: order.workshopId, orderId: order.id, before, after: technicianIds }).catch(() => {});
+    }
     ok(res, isTech(req) ? forTechnician(updated) : updated);
   } catch (e) { next(e); }
 };
@@ -465,4 +494,5 @@ module.exports = {
   createOrderRecord, list, create, getOne, update, updateStatus, updatePayment, linkQuote,
   listPayments, addPayment, removePayment, addPart, removePart, remove,
 };
+
 

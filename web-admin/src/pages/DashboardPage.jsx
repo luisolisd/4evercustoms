@@ -14,6 +14,7 @@ import { getWorkshop } from '../services/workshop';
 import { WorkOrderBadge } from '../components/ui/Badge';
 import ResponsiveTable from '../components/ui/ResponsiveTable';
 import AssignTechniciansModal from '../components/AssignTechniciansModal';
+import AssignAppointmentModal from '../components/AssignAppointmentModal';
 import { useState } from 'react';
 import { WORK_ORDER_FLOW } from '../constants/statuses';
 import { waLink } from '../utils/whatsapp';
@@ -112,7 +113,7 @@ const dayLabel = (iso) => {
 };
 const timeLabel = (iso) => new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-function AppointmentRow({ a, actions }) {
+function AppointmentRow({ a, actions, onAssign }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <div className="w-16 shrink-0 text-center border-r border-gray-100 pr-3">
@@ -122,6 +123,11 @@ function AppointmentRow({ a, actions }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{a.customer?.firstName} {a.customer?.lastName}</p>
         <p className="text-xs text-gray-500 line-clamp-2">{a.serviceType} · {a.vehicle?.make} {a.vehicle?.model} {a.vehicle?.year}</p>
+        {onAssign && (
+          <button onClick={onAssign} className={a.assignedTo ? 'mt-1 inline-flex items-center rounded border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-700 hover:border-brand-300' : 'mt-1 inline-flex items-center rounded bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-2 py-0.5 text-[11px] font-semibold hover:bg-amber-100'}>
+            {a.assignedTo ? `Técnico: ${a.assignedTo.firstName}` : 'Asignar técnico'}
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-1 shrink-0">{actions}</div>
     </div>
@@ -135,6 +141,7 @@ export default function DashboardPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const [assigning, setAssigning] = useState(null);
+  const [assigningAppt, setAssigningAppt] = useState(null);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['dashboard', workshopId],
@@ -256,7 +263,7 @@ export default function DashboardPage() {
         <Section title="Por ingresar" count={data?.toEnter.length} subtitle="Citas confirmadas · próximos 7 días" to="/appointments">
           {!data?.toEnter.length ? <Empty text="No hay citas confirmadas próximas." /> : (
             <div className="divide-y divide-gray-100">
-              {data.toEnter.map((a) => <AppointmentRow key={a.id} a={a} actions={
+              {data.toEnter.map((a) => <AppointmentRow key={a.id} a={a} onAssign={() => setAssigningAppt(a)} actions={
                 <button onClick={() => whatsappAppointment(a)} title="WhatsApp" className="p-2.5 rounded text-[#25D366] hover:bg-emerald-50"><MessageCircle size={16} /></button>
               } />)}
             </div>
@@ -321,6 +328,7 @@ export default function DashboardPage() {
       )}
 
       <AssignTechniciansModal open={!!assigning} onClose={() => setAssigning(null)} order={assigning} onSaved={refresh} />
+      <AssignAppointmentModal open={!!assigningAppt} onClose={() => setAssigningAppt(null)} appointment={assigningAppt} onSaved={refresh} />
     </div>
   );
 }

@@ -16,3 +16,6 @@ export const removePhotoSlot = (wid, slotId) => api.delete(`${base(wid)}/photo-s
 // Galería y borrado
 export const getGallery = (wid, p) => api.get(`${base(wid)}/photos`, { params: p });
 export const bulkDeletePhotos = (wid, ids) => api.post(`${base(wid)}/photos/bulk-delete`, { ids });
+
+// ¿El servidor tiene configurado el almacenamiento de fotos?
+export const getPhotoStatus = (wid) => api.get(`${base(wid)}/photos/status`);

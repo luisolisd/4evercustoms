@@ -23,6 +23,7 @@ router.patch('/photo-templates/:templateId', ...staff, ctrl.updateTemplate);
 router.delete('/photo-templates/:templateId', ...staff, ctrl.removeTemplate);
 
 // Galería del servidor: ver, borrar una o en lote
+router.get('/photos/status', ...anyRole, ctrl.storageStatus);
 router.get('/photos', ...staff, ctrl.gallery);
 router.post('/photos/bulk-delete', ...staff, ctrl.bulkRemove);
 router.delete('/photos/:photoId', ...staff, ctrl.remove);

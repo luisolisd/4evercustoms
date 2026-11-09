@@ -38,6 +38,13 @@ async function sendToCustomer(customerId, payload) {
   await Promise.all(subs.map((s) => sendToSubscription(s, payload)));
 }
 
+// Notificación push a un usuario del taller (técnico, supervisor, admin)
+async function sendToUser(userId, payload) {
+  if (!enabled) return;
+  const subs = await prisma.pushSubscription.findMany({ where: { userId } });
+  await Promise.all(subs.map((s) => sendToSubscription(s, payload)));
+}
+
 async function sendToWorkshopCustomers(workshopId, payload) {
   if (!enabled) return;
   const subs = await prisma.pushSubscription.findMany({
@@ -46,4 +53,4 @@ async function sendToWorkshopCustomers(workshopId, payload) {
   await Promise.all(subs.map((s) => sendToSubscription(s, payload)));
 }
 
-module.exports = { enabled, getPublicKey, sendToCustomer, sendToWorkshopCustomers };
+module.exports = { enabled, getPublicKey, sendToCustomer, sendToUser, sendToWorkshopCustomers };

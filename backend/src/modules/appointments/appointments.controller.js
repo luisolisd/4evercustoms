@@ -2,7 +2,7 @@ const prisma = require('../../config/database');
 const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { z, pick, ensure, dateStr, optionalStr } = require('../../utils/guards');
-const { notifyCustomer } = require('../../utils/notify');
+const { notifyCustomer, notifyUser } = require('../../utils/notify');
 
 const APPT_LABELS = {
   PENDING: 'Pendiente',
@@ -20,13 +20,51 @@ const apptSchema = z.object({
   duration: z.preprocess((v) => (v === '' || v === null || Number.isNaN(v) ? undefined : v), z.coerce.number().int().min(5).max(1440).optional()),
   serviceType: z.string().trim().min(1, 'Requerido').max(100),
   notes: optionalStr,
-  assignedToId: optionalStr,
 });
 
 const parseDate = (v, name) => {
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) throw Object.assign(new Error('Fecha inválida: ' + name), { status: 400 });
   return d;
+};
+
+// Aviso al técnico (o admin) al que se le asigna una cita por ingresar
+const notifyAppointmentAssignee = async ({ appt, workshop, actorId }) => {
+  if (!appt.assignedToId || appt.assignedToId === actorId) return;
+  const when = new Date(appt.scheduledAt).toLocaleString('es-MX', {
+    weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false,
+    timeZone: workshop.timezone || 'America/Mexico_City',
+  });
+  const car = appt.vehicle ? `${appt.vehicle.year} ${appt.vehicle.make} ${appt.vehicle.model}` : '';
+  const wu = await prisma.workshopUser.findFirst({ where: { workshopId: appt.workshopId, userId: appt.assignedToId }, select: { role: true } });
+  await notifyUser({
+    userId: appt.assignedToId, workshopId: appt.workshopId, title: 'Nueva cita por ingresar',
+    body: `${when} · ${appt.customer?.firstName || ''} · ${car} · ${appt.serviceType}`,
+    url: wu?.role === 'TECHNICIAN' ? '/mis-ordenes' : '/appointments', data: { appointmentId: appt.id },
+  });
+};
+
+const ASSIGNEE = { select: { id: true, firstName: true, lastName: true } };
+
+// Citas por ingresar asignadas a quien consulta (panel del técnico)
+const mine = async (req, res, next) => {
+  try {
+    const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    const data = await prisma.appointment.findMany({
+      where: {
+        workshopId: req.params.workshopId, assignedToId: req.user.id,
+        status: { in: ['PENDING', 'CONFIRMED'] }, scheduledAt: { gte: since }, workOrder: { is: null },
+      },
+      orderBy: { scheduledAt: 'asc' },
+      take: 30,
+      select: {
+        id: true, scheduledAt: true, duration: true, serviceType: true, notes: true, status: true,
+        customer: { select: { firstName: true, lastName: true } },
+        vehicle: { select: { make: true, model: true, year: true, licensePlate: true, color: true } },
+      },
+    });
+    ok(res, data);
+  } catch (e) { next(e); }
 };
 
 const list = async (req, res, next) => {
@@ -55,6 +93,7 @@ const list = async (req, res, next) => {
         include: {
           customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
           vehicle: { select: { id: true, make: true, model: true, year: true, licensePlate: true } },
+          assignedTo: ASSIGNEE,
         },
       }),
       prisma.appointment.count({ where }),
@@ -69,14 +108,18 @@ const create = async (req, res, next) => {
     const { workshopId } = req.params;
     await ensure.customer(req.body.customerId, workshopId);
     await ensure.vehicle(req.body.vehicleId, workshopId, req.body.customerId);
-    const data = apptSchema.parse(pick(req.body, ['scheduledAt', 'duration', 'serviceType', 'notes', 'assignedToId']));
+    const data = apptSchema.parse(pick(req.body, ['scheduledAt', 'duration', 'serviceType', 'notes']));
+    const assignedToId = req.body.assignedToId || null;
+    if (assignedToId) await ensure.assignee(assignedToId, workshopId);
     const appointment = await prisma.appointment.create({
-      data: { workshopId, customerId: req.body.customerId, vehicleId: req.body.vehicleId, ...data },
+      data: { workshopId, customerId: req.body.customerId, vehicleId: req.body.vehicleId, ...(assignedToId && { assignedToId }), ...data },
       include: {
         customer: { select: { id: true, firstName: true, lastName: true } },
         vehicle: { select: { id: true, make: true, model: true, year: true } },
+        assignedTo: ASSIGNEE,
       },
     });
+    notifyAppointmentAssignee({ appt: appointment, workshop: req.workshop, actorId: req.user.id }).catch(() => {});
     created(res, appointment);
   } catch (e) { next(e); }
 };
@@ -102,8 +145,19 @@ const update = async (req, res, next) => {
     });
     if (!apt) return notFound(res);
 
-    const data = apptSchema.partial().parse(pick(req.body, ['scheduledAt', 'duration', 'serviceType', 'notes', 'assignedToId']));
-    const updated = await prisma.appointment.update({ where: { id: apt.id }, data });
+    const data = apptSchema.partial().parse(pick(req.body, ['scheduledAt', 'duration', 'serviceType', 'notes']));
+    let assigneeChanged = false;
+    if ('assignedToId' in req.body) {
+      const next = req.body.assignedToId || null;
+      if (next) await ensure.assignee(next, apt.workshopId);
+      assigneeChanged = next !== apt.assignedToId;
+      data.assignedToId = next;
+    }
+    const updated = await prisma.appointment.update({
+      where: { id: apt.id }, data,
+      include: { vehicle: { select: { make: true, model: true, year: true } }, customer: { select: { firstName: true } } },
+    });
+    if (assigneeChanged) notifyAppointmentAssignee({ appt: updated, workshop: req.workshop, actorId: req.user.id }).catch(() => {});
 
     // Avisa al cliente si cambió la fecha o los detalles de su cita
     const dateChanged =
@@ -191,6 +245,6 @@ const remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, cancel, remove };
+module.exports = { mine, list, create, getOne, update, updateStatus, cancel, remove };
 
 

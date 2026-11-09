@@ -8,6 +8,7 @@ import { getCustomers } from '../../services/customers';
 import { getVehicles } from '../../services/vehicles';
 import { useAuthStore } from '../../store/authStore';
 import { useWatch } from 'react-hook-form';
+import { getTechnicians } from '../../services/team';
 import { toLocalInput, fromLocalInput } from '../../utils/formatters';
 
 const SERVICES = [
@@ -23,6 +24,11 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
       : undefined,
   });
   const customerId = useWatch({ control, name: 'customerId' });
+  const { data: techs } = useQuery({
+    queryKey: ['technicians', workshopId],
+    queryFn: () => getTechnicians(workshopId).then((r) => r.data),
+    enabled: !!workshopId,
+  });
 
   const { data: customers } = useQuery({
     queryKey: ['customers-all', workshopId],
@@ -69,6 +75,12 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
         options={SERVICES.map((s) => ({ value: s, label: s }))}
         error={errors.serviceType?.message}
         {...register('serviceType', { required: 'Requerido' })}
+      />
+      <Select
+        label="Técnico asignado (recibe aviso)"
+        placeholder="Sin asignar"
+        options={(techs || []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}${t.role === 'WORKSHOP_ADMIN' ? ' (admin)' : ''}`.trim() }))}
+        {...register('assignedToId')}
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input

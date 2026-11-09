@@ -60,6 +60,15 @@ const ensure = {
     if (!r) throw httpError('Cotización no encontrada', 404);
     return r;
   },
+  // Persona asignable a trabajos: técnico o administrador (trabajos especiales), activa y del taller
+  assignee: async (id, workshopId) => {
+    const r = id && (await prisma.workshopUser.findFirst({
+      where: { userId: id, workshopId, role: { in: ['TECHNICIAN', 'WORKSHOP_ADMIN'] }, isActive: true, user: { isActive: true } },
+      select: { id: true },
+    }));
+    if (!r) throw httpError('La persona asignada no es válida', 400);
+    return r;
+  },
   part: async (id, workshopId) => {
     const r = id && (await prisma.part.findFirst({ where: { id, workshopId, isActive: true }, select: { id: true, unitPrice: true } }));
     if (!r) throw httpError('Refacción no válida para este taller', 400);

@@ -2,9 +2,13 @@ const router = require('express').Router({ mergeParams: true });
 const ctrl = require('./appointments.controller');
 const authenticate = require('../../middleware/authenticate');
 const { workshopAccess } = require('../../middleware/workshopAccess');
-const { STAFF } = require('../../utils/roles');
+const { STAFF, ALL } = require('../../utils/roles');
 
 const staff = [authenticate, workshopAccess(...STAFF)];
+const anyRole = [authenticate, workshopAccess(...ALL)];
+
+// Citas por ingresar asignadas a quien consulta (el técnico solo ve las suyas)
+router.get('/mine', ...anyRole, ctrl.mine);
 
 router.get('/', ...staff, ctrl.list);
 router.post('/', ...staff, ctrl.create);

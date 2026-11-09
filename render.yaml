@@ -9,6 +9,8 @@ services:
     buildCommand: npm ci && npx prisma generate && npx prisma db push && npm run seed
     startCommand: node src/index.js
     envVars:
+      - key: NODE_VERSION
+        value: "22"
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -51,6 +53,8 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     envVars:
+      - key: NODE_VERSION
+        value: "22"
       - key: VITE_API_URL
         sync: false
     # Sin caché para los manifiestos, el service worker y los HTML: así un cambio de app instalable se aplica al instante
@@ -81,6 +85,7 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
 
 
 

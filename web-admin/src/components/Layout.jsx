@@ -1,10 +1,13 @@
 import { Suspense, useState } from 'react';
+import PushBanner from './PushBanner';
+import { disableStaffPush } from '../services/push';
+import { useUnread } from '../hooks/useUnread';
 import { useQuery } from '@tanstack/react-query';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, CalendarDays, ClipboardList,
   FileText, Package, BarChart3, LogOut, Menu,
-  ChevronRight, Megaphone, BellRing, Wallet, Images, UserCog, User, LayoutGrid,
+  ChevronRight, Megaphone, BellRing, Wallet, Images, UserCog, User, LayoutGrid, Bell,
 } from 'lucide-react';
 import { useAuthStore, ROLE_LABELS, selectRole } from '../store/authStore';
 import { getWorkshop } from '../services/workshop';
@@ -16,6 +19,7 @@ import clsx from 'clsx';
 const nav = [
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',     roles: 'AS' },
   { to: '/mis-ordenes',  icon: ClipboardList,   label: 'Mis órdenes',   roles: 'T' },
+  { to: '/notificaciones', icon: Bell,          label: 'Notificaciones', roles: 'AST' },
   { to: '/customers',    icon: Users,           label: 'Clientes',      roles: 'AS' },
   { to: '/vehicles',     icon: Car,             label: 'Vehículos',     roles: 'AS' },
   { to: '/appointments', icon: CalendarDays,    label: 'Citas',         roles: 'AS' },
@@ -41,6 +45,7 @@ const TAB_BAR = {
   ],
   T: [
     { to: '/mis-ordenes', icon: ClipboardList, label: 'Mis órdenes' },
+    { to: '/notificaciones', icon: Bell, label: 'Avisos' },
     { to: '/profile', icon: User, label: 'Perfil' },
   ],
 };
@@ -48,6 +53,7 @@ TAB_BAR.S = TAB_BAR.A;
 
 function MobileTabBar({ code, onMenu }) {
   const items = TAB_BAR[code] || [];
+  const unread = useUnread();
   const base = 'flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold transition-colors';
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 glass border-t border-gray-200/70 shadow-[0_-8px_24px_-12px_rgba(16,18,27,0.18)] pb-safe">
@@ -56,8 +62,9 @@ function MobileTabBar({ code, onMenu }) {
           <NavLink key={it.to} to={it.to} className={({ isActive }) => clsx(base, isActive ? 'text-brand-600' : 'text-gray-400')}>
             {({ isActive }) => (
               <>
-                <span className={clsx('flex h-7 w-12 items-center justify-center rounded-full transition-all', isActive && 'bg-brand-50')}>
+                <span className={clsx('relative flex h-7 w-12 items-center justify-center rounded-full transition-all', isActive && 'bg-brand-50')}>
                   <it.icon size={20} />
+                  {it.to === '/notificaciones' && unread > 0 && <span className="absolute right-2 top-0 min-w-[16px] rounded bg-red-500 px-1 text-center text-[10px] font-bold leading-4 text-white">{unread > 9 ? '9+' : unread}</span>}
                 </span>
                 <span className="truncate max-w-full px-1">{it.label}</span>
               </>
@@ -73,7 +80,7 @@ function MobileTabBar({ code, onMenu }) {
   );
 }
 
-function NavItem({ to, icon: Icon, label, onClick }) {
+function NavItem({ to, icon: Icon, label, onClick, badge = 0 }) {
   return (
     <NavLink
       to={to}
@@ -92,6 +99,7 @@ function NavItem({ to, icon: Icon, label, onClick }) {
           {isActive && <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-brand-400" />}
           <Icon size={18} className={clsx('shrink-0 transition-transform group-hover:scale-110', !isActive && 'text-ink-400 group-hover:text-brand-400')} />
           <span className="flex-1">{label}</span>
+          {badge > 0 && <span className="min-w-[20px] rounded bg-red-500 px-1.5 py-px text-center text-[11px] font-bold text-white">{badge > 99 ? '99+' : badge}</span>}
           {isActive && <ChevronRight size={14} className="opacity-70" />}
         </>
       )}
@@ -114,7 +122,13 @@ function Sidebar({ mobile = false, onNavigate }) {
     enabled: !!workshopId,
   });
   const workshopName = wRes?.data?.name;
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const unread = useUnread();
+  // Al salir se desactivan los avisos push de este dispositivo (máx. 1.5 s de espera)
+  const handleLogout = async () => {
+    await Promise.race([disableStaffPush(), new Promise((r) => setTimeout(r, 1500))]);
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className={clsx('relative flex flex-col h-full bg-ink-gradient', mobile ? 'w-72 max-w-full' : 'w-64')}>
@@ -134,7 +148,7 @@ function Sidebar({ mobile = false, onNavigate }) {
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {nav
             .filter((item) => item.roles.includes(code))
-            .map(({ roles, ...item }) => <NavItem key={item.to} {...item} onClick={mobile ? onNavigate : undefined} />)}
+            .map(({ roles, ...item }) => <NavItem key={item.to} {...item} badge={item.to === '/notificaciones' ? unread : 0} onClick={mobile ? onNavigate : undefined} />)}
         </nav>
 
         {/* User */}
@@ -167,6 +181,7 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const close = () => setSidebarOpen(false);
   const code = ROLE_CODE[useAuthStore(selectRole)] || '';
+  const headerUnread = useUnread();
 
   return (
     <div className="flex h-[100dvh] bg-gray-50 overflow-hidden">
@@ -193,12 +208,16 @@ export default function Layout() {
             <Menu size={20} />
           </button>
           <img src="/color.png" alt="4EVRcustoms" className="h-6 w-auto select-none" draggable={false} />
-          <div className="w-9" />
+          <Link to="/notificaciones" aria-label="Notificaciones" className="relative p-2 rounded-xl hover:bg-gray-100">
+            <Bell size={20} />
+            {headerUnread > 0 && <span className="absolute right-0.5 top-0.5 min-w-[16px] rounded bg-red-500 px-1 text-center text-[10px] font-bold leading-4 text-white">{headerUnread > 9 ? '9+' : headerUnread}</span>}
+          </Link>
         </header>
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
           <div className="max-w-7xl mx-auto p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 lg:pb-8 animate-fade-up">
+            <PushBanner />
             <Suspense fallback={<div className="flex justify-center py-24"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>}>
               <Outlet />
             </Suspense>

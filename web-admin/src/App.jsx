@@ -26,6 +26,7 @@ const PromotionsPage = lazy(() => import('./pages/PromotionsPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const PhotosPage = lazy(() => import('./pages/PhotosPage'));
 const CashClosePage = lazy(() => import('./pages/CashClosePage'));
 const RemindersPage = lazy(() => import('./pages/RemindersPage'));
@@ -112,6 +113,7 @@ export default function App() {
         <Route path="users"         element={<AdminRoute><UsersPage /></AdminRoute>} />
         <Route path="mis-ordenes"     element={<TechRoute><TechOrdersPage /></TechRoute>} />
         <Route path="mis-ordenes/:id" element={<TechRoute><TechOrderPage /></TechRoute>} />
+        <Route path="notificaciones" element={<NotificationsPage />} />
         <Route path="profile"      element={<ProfilePage />} />
       </Route>
     </Routes>

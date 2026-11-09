@@ -304,7 +304,7 @@ const subscribePush = async (req, res, next) => {
     }
     await prisma.pushSubscription.upsert({
       where: { endpoint },
-      update: { customerId: req.customer.id, p256dh: keys.p256dh, auth: keys.auth },
+      update: { customerId: req.customer.id, userId: null, p256dh: keys.p256dh, auth: keys.auth },
       create: { customerId: req.customer.id, endpoint, p256dh: keys.p256dh, auth: keys.auth },
     });
     ok(res, { message: 'Suscripción registrada' });

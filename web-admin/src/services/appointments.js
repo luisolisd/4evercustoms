@@ -8,3 +8,4 @@ export const updateAppointment = (wid, id, d) => api.put(`${base(wid)}/${id}`, d
 export const updateAppStatus   = (wid, id, status) => api.patch(`${base(wid)}/${id}/status`, { status });
 export const cancelAppointment = (wid, id) => api.patch(`${base(wid)}/${id}/cancel`);
 export const deleteAppointment = (wid, id) => api.delete(`${base(wid)}/${id}`);
+export const getMyAppointments = (wid) => api.get(`${base(wid)}/mine`);
