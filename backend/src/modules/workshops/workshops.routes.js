@@ -9,7 +9,6 @@ router.get('/:workshopId/users/me', authenticate, workshopAccess(...ALL), ctrl.g
 router.put('/:workshopId/users/me', authenticate, workshopAccess(...ALL), ctrl.updateMe);
 router.post('/:workshopId/users/me/change-password', authenticate, workshopAccess(...ALL), ctrl.changePassword);
 router.put('/:workshopId', authenticate, workshopAccess(ADMIN), ctrl.updateWorkshop);
-router.get('/:workshopId/stats', authenticate, workshopAccess(...STAFF), ctrl.getStats);
 
 // Equipo
 router.get('/:workshopId/technicians', authenticate, workshopAccess(...STAFF), ctrl.listTechnicians);

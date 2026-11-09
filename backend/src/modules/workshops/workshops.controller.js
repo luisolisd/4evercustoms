@@ -35,24 +35,6 @@ const updateWorkshop = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-const getStats = async (req, res, next) => {
-  try {
-    const wid = req.params.workshopId;
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const [customers, activeOrders, pendingAppointments, revenue] = await Promise.all([
-      prisma.customer.count({ where: { workshopId: wid, isActive: true } }),
-      prisma.workOrder.count({ where: { workshopId: wid, status: { notIn: ['DELIVERED', 'CANCELLED'] } } }),
-      prisma.appointment.count({ where: { workshopId: wid, status: { in: ['PENDING', 'CONFIRMED'] } } }),
-      prisma.payment.aggregate({
-        where: { workshopId: wid, createdAt: { gte: startOfMonth } },
-        _sum: { amount: true },
-      }),
-    ]);
-    ok(res, { customers, activeOrders, pendingAppointments, revenueThisMonth: revenue._sum.amount || 0 });
-  } catch (e) { next(e); }
-};
-
 const USER_PUBLIC = { id: true, phone: true, email: true, firstName: true, lastName: true, avatarUrl: true, lastLoginAt: true };
 
 const listUsers = async (req, res, next) => {
@@ -255,5 +237,5 @@ const changePassword = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { getWorkshop, updateWorkshop, getStats, listUsers, listTechnicians, createUser, resetUserPassword, updateUser, removeUser, getMyProfile, updateMe, changePassword };
+module.exports = { getWorkshop, updateWorkshop, listUsers, listTechnicians, createUser, resetUserPassword, updateUser, removeUser, getMyProfile, updateMe, changePassword };
 

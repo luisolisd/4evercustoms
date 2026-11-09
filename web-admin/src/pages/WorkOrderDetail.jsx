@@ -14,10 +14,10 @@ import {
 import { getParts } from '../services/inventory';
 import { addQuoteItem, removeQuoteItem, createQuote, updateQuoteStatus, getQuotes } from '../services/quotes';
 import { useAuthStore, selectIsAdmin } from '../store/authStore';
-import { getTechnicians } from '../services/team';
 import PaymentsModal from '../components/PaymentsModal';
 import PhotoSlotsPanel from '../components/PhotoSlotsPanel';
 import DamagePanel from '../components/DamagePanel';
+import AssignTechniciansModal from '../components/AssignTechniciansModal';
 import { compressImage } from '../utils/image';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -76,7 +76,7 @@ export default function WorkOrderDetail() {
   const [searchParams] = useSearchParams();
   const initialTab = { recepcion: 'reception', fotos: 'photos' }[searchParams.get('tab')] || 'info';
   const [tab, setTab] = useState(initialTab);
-  const [techIds, setTechIds] = useState([]);
+  const [assignModal, setAssignModal] = useState(false);
   const [addPartModal, setAddPartModal] = useState(false);
   const [quoteModal, setQuoteModal] = useState(false);
   const [linkModal, setLinkModal] = useState(false);
@@ -106,13 +106,6 @@ export default function WorkOrderDetail() {
     queryFn: () => getWorkshop(workshopId),
     enabled: !!workshopId,
   });
-
-  const { data: techRes } = useQuery({
-    queryKey: ['technicians', workshopId],
-    queryFn: () => getTechnicians(workshopId),
-    enabled: !!workshopId,
-  });
-  const technicians = techRes?.data || [];
 
   const [pdfBusy, setPdfBusy] = useState(false);
   const handlePdf = async () => {
@@ -189,7 +182,7 @@ export default function WorkOrderDetail() {
 
   const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, recommendations: order.recommendations, technicianNotes: order.technicianNotes, estimatedReady: toLocalInput(order.estimatedReady), } : {} });
   const editMut = useMutation({
-    mutationFn: (d) => updateWorkOrder(workshopId, id, { ...d, estimatedReady: fromLocalInput(d.estimatedReady), technicianIds: techIds }),
+    mutationFn: (d) => updateWorkOrder(workshopId, id, { ...d, estimatedReady: fromLocalInput(d.estimatedReady) }),
     onSuccess: () => { invalidate(); setEditModal(false); toast.success('Orden actualizada'); },
     onError: (e) => toast.error(e.message),
   });
@@ -218,7 +211,7 @@ export default function WorkOrderDetail() {
           <div className="flex gap-2 flex-wrap">
             <Button variant="secondary" icon={FileDown} size="sm" loading={pdfBusy} onClick={handlePdf}>PDF</Button>
             <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Cobros</Button>
-            <Button variant="secondary" icon={Edit2} size="sm" onClick={() => { setTechIds((order.technicians || []).map((t) => t.id)); setEditModal(true); }}>Editar</Button>
+            <Button variant="secondary" icon={Edit2} size="sm" onClick={() => setEditModal(true)}>Editar</Button>
           </div>
         </div>
       </div>
@@ -230,7 +223,7 @@ export default function WorkOrderDetail() {
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente</p>
           <div className="flex items-center gap-3">
@@ -252,6 +245,28 @@ export default function WorkOrderDetail() {
               <p className="text-sm text-gray-500">{order.vehicle?.licensePlate || 'Sin placa'}{order.mileageIn ? ` · ${fNumber(order.mileageIn)} km` : ''}</p>
             </div>
           </div>
+        </div>
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Técnico(s)</p>
+            <button onClick={() => setAssignModal(true)} className="text-xs font-semibold text-brand-600 hover:text-brand-700">
+              {order.technicians?.length ? 'Cambiar' : 'Asignar'}
+            </button>
+          </div>
+          {order.technicians?.length ? (
+            <div className="flex flex-wrap gap-2">
+              {order.technicians.map((t) => (
+                <span key={t.id} className="inline-flex items-center gap-2 rounded-full bg-gray-100 pl-1 pr-3 py-1 text-sm font-medium text-gray-800">
+                  <span className="h-6 w-6 rounded-full bg-gray-800 text-white text-[10px] font-bold flex items-center justify-center">{t.firstName?.[0]}{t.lastName?.[0]}</span>
+                  {t.firstName} {t.lastName}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <button onClick={() => setAssignModal(true)} className="w-full rounded-xl border border-dashed border-amber-300 bg-amber-50 px-3 py-3 text-sm font-medium text-amber-800 hover:bg-amber-100">
+              Sin técnico · Asignar ahora
+            </button>
+          )}
         </div>
       </div>
 
@@ -453,24 +468,11 @@ export default function WorkOrderDetail() {
           <Textarea label="Recomendaciones (PDF)" rows={3} {...editForm.register('recommendations')} />
           <Textarea label="Notas del técnico (internas)" rows={2} {...editForm.register('technicianNotes')} />
           <Input label="Entrega estimada" type="datetime-local" {...editForm.register('estimatedReady')} />
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Técnicos asignados</p>
-            {technicians.length === 0 ? (
-              <p className="text-xs text-gray-400">No hay técnicos activos. Créalos en Usuarios.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {technicians.map((u) => (
-                  <label key={u.id} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm cursor-pointer">
-                    <input type="checkbox" checked={techIds.includes(u.id)} onChange={() => setTechIds((s) => (s.includes(u.id) ? s.filter((x) => x !== u.id) : [...s, u.id]))} className="rounded" />
-                    {u.firstName} {u.lastName}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
           <div className="flex justify-end"><Button type="submit" loading={editMut.isPending}>Guardar</Button></div>
         </form>
       </Modal>
+
+      <AssignTechniciansModal open={assignModal} onClose={() => setAssignModal(false)} order={order} onSaved={invalidate} />
 
       <PaymentsModal
         open={payModal}

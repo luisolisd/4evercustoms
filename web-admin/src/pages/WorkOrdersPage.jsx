@@ -11,6 +11,7 @@ import EmptyState from '../components/ui/EmptyState';
 import Pagination from '../components/ui/Pagination';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import WorkOrderForm from '../components/forms/WorkOrderForm';
+import AssignTechniciansModal from '../components/AssignTechniciansModal';
 import Select from '../components/ui/Select';
 import SearchInput from '../components/ui/SearchInput';
 import { useToast } from '../hooks/useToast';
@@ -31,6 +32,7 @@ export default function WorkOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [assigning, setAssigning] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['work-orders', workshopId, statusFilter, search, page],
@@ -109,7 +111,15 @@ export default function WorkOrdersPage() {
                       <p className="font-medium text-gray-900">{o.customer?.firstName} {o.customer?.lastName}</p>
                       <p className="text-xs text-gray-500">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? ` · ${o.vehicle.licensePlate}` : ''}</p>
                     </td>
-                    <td className="px-5 py-4 text-gray-600 text-sm">{o.technicians?.length ? o.technicians.map((t) => t.firstName).join(', ') : <span className="text-gray-300">Sin asignar</span>}</td>
+                    <td className="px-5 py-4 text-sm">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setAssigning(o); }}
+                          title="Asignar técnico"
+                          className={o.technicians?.length ? 'text-gray-700 hover:text-brand-600 hover:underline' : 'inline-flex rounded-full bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-2.5 py-0.5 text-xs font-semibold hover:bg-amber-100'}
+                        >
+                          {o.technicians?.length ? o.technicians.map((t) => t.firstName).join(', ') : 'Asignar'}
+                        </button>
+                      </td>
                     <td className="px-5 py-4 text-center"><WorkOrderBadge status={o.status} /></td>
                     <td className="px-5 py-4 text-center"><PaymentBadge status={o.paymentStatus} /></td>
                     <td className="px-5 py-4 text-right font-semibold text-gray-900">{fMoney(o.totalAmount)}</td>
@@ -146,6 +156,13 @@ export default function WorkOrdersPage() {
         loading={deleteMut.isPending}
         title="Eliminar orden"
         message={`¿Eliminar la orden ${deleting?.orderNumber}? Se borrarán sus fotos, refacciones, cotizaciones e historial. Esta acción no se puede deshacer.`}
+      />
+
+      <AssignTechniciansModal
+        open={!!assigning}
+        onClose={() => setAssigning(null)}
+        order={assigning}
+        onSaved={() => qc.invalidateQueries({ queryKey: ['work-orders', workshopId] })}
       />
     </div>
   );

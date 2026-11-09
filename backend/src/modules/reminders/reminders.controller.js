@@ -161,4 +161,5 @@ const remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, update, contact, setStatus, remove };
+module.exports = { list, create, update, contact, setStatus, remove, withWhatsApp, INCLUDE };
+

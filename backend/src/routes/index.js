@@ -15,6 +15,7 @@ const customerSelfRoutes = require('../modules/customer/customer.routes');
 const promotionRoutes    = require('../modules/promotions/promotions.routes');
 const cashCutRoutes      = require('../modules/cashcuts/cashcuts.routes');
 const reminderRoutes     = require('../modules/reminders/reminders.routes');
+const dashboardRoutes    = require('../modules/dashboard/dashboard.routes');
 const push               = require('../utils/push');
 
 router.use('/auth', authRoutes);
@@ -34,6 +35,8 @@ router.use('/workshops/:workshopId/reports', reportRoutes);
 router.use('/workshops/:workshopId/promotions', promotionRoutes);
 router.use('/workshops/:workshopId/cash-cuts', cashCutRoutes);
 router.use('/workshops/:workshopId/reminders', reminderRoutes);
+router.use('/workshops/:workshopId/dashboard', dashboardRoutes);
 router.use('/notifications', notifRoutes);
 
 module.exports = router;
+

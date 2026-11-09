@@ -1,10 +1,3 @@
 import api from './api';
 
-const base = (wid) => `/workshops/${wid}/reports`;
-
-export const getReports      = (wid, type, params) => api.get(`${base(wid)}/${type}`, { params });
-export const getRevenue      = (wid, p) => api.get(`${base(wid)}/revenue`, { params: p });
-export const getOrdersByStatus = (wid) => api.get(`${base(wid)}/orders-by-status`);
-export const getTopServices  = (wid, p) => api.get(`${base(wid)}/top-services`, { params: p });
-export const getWorkshopStats = (wid) => api.get(`/workshops/${wid}/stats`);
-
+export const getReports = (wid, type, params) => api.get(`/workshops/${wid}/reports/${type}`, { params });
