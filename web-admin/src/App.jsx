@@ -1,7 +1,9 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore, selectIsAdmin, selectIsStaff, selectIsTech } from './store/authStore';
 import { useCustomerStore } from './store/customerAuthStore';
+import { useToastStore } from './store/toastStore';
+import { consumeUpdateResult } from './utils/appUpdate';
 
 const CustomerLogin = lazy(() => import('./pages/customer/CustomerLogin'));
 const CustomerLayout = lazy(() => import('./pages/customer/CustomerLayout'));
@@ -71,6 +73,14 @@ const Loading = () => (
 );
 
 export default function App() {
+  // Tras pulsar "Actualizar versión" la página se recarga: aquí se confirma a qué versión quedó
+  useEffect(() => {
+    const r = consumeUpdateResult();
+    if (!r) return;
+    const t = useToastStore.getState();
+    if (r.ok) t.success(r.message); else t.info(r.message);
+  }, []);
+
   return (
     <Suspense fallback={<Loading />}>
     <Routes>

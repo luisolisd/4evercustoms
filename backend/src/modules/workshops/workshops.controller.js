@@ -181,7 +181,8 @@ const getMyProfile = async (req, res, next) => {
 
 const updateMe = async (req, res, next) => {
   try {
-    const allowed = ['firstName', 'lastName', 'email', 'avatarUrl', 'phone'];
+    // El técnico solo edita su teléfono; nombre y correo los administra el administrador
+    const allowed = req.workshopUser?.role === TECHNICIAN ? ['phone'] : ['firstName', 'lastName', 'email', 'avatarUrl', 'phone'];
     const data = Object.fromEntries(
       Object.entries(req.body).filter(([k]) => allowed.includes(k) && req.body[k] !== '')
     );

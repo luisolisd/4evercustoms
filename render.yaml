@@ -68,6 +68,9 @@ services:
       - path: /sw.js
         name: Cache-Control
         value: no-cache
+      - path: /version.json
+        name: Cache-Control
+        value: no-cache
       - path: /index.html
         name: Cache-Control
         value: no-cache

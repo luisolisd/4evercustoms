@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { useCustomerStore } from '../../store/customerAuthStore';
 import { APP_VERSION } from '../../version';
 import InstallPrompt from '../../components/InstallPrompt';
+import { fetchLatestVersion, isNewer, clearCacheAndReload } from '../../utils/appUpdate';
 
 const tabs = [
   { to: '/cliente/inicio', icon: Home, label: 'Inicio' },
@@ -45,7 +46,20 @@ export default function CustomerLayout() {
         <Suspense fallback={<div className="flex justify-center py-16"><div className="animate-spin h-7 w-7 rounded-full border-4 border-brand-600 border-t-transparent" /></div>}>
           <Outlet />
         </Suspense>
-        <p className="text-center text-[10px] text-gray-400 pt-6">4EVRcustoms {APP_VERSION}</p>
+        <p className="text-center text-[10px] text-gray-400 pt-6">
+          4EVRcustoms {APP_VERSION} ·{' '}
+          <button
+            type="button"
+            className="underline"
+            onClick={async () => {
+              let latest = '';
+              try { const d = await fetchLatestVersion(); latest = isNewer(d.version) ? d.version : d.version; } catch { /* sin dato */ }
+              clearCacheAndReload(latest);
+            }}
+          >
+            Actualizar app
+          </button>
+        </p>
       </main>
 
       <InstallPrompt offset="bottom-24" />

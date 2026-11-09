@@ -131,7 +131,10 @@ function Sidebar({ mobile = false, onNavigate }) {
   };
 
   return (
-    <div className={clsx('relative flex flex-col h-full bg-ink-gradient', mobile ? 'w-72 max-w-full' : 'w-64')}>
+    <div
+      className={clsx('relative flex flex-col h-full bg-ink-gradient', mobile ? 'w-72 max-w-full' : 'w-64')}
+      style={mobile ? { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' } : undefined}
+    >
       {/* Halo de marca en la parte superior */}
       <div className="pointer-events-none absolute inset-0 bg-mesh opacity-70" />
       <div className="relative flex flex-col h-full">
@@ -203,7 +206,10 @@ export default function Layout() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar (mobile) */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 glass border-b border-gray-200/70 shadow-soft shrink-0 sticky top-0 z-30">
+        <header
+          className="lg:hidden flex items-center justify-between px-4 pb-3 glass border-b border-gray-200/70 shadow-soft shrink-0 sticky top-0 z-30"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+        >
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition">
             <Menu size={20} />
           </button>

@@ -40,7 +40,10 @@ export default function ToastContainer() {
   const toasts = useToastStore((s) => s.toasts);
 
   return createPortal(
-    <div className="fixed top-3 inset-x-3 sm:inset-x-auto sm:top-4 sm:right-4 z-[100] flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
+    <div
+      className="fixed inset-x-3 sm:inset-x-auto sm:right-4 z-[100] flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto"
+      style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+    >
       {toasts.map((t) => <Toast key={t.id} {...t} />)}
     </div>,
     document.body

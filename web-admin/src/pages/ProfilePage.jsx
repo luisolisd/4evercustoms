@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { User, Lock, Store } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { User, Lock, Store, RefreshCw } from 'lucide-react';
+import AppUpdater from '../components/AppUpdater';
+import { useAuthStore, selectIsAdmin, selectIsTech } from '../store/authStore';
 import { updateProfile, changePassword } from '../services/profile';
 import { getWorkshop, updateWorkshop } from '../services/workshop';
 import Button from '../components/ui/Button';
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'profile', label: 'Perfil', icon: User },
   { id: 'workshop', label: 'Taller', icon: Store },
   { id: 'security', label: 'Seguridad', icon: Lock },
+  { id: 'app', label: 'Aplicación', icon: RefreshCw },
 ];
 
 function WorkshopTab({ workshopId }) {
@@ -61,7 +63,7 @@ function WorkshopTab({ workshopId }) {
   );
 }
 
-function ProfileTab({ user, workshopId }) {
+function ProfileTab({ user, workshopId, phoneOnly = false }) {
   const updateUser = useAuthStore((s) => s.updateUser);
   const toast = useToast();
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -73,7 +75,8 @@ function ProfileTab({ user, workshopId }) {
   });
 
   const mut = useMutation({
-    mutationFn: (d) => updateProfile(workshopId, d),
+    // Técnico: solo se envía el teléfono
+    mutationFn: (d) => updateProfile(workshopId, phoneOnly ? { phone: d.phone } : d),
     onSuccess: (res) => { updateUser(res.data); toast.success('Perfil actualizado'); },
     onError: (e) => toast.error(e.message),
   });
@@ -89,8 +92,9 @@ function ProfileTab({ user, workshopId }) {
           <p className="text-sm text-gray-500">{user?.phone}</p>
         </div>
       </div>
-      <Input label="Nombre" {...register('firstName', { required: 'Requerido' })} error={errors.firstName?.message} />
-      <Input label="Apellido" {...register('lastName')} error={errors.lastName?.message} />
+      <Input label="Nombre" disabled={phoneOnly} {...register('firstName', { required: 'Requerido' })} error={errors.firstName?.message} />
+      <Input label="Apellido" disabled={phoneOnly} {...register('lastName')} error={errors.lastName?.message} />
+      {phoneOnly && <p className="-mt-2 text-xs text-gray-400">Tu nombre lo administra el administrador. Aquí solo puedes cambiar tu teléfono.</p>}
       <Input label="Teléfono (10 dígitos)" placeholder="4721082970" maxLength={10}
         {...register('phone', { pattern: { value: /^\d{10}$/, message: '10 dígitos' } })}
         error={errors.phone?.message} />
@@ -154,7 +158,11 @@ function SecurityTab({ workshopId }) {
 export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const workshopId = useAuthStore((s) => s.workshopId);
+  const isAdmin = useAuthStore(selectIsAdmin);
+  const isTech = useAuthStore(selectIsTech);
   const [tab, setTab] = useState('profile');
+  // Los datos del taller solo los ve y edita el administrador
+  const tabs = TABS.filter((t) => t.id !== 'workshop' || isAdmin);
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -164,13 +172,13 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex border-b border-gray-100">
-          {TABS.map((t) => (
+        <div className="flex border-b border-gray-100 overflow-x-auto [scrollbar-width:none]">
+          {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={clsx(
-                'flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors',
+                'flex shrink-0 items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors',
                 tab === t.id ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500 hover:text-gray-700'
               )}
             >
@@ -180,11 +188,13 @@ export default function ProfilePage() {
           ))}
         </div>
         <div className="p-6">
-          {tab === 'profile' && <ProfileTab user={user} workshopId={workshopId} />}
-          {tab === 'workshop' && <WorkshopTab workshopId={workshopId} />}
+          {tab === 'profile' && <ProfileTab user={user} workshopId={workshopId} phoneOnly={isTech} />}
+          {tab === 'workshop' && isAdmin && <WorkshopTab workshopId={workshopId} />}
           {tab === 'security' && <SecurityTab workshopId={workshopId} />}
+          {tab === 'app' && <AppUpdater />}
         </div>
       </div>
     </div>
   );
 }
+
