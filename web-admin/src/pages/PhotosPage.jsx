@@ -114,7 +114,7 @@ function Gallery() {
                 </div>
                 <div className="p-2 text-[11px] leading-tight">
                   <Link to={`/work-orders/${p.workOrderId}`} className="font-semibold text-brand-700">{p.workOrder?.orderNumber}</Link>
-                  <p className="text-gray-500 truncate">{p.slot?.label || (p.phase === 'DELIVERY' ? 'Entrega' : 'Recepción / general')}</p>
+                  <p className="text-gray-500 truncate">{p.slot?.label || p.tag || (p.phase === 'DELIVERY' ? 'Entrega' : 'Recepción / general')}</p>
                   <p className="text-gray-400">{fDateTime(p.createdAt)} · {formatBytes(p.bytes)}</p>
                 </div>
               </div>

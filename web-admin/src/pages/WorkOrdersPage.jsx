@@ -48,7 +48,7 @@ export default function WorkOrdersPage() {
       qc.invalidateQueries({ queryKey: ['work-orders', workshopId] });
       setShowCreate(false);
       toast.success(`Orden ${res.data.orderNumber} creada`);
-      navigate(`/work-orders/${res.data.id}`);
+      navigate(`/work-orders/${res.data.id}?tab=recepcion`);
     },
     onError: (e) => toast.error(e.message || 'Error al crear orden'),
   });
@@ -109,7 +109,7 @@ export default function WorkOrdersPage() {
                       <p className="font-medium text-gray-900">{o.customer?.firstName} {o.customer?.lastName}</p>
                       <p className="text-xs text-gray-500">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? ` · ${o.vehicle.licensePlate}` : ''}</p>
                     </td>
-                    <td className="px-5 py-4 text-gray-600 text-sm">{o.technician ? `${o.technician.firstName} ${o.technician.lastName}` : <span className="text-gray-300">Sin asignar</span>}</td>
+                    <td className="px-5 py-4 text-gray-600 text-sm">{o.technicians?.length ? o.technicians.map((t) => t.firstName).join(', ') : <span className="text-gray-300">Sin asignar</span>}</td>
                     <td className="px-5 py-4 text-center"><WorkOrderBadge status={o.status} /></td>
                     <td className="px-5 py-4 text-center"><PaymentBadge status={o.paymentStatus} /></td>
                     <td className="px-5 py-4 text-right font-semibold text-gray-900">{fMoney(o.totalAmount)}</td>

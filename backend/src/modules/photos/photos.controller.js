@@ -19,7 +19,7 @@ const accessibleOrder = async (req) => {
     where: {
       id: req.params.orderId,
       workshopId: req.params.workshopId,
-      ...(req.workshopUser.role === TECHNICIAN && { technicianId: req.user.id }),
+      ...(req.workshopUser.role === TECHNICIAN && { technicians: { some: { userId: req.user.id } } }),
     },
     select: { id: true },
   });
@@ -50,6 +50,8 @@ const upload = async (req, res, next) => {
 
     const phase = PHASES.includes(req.body.phase) ? req.body.phase : null;
     const caption = req.body.caption ? String(req.body.caption).slice(0, 200) : null;
+    // Etiqueta de daño u observación de recepción (Golpe, Rayón, Estrellado, Faltante, Pintura, otro...)
+    const tag = req.body.tag ? String(req.body.tag).trim().slice(0, 40) : null;
 
     // Si la foto cumple un requerimiento (slot), debe pertenecer a esta orden
     let slotId = null;
@@ -81,6 +83,7 @@ const upload = async (req, res, next) => {
             publicId: result.public_id,
             bytes,
             caption,
+            tag,
             phase,
             slotId,
             uploadedById: req.user.id,
@@ -194,7 +197,8 @@ const addSlots = async (req, res, next) => {
 const removeSlot = async (req, res, next) => {
   try {
     const slot = await prisma.orderPhotoSlot.findFirst({
-      where: { id: req.params.slotId, workOrder: { workshopId: req.params.workshopId } },
+      // Las fotos de recepción son obligatorias y no se pueden quitar; solo las pedidas al técnico
+      where: { id: req.params.slotId, kind: 'TECH', workOrder: { workshopId: req.params.workshopId } },
       select: { id: true },
     });
     if (!slot) return notFound(res);

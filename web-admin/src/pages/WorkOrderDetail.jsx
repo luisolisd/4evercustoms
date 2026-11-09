@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { IVA_FACTOR } from '../constants/tax';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Camera, Plus, Trash2, ChevronRight, DollarSign,
   Clock, Car, Edit2, Eye, FileDown,
@@ -17,6 +17,7 @@ import { useAuthStore, selectIsAdmin } from '../store/authStore';
 import { getTechnicians } from '../services/team';
 import PaymentsModal from '../components/PaymentsModal';
 import PhotoSlotsPanel from '../components/PhotoSlotsPanel';
+import DamagePanel from '../components/DamagePanel';
 import { compressImage } from '../utils/image';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -72,7 +73,10 @@ export default function WorkOrderDetail() {
   const photoInput = useRef();
   const isAdmin = useAuthStore(selectIsAdmin);
 
-  const [tab, setTab] = useState('info');
+  const [searchParams] = useSearchParams();
+  const initialTab = { recepcion: 'reception', fotos: 'photos' }[searchParams.get('tab')] || 'info';
+  const [tab, setTab] = useState(initialTab);
+  const [techIds, setTechIds] = useState([]);
   const [addPartModal, setAddPartModal] = useState(false);
   const [quoteModal, setQuoteModal] = useState(false);
   const [linkModal, setLinkModal] = useState(false);
@@ -183,9 +187,9 @@ export default function WorkOrderDetail() {
     photoMut.mutate(fd);
   };
 
-  const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, recommendations: order.recommendations, technicianNotes: order.technicianNotes, estimatedReady: toLocalInput(order.estimatedReady), technicianId: order.technicianId || '' } : {} });
+  const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, recommendations: order.recommendations, technicianNotes: order.technicianNotes, estimatedReady: toLocalInput(order.estimatedReady), } : {} });
   const editMut = useMutation({
-    mutationFn: (d) => updateWorkOrder(workshopId, id, { ...d, estimatedReady: fromLocalInput(d.estimatedReady), technicianId: d.technicianId || null }),
+    mutationFn: (d) => updateWorkOrder(workshopId, id, { ...d, estimatedReady: fromLocalInput(d.estimatedReady), technicianIds: techIds }),
     onSuccess: () => { invalidate(); setEditModal(false); toast.success('Orden actualizada'); },
     onError: (e) => toast.error(e.message),
   });
@@ -209,12 +213,12 @@ export default function WorkOrderDetail() {
               <WorkOrderBadge status={order.status} />
               <PaymentBadge status={order.paymentStatus} />
             </div>
-            <p className="text-gray-500 mt-1">Recibido {fDateTime(order.receivedAt)}{order.technician ? ` · Técnico: ${order.technician.firstName} ${order.technician.lastName}` : ' · Sin técnico asignado'}</p>
+            <p className="text-gray-500 mt-1">Recibido {fDateTime(order.receivedAt)}{order.technicians?.length ? ` · Técnico(s): ${order.technicians.map((t) => `${t.firstName} ${t.lastName}`).join(', ')}` : ' · Sin técnico asignado'}</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="secondary" icon={FileDown} size="sm" loading={pdfBusy} onClick={handlePdf}>PDF</Button>
             <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Cobros</Button>
-            <Button variant="secondary" icon={Edit2} size="sm" onClick={() => setEditModal(true)}>Editar</Button>
+            <Button variant="secondary" icon={Edit2} size="sm" onClick={() => { setTechIds((order.technicians || []).map((t) => t.id)); setEditModal(true); }}>Editar</Button>
           </div>
         </div>
       </div>
@@ -254,7 +258,7 @@ export default function WorkOrderDetail() {
       {/* Tabs */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex border-b">
-          {['info', 'parts', 'photos', 'quotes'].map((t) => (
+          {['info', 'reception', 'photos', 'parts', 'quotes'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -263,7 +267,7 @@ export default function WorkOrderDetail() {
                 tab === t ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500 hover:text-gray-700'
               )}
             >
-              {{ info: 'Información', parts: `Refacciones (${order.workOrderParts?.length ?? 0})`, photos: `Fotos (${order.photos?.length ?? 0})`, quotes: `Cotizaciones (${order.quotes?.length ?? 0})` }[t]}
+              {{ info: 'Información', reception: 'Recepción', photos: 'Fotos del técnico', parts: `Refacciones (${order.workOrderParts?.length ?? 0})`, quotes: `Cotizaciones (${order.quotes?.length ?? 0})` }[t]}
             </button>
           ))}
         </div>
@@ -352,18 +356,19 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* PHOTOS */}
+          {/* RECEPCIÓN: cómo llega el vehículo (supervisor/admin) */}
+          {tab === 'reception' && (
+            <div className="space-y-8">
+              <PhotoSlotsPanel order={order} workshopId={workshopId} kind="RECEPTION" title="Fotos de recepción (obligatorias)" canDelete onChanged={invalidate} />
+              <DamagePanel order={order} workshopId={workshopId} canDelete onChanged={invalidate} />
+            </div>
+          )}
+
+          {/* FOTOS DEL TÉCNICO + entrega */}
           {tab === 'photos' && (
             <div className="space-y-8">
-              <PhotoSlotsPanel order={order} workshopId={workshopId} canManage onChanged={invalidate} />
+              <PhotoSlotsPanel order={order} workshopId={workshopId} kind="TECH" title="Fotos que debe registrar el técnico" canEditSlots canDelete onChanged={invalidate} />
               <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
-              <PhotoSection
-                title="Recepción — cómo llega el vehículo"
-                photos={(order.photos || []).filter((p) => !p.slotId && p.phase !== 'DELIVERY')}
-                onUpload={() => pickPhotos('RECEPTION')}
-                loading={photoMut.isPending}
-                onDelete={(id) => delPhotoMut.mutate(id)}
-              />
               <PhotoSection
                 title="Entrega — cómo se entrega el vehículo"
                 photos={(order.photos || []).filter((p) => p.phase === 'DELIVERY')}
@@ -448,12 +453,21 @@ export default function WorkOrderDetail() {
           <Textarea label="Recomendaciones (PDF)" rows={3} {...editForm.register('recommendations')} />
           <Textarea label="Notas del técnico (internas)" rows={2} {...editForm.register('technicianNotes')} />
           <Input label="Entrega estimada" type="datetime-local" {...editForm.register('estimatedReady')} />
-          <Select
-            label="Técnico asignado"
-            placeholder="Sin asignar"
-            options={technicians.map((u) => ({ value: u.id, label: `${u.firstName} ${u.lastName}`.trim() }))}
-            {...editForm.register('technicianId')}
-          />
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Técnicos asignados</p>
+            {technicians.length === 0 ? (
+              <p className="text-xs text-gray-400">No hay técnicos activos. Créalos en Usuarios.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {technicians.map((u) => (
+                  <label key={u.id} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={techIds.includes(u.id)} onChange={() => setTechIds((s) => (s.includes(u.id) ? s.filter((x) => x !== u.id) : [...s, u.id]))} className="rounded" />
+                    {u.firstName} {u.lastName}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="flex justify-end"><Button type="submit" loading={editMut.isPending}>Guardar</Button></div>
         </form>
       </Modal>

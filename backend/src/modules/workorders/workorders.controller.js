@@ -3,7 +3,7 @@ const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { notifyCustomer } = require('../../utils/notify');
 const { recalcOrderTotal, recalcPaid } = require('../../utils/orderTotals');
-const { addSlotsToOrder } = require('../../utils/photoSlots');
+const { RECEPTION_SLOTS } = require('../../utils/photoSlots');
 const { TECHNICIAN } = require('../../utils/roles');
 const { destroyCloudPhotos } = require('../photos/photos.upload');
 const { CUSTOMER_PUBLIC, z, pick, ensure, dateStr, num, optionalInt, optionalStr, httpError } = require('../../utils/guards');
@@ -43,13 +43,16 @@ const parseDate = (v, name) => {
   return d;
 };
 
-// El técnico asignado debe ser un TECHNICIAN activo del mismo taller
-const ensureTechnician = async (userId, workshopId) => {
-  const wu = userId && (await prisma.workshopUser.findFirst({
-    where: { userId, workshopId, role: TECHNICIAN, isActive: true, user: { isActive: true } },
-    select: { id: true },
-  }));
-  if (!wu) throw httpError('El técnico seleccionado no es válido', 400);
+// Todos los técnicos asignados deben ser TECHNICIAN activos del mismo taller
+const ensureTechnicians = async (ids, workshopId) => {
+  if (!Array.isArray(ids)) throw httpError('Lista de técnicos inválida', 400);
+  const unique = [...new Set(ids.map(String))];
+  if (!unique.length) return unique;
+  const found = await prisma.workshopUser.count({
+    where: { userId: { in: unique }, workshopId, role: TECHNICIAN, isActive: true, user: { isActive: true } },
+  });
+  if (found !== unique.length) throw httpError('Algún técnico seleccionado no es válido', 400);
+  return unique;
 };
 
 // Carga la orden verificando taller y, para técnicos, que esté asignada a ellos
@@ -58,7 +61,7 @@ const loadOrder = async (req, extra = {}) => {
     where: {
       id: req.params.orderId,
       workshopId: req.params.workshopId,
-      ...(isTech(req) && { technicianId: req.user.id }),
+      ...(isTech(req) && { technicians: { some: { userId: req.user.id } } }),
     },
     ...extra,
   });
@@ -76,7 +79,10 @@ const generateOrderNumber = async (workshopId) => {
   return `O-${String(n + 1).padStart(4, '0')}`;
 };
 
-const TECH_USER = { select: { id: true, firstName: true, lastName: true } };
+const TECHS_INCLUDE = { include: { user: { select: { id: true, firstName: true, lastName: true } } } };
+
+// technicians: [{ id, firstName, lastName }]
+const shapeTechs = (o) => (o.technicians ? { ...o, technicians: o.technicians.map((t) => t.user) } : o);
 
 // Vista reducida para el técnico: sin dinero, cotizaciones ni datos de contacto
 const forTechnician = (o) => {
@@ -85,6 +91,7 @@ const forTechnician = (o) => {
   } = o;
   void totalAmount; void paidAmount; void paymentStatus; void paidAt; void customerSignature; void signedAt;
   void quotes; void payments; void workOrderParts;
+  if (rest.photoSlots) rest.photoSlots = rest.photoSlots.filter((s) => s.kind === 'TECH');
   return rest;
 };
 
@@ -98,8 +105,8 @@ const list = async (req, res, next) => {
 
     const where = {
       workshopId,
-      ...(tech && { technicianId: req.user.id }),
-      ...(!tech && technicianId && { technicianId }),
+      ...(tech && { technicians: { some: { userId: req.user.id } } }),
+      ...(!tech && technicianId && { technicians: { some: { userId: technicianId } } }),
       ...(status && { status }),
       ...(customerId && !tech && { customerId }),
       ...(vehicleId && { vehicleId }),
@@ -132,8 +139,8 @@ const list = async (req, res, next) => {
         include: {
           customer: { select: tech ? { id: true, firstName: true, lastName: true } : { id: true, firstName: true, lastName: true, phone: true } },
           vehicle: { select: { id: true, make: true, model: true, year: true, licensePlate: true } },
-          technician: TECH_USER,
-          photoSlots: { select: { id: true, _count: { select: { photos: true } } } },
+          technicians: TECHS_INCLUDE,
+          photoSlots: { select: { id: true, kind: true, _count: { select: { photos: true } } } },
           _count: { select: { photos: true, quotes: true } },
         },
       }),
@@ -142,8 +149,8 @@ const list = async (req, res, next) => {
 
     // Avance de fotos requeridas: cuántas ya tienen al menos una foto
     const data = rows.map((o) => {
-      const slots = o.photoSlots || [];
-      const { photoSlots, ...rest } = o;
+      const slots = (o.photoSlots || []).filter((s) => s.kind === 'TECH');
+      const { photoSlots, ...rest } = shapeTechs(o);
       void photoSlots;
       const shaped = { ...rest, slotProgress: { total: slots.length, done: slots.filter((s) => s._count.photos > 0).length } };
       return tech ? forTechnician(shaped) : shaped;
@@ -161,13 +168,6 @@ const create = async (req, res, next) => {
     const data = orderSchema.parse(
       pick(req.body, ['description', 'diagnosis', 'recommendations', 'technicianNotes', 'estimatedReady', 'mileageIn'])
     );
-    const technicianId = req.body.technicianId || null;
-    if (technicianId) await ensureTechnician(technicianId, workshopId);
-    // Valida las fotos requeridas antes de crear la orden
-    const slotSpec = {
-      templateIds: Array.isArray(req.body.photoTemplateIds) ? req.body.photoTemplateIds : [],
-      custom: Array.isArray(req.body.photoCustom) ? req.body.photoCustom : [],
-    };
 
     // El número se calcula como último+1; si dos órdenes chocan (unique), se reintenta.
     let order;
@@ -177,12 +177,13 @@ const create = async (req, res, next) => {
         order = await prisma.workOrder.create({
           data: {
             workshopId, orderNumber, customerId: req.body.customerId, vehicleId: req.body.vehicleId,
-            ...(technicianId && { technicianId }), ...data,
+            ...data,
+            // Fotos de recepción obligatorias (las toma supervisor/admin al levantar la orden)
+            photoSlots: { create: RECEPTION_SLOTS.map((label) => ({ label, kind: 'RECEPTION' })) },
           },
           include: {
             customer: { select: { id: true, firstName: true, lastName: true } },
             vehicle: { select: { id: true, make: true, model: true, year: true } },
-            technician: TECH_USER,
           },
         });
         break;
@@ -201,7 +202,6 @@ const create = async (req, res, next) => {
         mileage: order.mileageIn,
       },
     });
-    await addSlotsToOrder(workshopId, order.id, slotSpec);
 
     created(res, order);
   } catch (e) { next(e); }
@@ -214,7 +214,7 @@ const getOne = async (req, res, next) => {
       include: {
         customer: { select: tech ? { id: true, firstName: true, lastName: true } : CUSTOMER_PUBLIC },
         vehicle: true,
-        technician: TECH_USER,
+        technicians: TECHS_INCLUDE,
         quotes: { include: { items: true } },
         photos: { orderBy: { takenAt: 'desc' } },
         photoSlots: { orderBy: { createdAt: 'asc' }, include: { photos: { orderBy: { takenAt: 'desc' } } } },
@@ -224,7 +224,8 @@ const getOne = async (req, res, next) => {
       },
     });
     if (!order) return notFound(res);
-    ok(res, tech ? forTechnician(order) : order);
+    const shaped = shapeTechs(order);
+    ok(res, tech ? forTechnician(shaped) : shaped);
   } catch (e) { next(e); }
 };
 
@@ -239,12 +240,20 @@ const update = async (req, res, next) => {
       : ['description', 'diagnosis', 'recommendations', 'technicianNotes', 'estimatedReady', 'mileageIn', 'mileageOut'];
     const data = orderSchema.partial().parse(pick(req.body, fields));
 
-    if (!isTech(req) && 'technicianId' in req.body) {
-      const tid = req.body.technicianId || null;
-      if (tid) await ensureTechnician(tid, order.workshopId);
-      data.technicianId = tid;
+    // Asignación de técnicos (uno o varios): reemplaza la lista completa
+    let technicianIds = null;
+    if (!isTech(req) && 'technicianIds' in req.body) {
+      technicianIds = await ensureTechnicians(req.body.technicianIds, order.workshopId);
     }
-    const updated = await prisma.workOrder.update({ where: { id: order.id }, data });
+    const updated = await prisma.$transaction(async (tx) => {
+      if (technicianIds) {
+        await tx.workOrderTechnician.deleteMany({ where: { workOrderId: order.id } });
+        if (technicianIds.length) {
+          await tx.workOrderTechnician.createMany({ data: technicianIds.map((userId) => ({ workOrderId: order.id, userId })) });
+        }
+      }
+      return tx.workOrder.update({ where: { id: order.id }, data });
+    });
     ok(res, isTech(req) ? forTechnician(updated) : updated);
   } catch (e) { next(e); }
 };

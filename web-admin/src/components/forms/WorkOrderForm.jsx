@@ -8,21 +8,11 @@ import { getCustomers } from '../../services/customers';
 import { getVehicles } from '../../services/vehicles';
 import { useAuthStore } from '../../store/authStore';
 import { fromLocalInput } from '../../utils/formatters';
-import { useState } from 'react';
-import { getTechnicians } from '../../services/team';
-import PhotoPicker from '../PhotoPicker';
 
 export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
   const workshopId = useAuthStore((s) => s.workshopId);
   const { register, handleSubmit, control, formState: { errors } } = useForm({ defaultValues });
   const customerId = useWatch({ control, name: 'customerId' });
-  const [photos, setPhotos] = useState({ templateIds: [], custom: [] });
-
-  const { data: techs } = useQuery({
-    queryKey: ['technicians', workshopId],
-    queryFn: () => getTechnicians(workshopId).then((r) => r.data),
-    enabled: !!workshopId,
-  });
 
   const { data: customers } = useQuery({
     queryKey: ['customers-all', workshopId],
@@ -37,7 +27,7 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
   });
 
   return (
-    <form onSubmit={handleSubmit((d) => onSubmit({ ...d, estimatedReady: fromLocalInput(d.estimatedReady), technicianId: d.technicianId || null, photoTemplateIds: photos.templateIds, photoCustom: photos.custom }))} className="space-y-4">
+    <form onSubmit={handleSubmit((d) => onSubmit({ ...d, estimatedReady: fromLocalInput(d.estimatedReady) }))} className="space-y-4">
       <Select
         label="Cliente *"
         placeholder="Seleccionar cliente"
@@ -72,12 +62,6 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
           {...register('estimatedReady')}
         />
       </div>
-      <Select
-        label="Técnico asignado"
-        placeholder="Sin asignar"
-        options={(techs || []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}`.trim() }))}
-        {...register('technicianId')}
-      />
       <Textarea
         label="Descripción del problema *"
         placeholder="Describe el problema reportado por el cliente..."
@@ -91,9 +75,9 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
         rows={2}
         {...register('diagnosis')}
       />
-      <PhotoPicker value={photos} onChange={setPhotos} />
+      <p className="text-xs text-gray-500 rounded-lg bg-gray-50 p-3">Al crear la orden podrás tomar las fotos de recepción del vehículo. Después asignas técnico(s) y eliges las fotos que se les pedirán.</p>
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="submit" loading={loading}>Crear orden</Button>
+        <Button type="submit" loading={loading}>Crear orden y tomar fotos</Button>
       </div>
     </form>
   );

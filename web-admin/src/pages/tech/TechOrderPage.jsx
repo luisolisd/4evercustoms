@@ -101,7 +101,7 @@ export default function TechOrderPage() {
       )}
 
       <div className="card p-4">
-        <PhotoSlotsPanel order={order} workshopId={workshopId} canManage={false} onChanged={refresh} />
+        <PhotoSlotsPanel order={order} workshopId={workshopId} kind="TECH" title="Fotos que debes registrar" onChanged={refresh} />
       </div>
 
       <div className="card p-4 space-y-3">

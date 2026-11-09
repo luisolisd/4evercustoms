@@ -13,10 +13,11 @@ import { useToast } from '../hooks/useToast';
 
 /**
  * Lista de fotos requeridas de una orden. Cada requerimiento muestra sus fotos y un botón para tomar/subir.
- *  canManage: supervisor/admin pueden agregar o quitar requerimientos y borrar fotos.
- *  Los técnicos solo suben fotos.
+ *  kind: 'RECEPTION' (fotos de recepción) o 'TECH' (las que se piden al técnico).
+ *  canEditSlots: supervisor/admin pueden pedir o quitar fotos (solo tipo TECH).
+ *  canDelete: pueden eliminar fotos ya subidas. Los técnicos solo suben.
  */
-export default function PhotoSlotsPanel({ order, workshopId, canManage, onChanged }) {
+export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', title, canEditSlots = false, canDelete = false, onChanged }) {
   const toast = useToast();
   const inputRef = useRef(null);
   const activeSlot = useRef(null);
@@ -25,7 +26,7 @@ export default function PhotoSlotsPanel({ order, workshopId, canManage, onChange
   const [spec, setSpec] = useState({ templateIds: [], custom: [] });
   const [deletingPhoto, setDeletingPhoto] = useState(null);
 
-  const slots = order.photoSlots || [];
+  const slots = (order.photoSlots || []).filter((s) => (s.kind || 'TECH') === kind);
   const done = slots.filter((s) => s.photos?.length > 0).length;
 
   const upload = async (files, slotId) => {
@@ -73,10 +74,10 @@ export default function PhotoSlotsPanel({ order, workshopId, canManage, onChange
 
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-gray-800">Fotos requeridas</p>
-          <p className="text-xs text-gray-500">{slots.length ? `${done} de ${slots.length} completas` : 'No se han solicitado fotos para esta orden'}</p>
+          <p className="text-sm font-semibold text-gray-800">{title || 'Fotos requeridas'}</p>
+          <p className="text-xs text-gray-500">{slots.length ? `${done} de ${slots.length} completas` : kind === 'TECH' ? 'Aún no se han solicitado fotos al técnico' : 'Sin fotos de recepción'}</p>
         </div>
-        {canManage && (
+        {canEditSlots && kind === 'TECH' && (
           <Button size="sm" variant="secondary" icon={Plus} onClick={() => setPickerOpen(true)}>Solicitar fotos</Button>
         )}
       </div>
@@ -105,7 +106,7 @@ export default function PhotoSlotsPanel({ order, workshopId, canManage, onChange
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
                   {ok ? 'Agregar' : 'Tomar foto'}
                 </button>
-                {canManage && (
+                {canEditSlots && kind === 'TECH' && (
                   <button type="button" onClick={() => removeSlotMut.mutate(s.id)} className="p-1.5 text-gray-400 hover:text-red-600" title="Quitar requerimiento">
                     <X size={14} />
                   </button>
@@ -118,7 +119,7 @@ export default function PhotoSlotsPanel({ order, workshopId, canManage, onChange
                       <img src={p.thumbnailUrl || p.url} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
                       <div className="absolute bottom-1 right-1 flex gap-1">
                         <a href={p.url} target="_blank" rel="noreferrer" className="p-1.5 rounded-md bg-black/55 text-white"><Eye size={12} /></a>
-                        {canManage && (
+                        {canDelete && (
                           <button type="button" onClick={() => setDeletingPhoto(p)} className="p-1.5 rounded-md bg-black/55 text-white hover:bg-red-600"><Trash2 size={12} /></button>
                         )}
                       </div>

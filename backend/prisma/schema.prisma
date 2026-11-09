@@ -141,7 +141,7 @@ model User {
   workshops      WorkshopUser[]
   notifications  Notification[]
   auditLogs      AuditLog[]
-  assignedOrders WorkOrder[]    @relation("OrderTechnician")
+  assignedOrders WorkOrderTechnician[]
 
   @@index([phone])
   @@map("users")
@@ -278,7 +278,6 @@ model WorkOrder {
   diagnosis         String?
   recommendations   String?
   technicianNotes   String?
-  technicianId      String?
   receivedAt        DateTime        @default(now())
   estimatedReady    DateTime?
   deliveredAt       DateTime?
@@ -293,21 +292,20 @@ model WorkOrder {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
-  workshop       Workshop          @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  customer       Customer          @relation(fields: [customerId], references: [id])
-  vehicle        Vehicle           @relation(fields: [vehicleId], references: [id])
-  appointment    Appointment?      @relation(fields: [appointmentId], references: [id])
+  workshop       Workshop              @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer       Customer              @relation(fields: [customerId], references: [id])
+  vehicle        Vehicle               @relation(fields: [vehicleId], references: [id])
+  appointment    Appointment?          @relation(fields: [appointmentId], references: [id])
   quotes         Quote[]
   photos         Photo[]
   serviceHistory ServiceHistory[]
   workOrderParts WorkOrderPart[]
-  technician     User?             @relation("OrderTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
+  technicians    WorkOrderTechnician[]
   photoSlots     OrderPhotoSlot[]
   payments       Payment[]
   reminders      ServiceReminder[]
 
   @@unique([workshopId, orderNumber])
-  @@index([technicianId])
   @@index([workshopId])
   @@index([customerId])
   @@index([vehicleId])
@@ -374,6 +372,7 @@ model Photo {
   caption      String?
   phase        String? // 'RECEPTION' (cómo llega) | 'DELIVERY' (cómo se entrega)
   slotId       String?
+  tag          String? // etiqueta de daño u observación: Golpe, Rayón, Estrellado...
   publicId     String?
   bytes        Int?
   uploadedById String
@@ -588,6 +587,7 @@ model OrderPhotoSlot {
   id          String   @id @default(uuid())
   workOrderId String
   label       String
+  kind        String   @default("TECH") // RECEPTION (recepción, la toma supervisor/admin) | TECH (la pide al técnico)
   createdAt   DateTime @default(now())
 
   workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
@@ -661,4 +661,19 @@ model ServiceReminder {
 
   @@index([workshopId, status, dueDate])
   @@map("service_reminders")
+}
+
+// Técnicos asignados a una orden (puede haber varios)
+model WorkOrderTechnician {
+  id          String   @id @default(uuid())
+  workOrderId String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workOrderId, userId])
+  @@index([userId])
+  @@map("work_order_technicians")
 }

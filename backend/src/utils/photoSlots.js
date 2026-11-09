@@ -1,12 +1,11 @@
 const prisma = require('../config/database');
 const { httpError } = require('./guards');
 
+// Fotos de recepción obligatorias: las toma supervisor/admin al levantar la orden
+const RECEPTION_SLOTS = ['Lado izquierdo', 'Lado derecho', 'Vista superior', 'Frente', 'Reverso'];
+
 // Lista base (completa pero breve). El taller puede agregar más desde el catálogo.
 const DEFAULT_TEMPLATES = [
-  'Frente del vehículo',
-  'Parte trasera',
-  'Lateral izquierdo',
-  'Lateral derecho',
   'Tablero / kilometraje',
   'Interior',
   'Cajuela',
@@ -58,13 +57,13 @@ async function resolveSlotLabels(workshopId, { templateIds = [], custom = [] } =
 async function addSlotsToOrder(workshopId, orderId, spec) {
   const labels = await resolveSlotLabels(workshopId, spec);
   if (!labels.length) return [];
-  const existing = await prisma.orderPhotoSlot.findMany({ where: { workOrderId: orderId }, select: { label: true } });
+  const existing = await prisma.orderPhotoSlot.findMany({ where: { workOrderId: orderId, kind: 'TECH' }, select: { label: true } });
   const have = new Set(existing.map((s) => s.label));
   const fresh = labels.filter((l) => !have.has(l));
   if (fresh.length) {
-    await prisma.orderPhotoSlot.createMany({ data: fresh.map((label) => ({ workOrderId: orderId, label })) });
+    await prisma.orderPhotoSlot.createMany({ data: fresh.map((label) => ({ workOrderId: orderId, label, kind: 'TECH' })) });
   }
   return fresh;
 }
 
-module.exports = { DEFAULT_TEMPLATES, ensureTemplates, resolveSlotLabels, addSlotsToOrder };
+module.exports = { RECEPTION_SLOTS, DEFAULT_TEMPLATES, ensureTemplates, resolveSlotLabels, addSlotsToOrder };
