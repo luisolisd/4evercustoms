@@ -11,7 +11,7 @@ import BrandLogo from '../ui/BrandLogo';
 
 const COLORS = ['Blanco', 'Negro', 'Gris', 'Plata', 'Rojo', 'Azul', 'Verde', 'Amarillo', 'Naranja', 'Café', 'Otro'];
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 40 }, (_, i) => ({ value: currentYear - i, label: currentYear - i }));
+const years = Array.from({ length: currentYear - 1899 }, (_, i) => ({ value: currentYear - i, label: currentYear - i }));
 const BRAND_OPTIONS = [
   ...CAR_BRANDS.map((b) => ({ value: b, label: b })),
   { value: '__otra__', label: 'Otra marca…' },
@@ -42,7 +42,7 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
 
   const { data: customers } = useQuery({
     queryKey: ['customers-all', workshopId],
-    queryFn: () => getCustomers(workshopId, { limit: 100 }).then((r) => r.data),
+    queryFn: () => getCustomers(workshopId, { limit: 500 }).then((r) => r.data),
     enabled: !!workshopId && !fixedCustomerId,
   });
 
@@ -124,3 +124,5 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
     </form>
   );
 }
+
+

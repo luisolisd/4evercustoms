@@ -3,26 +3,33 @@ import { useQuery } from '@tanstack/react-query';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, CalendarDays, ClipboardList,
-  FileText, Package, BarChart3, LogOut, Menu, X, Bell,
-  ChevronRight, Megaphone,
+  FileText, Package, BarChart3, LogOut, Menu,
+  ChevronRight, Megaphone, BellRing, Wallet, Images, UserCog,
 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, ROLE_LABELS, selectRole } from '../store/authStore';
 import { getWorkshop } from '../services/workshop';
 import { APP_VERSION } from '../version';
 import ToastContainer from './ui/Toast';
 import clsx from 'clsx';
 
+// roles: quién ve el elemento (A = administrador, S = supervisor, T = técnico)
 const nav = [
-  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/customers',    icon: Users,            label: 'Clientes' },
-  { to: '/vehicles',     icon: Car,              label: 'Vehículos' },
-  { to: '/appointments', icon: CalendarDays,     label: 'Citas' },
-  { to: '/work-orders',  icon: ClipboardList,    label: 'Órdenes' },
-  { to: '/quotes',       icon: FileText,         label: 'Cotizaciones' },
-  { to: '/inventory',    icon: Package,          label: 'Inventario' },
-  { to: '/promotions',   icon: Megaphone,        label: 'Promociones' },
-  { to: '/reports',      icon: BarChart3,        label: 'Reportes' },
+  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',     roles: 'AS' },
+  { to: '/mis-ordenes',  icon: ClipboardList,   label: 'Mis órdenes',   roles: 'T' },
+  { to: '/customers',    icon: Users,           label: 'Clientes',      roles: 'AS' },
+  { to: '/vehicles',     icon: Car,             label: 'Vehículos',     roles: 'AS' },
+  { to: '/appointments', icon: CalendarDays,    label: 'Citas',         roles: 'AS' },
+  { to: '/work-orders',  icon: ClipboardList,   label: 'Órdenes',       roles: 'AS' },
+  { to: '/quotes',       icon: FileText,        label: 'Cotizaciones',  roles: 'AS' },
+  { to: '/reminders',    icon: BellRing,        label: 'Recordatorios', roles: 'AS' },
+  { to: '/cash-close',   icon: Wallet,          label: 'Corte de caja', roles: 'AS' },
+  { to: '/inventory',    icon: Package,         label: 'Inventario',    roles: 'AS' },
+  { to: '/photos',       icon: Images,          label: 'Fotos',         roles: 'AS' },
+  { to: '/promotions',   icon: Megaphone,       label: 'Promociones',   roles: 'AS' },
+  { to: '/reports',      icon: BarChart3,       label: 'Reportes',      roles: 'A' },
+  { to: '/users',        icon: UserCog,         label: 'Usuarios',      roles: 'A' },
 ];
+const ROLE_CODE = { WORKSHOP_ADMIN: 'A', SUPERVISOR: 'S', TECHNICIAN: 'T' };
 
 function NavItem({ to, icon: Icon, label, onClick }) {
   return (
@@ -53,6 +60,8 @@ function NavItem({ to, icon: Icon, label, onClick }) {
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const workshopId = useAuthStore((s) => s.workshopId);
+  const role = useAuthStore(selectRole);
+  const code = ROLE_CODE[role] || '';
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -82,7 +91,9 @@ export default function Layout() {
 
         {/* Nav */}
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-          {nav.map((item) => <NavItem key={item.to} {...item} onClick={mobile ? close : undefined} />)}
+          {nav
+            .filter((item) => item.roles.includes(code))
+            .map(({ roles, ...item }) => <NavItem key={item.to} {...item} onClick={mobile ? close : undefined} />)}
         </nav>
 
         {/* User */}
@@ -95,7 +106,7 @@ export default function Layout() {
               <p className="text-white text-sm font-semibold truncate group-hover:text-brand-300 transition-colors">
                 {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Administrador'}
               </p>
-              <p className="text-ink-400 text-xs truncate">{(user?.phone || '').replace(/\D/g, '').slice(-10) || '—'}</p>
+              <p className="text-ink-400 text-xs truncate">{ROLE_LABELS[role] || '—'}</p>
             </div>
           </Link>
           <button

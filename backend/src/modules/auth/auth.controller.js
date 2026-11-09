@@ -1,4 +1,4 @@
-const { adminLogin, customerAuthStatus, customerSetPassword, customerLogin, requestAdminSetupOtp, validateAdminSetupOtp, requestOtp, validateOtp, refreshAccessToken } = require('./auth.service');
+const { adminLogin, customerAuthStatus, customerSetPassword, customerLogin, requestOtp, validateOtp, refreshAccessToken } = require('./auth.service');
 const { ok, error } = require('../../utils/response');
 const prisma = require('../../config/database');
 
@@ -104,22 +104,5 @@ const getMe = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-const sendAdminSetupOtp = async (req, res, next) => {
-  try {
-    const { phone } = req.body;
-    if (!phone) return error(res, 'El teléfono es requerido');
-    await requestAdminSetupOtp(phone);
-    ok(res, { message: 'Código enviado' });
-  } catch (e) { next(e); }
-};
+module.exports = { loginAdmin, customerStatus, setCustomerPassword, loginCustomer, sendOtp, verifyOtp, refreshToken, logout, getMe };
 
-const verifyAdminSetupOtp = async (req, res, next) => {
-  try {
-    const { phone, code } = req.body;
-    if (!phone || !code) return error(res, 'Teléfono y código son requeridos');
-    const result = await validateAdminSetupOtp(phone, code);
-    ok(res, result);
-  } catch (e) { next(e); }
-};
-
-module.exports = { loginAdmin, customerStatus, setCustomerPassword, loginCustomer, sendAdminSetupOtp, verifyAdminSetupOtp, sendOtp, verifyOtp, refreshToken, logout, getMe };

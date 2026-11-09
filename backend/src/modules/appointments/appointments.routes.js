@@ -2,16 +2,16 @@ const router = require('express').Router({ mergeParams: true });
 const ctrl = require('./appointments.controller');
 const authenticate = require('../../middleware/authenticate');
 const { workshopAccess } = require('../../middleware/workshopAccess');
+const { STAFF } = require('../../utils/roles');
 
-const auth = [authenticate, workshopAccess()];
-const adminOrTech = [authenticate, workshopAccess('WORKSHOP_ADMIN', 'TECHNICIAN')];
+const staff = [authenticate, workshopAccess(...STAFF)];
 
-router.get('/', ...auth, ctrl.list);
-router.post('/', ...auth, ctrl.create);
-router.get('/:appointmentId', ...auth, ctrl.getOne);
-router.put('/:appointmentId', ...adminOrTech, ctrl.update);
-router.patch('/:appointmentId/status', ...adminOrTech, ctrl.updateStatus);
-router.patch('/:appointmentId/cancel', ...adminOrTech, ctrl.cancel);
-router.delete('/:appointmentId', ...adminOrTech, ctrl.remove);
+router.get('/', ...staff, ctrl.list);
+router.post('/', ...staff, ctrl.create);
+router.get('/:appointmentId', ...staff, ctrl.getOne);
+router.put('/:appointmentId', ...staff, ctrl.update);
+router.patch('/:appointmentId/status', ...staff, ctrl.updateStatus);
+router.patch('/:appointmentId/cancel', ...staff, ctrl.cancel);
+router.delete('/:appointmentId', ...staff, ctrl.remove);
 
 module.exports = router;

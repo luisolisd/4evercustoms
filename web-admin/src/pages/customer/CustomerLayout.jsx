@@ -13,7 +13,7 @@ const tabs = [
 
 export default function CustomerLayout() {
   const navigate = useNavigate();
-  const { customer, logout } = useCustomerStore();
+  const { logout } = useCustomerStore();
 
   const handleLogout = () => { logout(); navigate('/cliente/acceso', { replace: true }); };
 

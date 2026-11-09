@@ -1,9 +1,12 @@
 const prisma = require('../../config/database');
-const { ok, created, notFound } = require('../../utils/response');
+const { ok, created, notFound, error } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
-const { cleanData } = require('../../utils/sanitize');
 const { recalcOrderTotal } = require('../../utils/orderTotals');
 const { notifyCustomer } = require('../../utils/notify');
+const { CUSTOMER_PUBLIC, z, pick, ensure, dateStr, num, optionalStr, httpError } = require('../../utils/guards');
+
+const STATUSES = ['DRAFT', 'SENT', 'APPROVED', 'REJECTED', 'EXPIRED'];
+const optDate = z.preprocess((v) => (v === '' || v === null ? undefined : v), dateStr.optional());
 
 // Usa el último número real + 1 (no el conteo) para no chocar tras borrar cotizaciones.
 const generateQuoteNumber = async (workshopId) => {
@@ -26,16 +29,36 @@ const recalcTotals = async (quoteId) => {
   });
 };
 
+// La orden debe existir en el taller y ser del mismo cliente que la cotización
+const checkOrderLink = async (workOrderId, customerId, workshopId) => {
+  const order = await ensure.workOrder(workOrderId, workshopId);
+  if (order.customerId !== customerId) throw httpError('La orden es de otro cliente', 400);
+};
+
 const list = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
-    const { status, customerId, unlinked } = req.query;
+    const { status, customerId, unlinked, search } = req.query;
     const { page, limit, skip } = parsePagination(req.query);
+    if (status && !STATUSES.includes(status)) return error(res, 'Estado inválido');
 
     const where = {
       workshopId,
       ...(status && { status }),
       ...(customerId && { customerId }),
+      ...(search && {
+        OR: [
+          { quoteNumber: { contains: search, mode: 'insensitive' } },
+          {
+            customer: {
+              OR: [
+                { firstName: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } },
+              ],
+            },
+          },
+        ],
+      }),
       ...(unlinked === 'true' && { workOrderId: null }), // cotizaciones sin orden de trabajo
     };
     const [data, total] = await Promise.all([
@@ -56,10 +79,26 @@ const list = async (req, res, next) => {
 const create = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
-    const quoteNumber = await generateQuoteNumber(workshopId);
-    const quote = await prisma.quote.create({
-      data: { workshopId, quoteNumber, ...cleanData(req.body, ['validUntil']) },
-    });
+    const { customerId, workOrderId } = req.body;
+    const body = z
+      .object({ notes: optionalStr, validUntil: optDate })
+      .parse(pick(req.body, ['notes', 'validUntil']));
+    await ensure.customer(customerId, workshopId);
+    if (workOrderId) await checkOrderLink(workOrderId, customerId, workshopId);
+
+    // El número se calcula como último+1; si dos cotizaciones chocan (unique), se reintenta.
+    let quote;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const quoteNumber = await generateQuoteNumber(workshopId);
+      try {
+        quote = await prisma.quote.create({
+          data: { workshopId, quoteNumber, customerId, ...(workOrderId && { workOrderId }), ...body },
+        });
+        break;
+      } catch (e) {
+        if (e.code !== 'P2002' || attempt === 3) throw e;
+      }
+    }
     created(res, quote);
   } catch (e) { next(e); }
 };
@@ -68,7 +107,7 @@ const getOne = async (req, res, next) => {
   try {
     const quote = await prisma.quote.findFirst({
       where: { id: req.params.quoteId, workshopId: req.params.workshopId },
-      include: { items: { include: { part: true } }, customer: true, workOrder: true },
+      include: { items: { include: { part: true } }, customer: { select: CUSTOMER_PUBLIC }, workOrder: true },
     });
     if (!quote) return notFound(res);
     ok(res, quote);
@@ -77,30 +116,39 @@ const getOne = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const quote = await prisma.quote.findFirst({
-      where: { id: req.params.quoteId, workshopId: req.params.workshopId },
-    });
-    if (!quote) return notFound(res);
-    const allowed = ['notes', 'validUntil', 'workOrderId'];
-    const data = cleanData(
-      Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k))),
-      ['validUntil']
-    );
-    ok(res, await prisma.quote.update({ where: { id: quote.id }, data }));
+    const { workshopId, quoteId } = req.params;
+    const quote = await ensure.quote(quoteId, workshopId);
+    const data = z
+      .object({ notes: optionalStr, validUntil: optDate, workOrderId: z.string().nullable().optional() })
+      .parse(pick(req.body, ['notes', 'validUntil', 'workOrderId']));
+
+    if (data.workOrderId) await checkOrderLink(data.workOrderId, quote.customerId, workshopId);
+    const updated = await prisma.quote.update({ where: { id: quote.id }, data });
+
+    // Si cambió la orden ligada, recalcula el total de la anterior y de la nueva
+    if (data.workOrderId !== undefined && data.workOrderId !== quote.workOrderId) {
+      if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
+      if (data.workOrderId) await recalcOrderTotal(data.workOrderId);
+    }
+    ok(res, updated);
   } catch (e) { next(e); }
 };
 
 const updateStatus = async (req, res, next) => {
   try {
     const { status, rejectionReason } = req.body;
+    if (!STATUSES.includes(status)) return error(res, 'Estado inválido');
     const quote = await prisma.quote.findFirst({
       where: { id: req.params.quoteId, workshopId: req.params.workshopId },
     });
     if (!quote) return notFound(res);
 
-    const data = { status };
-    if (status === 'APPROVED') data.approvedAt = new Date();
-    if (status === 'REJECTED') { data.rejectedAt = new Date(); data.rejectionReason = rejectionReason; }
+    const data = {
+      status,
+      approvedAt: status === 'APPROVED' ? new Date() : null,
+      rejectedAt: status === 'REJECTED' ? new Date() : null,
+      rejectionReason: status === 'REJECTED' ? rejectionReason || null : null,
+    };
 
     const updated = await prisma.quote.update({ where: { id: quote.id }, data });
 
@@ -108,7 +156,7 @@ const updateStatus = async (req, res, next) => {
     if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
 
     // Avisa al cliente cuando el taller le envía una cotización para aprobar
-    if (status === 'SENT') {
+    if (status === 'SENT' && quote.status !== 'SENT') {
       notifyCustomer(
         { customerId: quote.customerId, workshopId: quote.workshopId },
         {
@@ -124,29 +172,46 @@ const updateStatus = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+const itemSchema = z.object({
+  description: z.string().trim().min(1, 'Requerido').max(300),
+  partId: optionalStr,
+  quantity: num.positive('La cantidad debe ser mayor a 0'),
+  unitPrice: num.min(0, 'El precio no puede ser negativo'),
+  isLabor: z.boolean().optional(),
+});
+
 const addItem = async (req, res, next) => {
   try {
-    const { description, partId, quantity, unitPrice, isLabor } = req.body;
+    const { workshopId, quoteId } = req.params;
+    const quote = await ensure.quote(quoteId, workshopId);
+    const body = itemSchema.parse(req.body);
+    if (body.partId) await ensure.part(body.partId, workshopId);
+
     const item = await prisma.quoteItem.create({
       data: {
-        quoteId: req.params.quoteId,
-        description,
-        partId: partId || null,
-        quantity,
-        unitPrice,
-        total: quantity * unitPrice,
-        isLabor: isLabor || false,
+        quoteId,
+        description: body.description,
+        partId: body.partId || null,
+        quantity: body.quantity,
+        unitPrice: body.unitPrice,
+        total: Math.round(body.quantity * body.unitPrice * 100) / 100,
+        isLabor: body.isLabor || false,
       },
     });
-    await recalcTotals(req.params.quoteId);
+    await recalcTotals(quoteId);
+    if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
     ok(res, item, 201);
   } catch (e) { next(e); }
 };
 
 const removeItem = async (req, res, next) => {
   try {
-    await prisma.quoteItem.delete({ where: { id: req.params.itemId } });
-    await recalcTotals(req.params.quoteId);
+    const { workshopId, quoteId, itemId } = req.params;
+    const quote = await ensure.quote(quoteId, workshopId);
+    const del = await prisma.quoteItem.deleteMany({ where: { id: itemId, quoteId } });
+    if (del.count === 0) return notFound(res, 'Ítem no encontrado');
+    await recalcTotals(quoteId);
+    if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
     ok(res, { message: 'Item eliminado' });
   } catch (e) { next(e); }
 };

@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
+const BASE = import.meta.env.VITE_API_URL || '/api/v1';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -12,17 +14,32 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Una sola renovación a la vez: si varias peticiones fallan con 401 comparten la misma promesa.
+let refreshing = null;
+const refreshAccessToken = (refreshToken) => {
+  if (!refreshing) {
+    refreshing = axios
+      .post(`${BASE}/auth/refresh-token`, { refreshToken })
+      .then((res) => res.data.data.accessToken)
+      .finally(() => { refreshing = null; });
+  }
+  return refreshing;
+};
+
 api.interceptors.response.use(
   (res) => res.data,
   async (err) => {
-    if (err.response?.status === 401) {
+    const original = err.config;
+    const isAuthCall = original?.url?.includes('/auth/');
+    if (err.response?.status === 401 && original && !original._retry && !isAuthCall) {
+      original._retry = true;
       const { refreshToken, setTokens, logout } = useAuthStore.getState();
       if (refreshToken) {
         try {
-          const res = await axios.post('/api/v1/auth/refresh-token', { refreshToken });
-          setTokens(res.data.data.accessToken, refreshToken);
-          err.config.headers.Authorization = `Bearer ${res.data.data.accessToken}`;
-          return api(err.config);
+          const accessToken = await refreshAccessToken(refreshToken);
+          setTokens(accessToken, refreshToken);
+          original.headers.Authorization = `Bearer ${accessToken}`;
+          return api(original);
         } catch {
           logout();
         }

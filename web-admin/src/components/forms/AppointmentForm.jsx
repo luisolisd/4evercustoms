@@ -8,6 +8,7 @@ import { getCustomers } from '../../services/customers';
 import { getVehicles } from '../../services/vehicles';
 import { useAuthStore } from '../../store/authStore';
 import { useWatch } from 'react-hook-form';
+import { toLocalInput, fromLocalInput } from '../../utils/formatters';
 
 const SERVICES = [
   'Cambio de aceite', 'Afinación', 'Frenos', 'Suspensión',
@@ -16,12 +17,16 @@ const SERVICES = [
 
 export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
   const workshopId = useAuthStore((s) => s.workshopId);
-  const { register, handleSubmit, control, formState: { errors } } = useForm({ defaultValues });
+  const { register, handleSubmit, control, formState: { errors } } = useForm({
+    defaultValues: defaultValues
+      ? { ...defaultValues, scheduledAt: toLocalInput(defaultValues.scheduledAt), customerId: defaultValues.customerId, vehicleId: defaultValues.vehicleId }
+      : undefined,
+  });
   const customerId = useWatch({ control, name: 'customerId' });
 
   const { data: customers } = useQuery({
     queryKey: ['customers-all', workshopId],
-    queryFn: () => getCustomers(workshopId, { limit: 100 }).then((r) => r.data),
+    queryFn: () => getCustomers(workshopId, { limit: 500 }).then((r) => r.data),
     enabled: !!workshopId,
   });
 
@@ -42,7 +47,7 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
   }));
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit((d) => onSubmit({ ...d, scheduledAt: fromLocalInput(d.scheduledAt) }))} className="space-y-4">
       <Select
         label="Cliente *"
         placeholder="Seleccionar cliente"
@@ -88,3 +93,5 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
     </form>
   );
 }
+
+

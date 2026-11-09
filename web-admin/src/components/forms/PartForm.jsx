@@ -27,12 +27,14 @@ export default function PartForm({ defaultValues, onSubmit, loading }) {
         {...register('unitPrice', { required: 'Requerido', valueAsNumber: true, min: 0 })}
       />
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label="Cantidad inicial"
-          type="number"
-          defaultValue={0}
-          {...register('initialQuantity', { valueAsNumber: true, min: 0 })}
-        />
+        {!defaultValues?.id && (
+          <Input
+            label="Cantidad inicial"
+            type="number"
+            defaultValue={0}
+            {...register('initialQuantity', { valueAsNumber: true, min: 0 })}
+          />
+        )}
         <Input
           label="Stock mínimo"
           type="number"
@@ -50,3 +52,4 @@ export default function PartForm({ defaultValues, onSubmit, loading }) {
     </form>
   );
 }
+

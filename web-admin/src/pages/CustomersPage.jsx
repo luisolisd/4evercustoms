@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, Phone, Mail, Eye, Edit2, Trash2 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, selectIsAdmin } from '../store/authStore';
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../services/customers';
 import Button from '../components/ui/Button';
 import SearchInput from '../components/ui/SearchInput';
@@ -16,6 +16,7 @@ import { fDate } from '../utils/formatters';
 
 export default function CustomersPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
+  const isAdmin = useAuthStore(selectIsAdmin);
   const qc = useQueryClient();
   const toast = useToast();
   const navigate = useNavigate();
@@ -164,13 +165,15 @@ export default function CustomersPage() {
                         >
                           <Edit2 size={15} />
                         </button>
-                        <button
+                        {isAdmin && (
+<button
                           onClick={() => setDeleting(c)}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                           title="Eliminar"
                         >
                           <Trash2 size={15} />
                         </button>
+)}
                       </div>
                     </td>
                   </tr>

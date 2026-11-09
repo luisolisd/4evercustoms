@@ -3,3 +3,9 @@ passwo.txt
 logotipos/
 .env
 *.log
+
+.claude/
+*.err
+*.log
+mobile/.expo/
+web-admin/dist/

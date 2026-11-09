@@ -30,7 +30,7 @@ export default function LoginPage() {
       const res = await api.post('/auth/admin/login', { email, password });
       setTokens(res.data.accessToken, res.data.refreshToken);
       setUser(res.data.user);
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'Credenciales incorrectas');
     } finally {

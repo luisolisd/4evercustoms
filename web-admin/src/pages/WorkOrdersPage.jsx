@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ClipboardList, Eye, Trash2 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, selectIsAdmin } from '../store/authStore';
 import { getWorkOrders, createWorkOrder, deleteWorkOrder } from '../services/workOrders';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -15,20 +15,13 @@ import Select from '../components/ui/Select';
 import SearchInput from '../components/ui/SearchInput';
 import { useToast } from '../hooks/useToast';
 import { fDate, fMoney } from '../utils/formatters';
+import { WORK_ORDER_FLOW_OPTS } from '../constants/statuses';
 
-const STATUS_OPTS = [
-  { value: '', label: 'Todos los estados' },
-  { value: 'RECEIVED',         label: 'Recibido' },
-  { value: 'DIAGNOSIS',        label: 'Diagnóstico' },
-  { value: 'AWAITING_AUTH',    label: 'Esp. autorización' },
-  { value: 'IN_REPAIR',        label: 'En reparación' },
-  { value: 'FINAL_TESTING',    label: 'Pruebas finales' },
-  { value: 'READY_FOR_PICKUP', label: 'Listo para entrega' },
-  { value: 'DELIVERED',        label: 'Entregado' },
-];
+const STATUS_OPTS = [{ value: '', label: 'Todos los estados' }, ...WORK_ORDER_FLOW_OPTS];
 
 export default function WorkOrdersPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
+  const isAdmin = useAuthStore(selectIsAdmin);
   const qc = useQueryClient();
   const toast = useToast();
   const navigate = useNavigate();
@@ -41,7 +34,7 @@ export default function WorkOrdersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['work-orders', workshopId, statusFilter, search, page],
-    queryFn: () => getWorkOrders(workshopId, { status: statusFilter || undefined, page, limit: 15 }),
+    queryFn: () => getWorkOrders(workshopId, { status: statusFilter || undefined, search: search || undefined, page, limit: 15 }),
     enabled: !!workshopId,
     keepPreviousData: true,
   });
@@ -93,6 +86,7 @@ export default function WorkOrdersPage() {
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-5 py-3">Orden</th>
                   <th className="text-left px-5 py-3">Cliente / Vehículo</th>
+                  <th className="text-left px-5 py-3">Técnico</th>
                   <th className="text-center px-5 py-3">Estado</th>
                   <th className="text-center px-5 py-3">Pago</th>
                   <th className="text-right px-5 py-3">Total</th>
@@ -115,6 +109,7 @@ export default function WorkOrdersPage() {
                       <p className="font-medium text-gray-900">{o.customer?.firstName} {o.customer?.lastName}</p>
                       <p className="text-xs text-gray-500">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? ` · ${o.vehicle.licensePlate}` : ''}</p>
                     </td>
+                    <td className="px-5 py-4 text-gray-600 text-sm">{o.technician ? `${o.technician.firstName} ${o.technician.lastName}` : <span className="text-gray-300">Sin asignar</span>}</td>
                     <td className="px-5 py-4 text-center"><WorkOrderBadge status={o.status} /></td>
                     <td className="px-5 py-4 text-center"><PaymentBadge status={o.paymentStatus} /></td>
                     <td className="px-5 py-4 text-right font-semibold text-gray-900">{fMoney(o.totalAmount)}</td>
@@ -124,9 +119,11 @@ export default function WorkOrdersPage() {
                         <button onClick={(e) => { e.stopPropagation(); navigate(`/work-orders/${o.id}`); }} className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50">
                           <Eye size={15} />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); setDeleting(o); }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
+                        {isAdmin && (
+<button onClick={(e) => { e.stopPropagation(); setDeleting(o); }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50">
                           <Trash2 size={15} />
                         </button>
+)}
                       </div>
                     </td>
                   </tr>
@@ -153,3 +150,4 @@ export default function WorkOrdersPage() {
     </div>
   );
 }
+

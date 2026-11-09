@@ -1,4 +1,4 @@
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const fDate = (date) =>
@@ -6,9 +6,6 @@ export const fDate = (date) =>
 
 export const fDateTime = (date) =>
   date ? format(parseISO(String(date)), "dd/MM/yyyy HH:mm", { locale: es }) : '—';
-
-export const fRelative = (date) =>
-  date ? formatDistanceToNow(parseISO(String(date)), { addSuffix: true, locale: es }) : '—';
 
 export const fMoney = (amount) =>
   amount != null
@@ -18,7 +15,20 @@ export const fMoney = (amount) =>
 export const fNumber = (n) =>
   n != null ? new Intl.NumberFormat('es-MX').format(Number(n)) : '—';
 
-export const fPhone = (phone) =>
-  phone
-    ? phone.replace(/(\+52)(\d{3})(\d{3})(\d{4})/, '$1 $2 $3 $4')
-    : '—';
+
+// ISO (UTC) → valor para <input type="datetime-local"> en hora LOCAL ("YYYY-MM-DDTHH:mm")
+export const toLocalInput = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+// Valor de <input type="datetime-local"> (hora local) → ISO UTC; '' si está vacío/invalid
+export const fromLocalInput = (v) => {
+  if (!v) return '';
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+};
+

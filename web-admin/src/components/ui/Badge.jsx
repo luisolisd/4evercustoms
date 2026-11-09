@@ -62,10 +62,6 @@ export function WorkOrderBadge({ status }) {
   return <Badge color={s.color}>{s.label}</Badge>;
 }
 
-export function AppointmentBadge({ status }) {
-  const s = APPOINTMENT_STATUS[status] || { label: status, color: 'gray' };
-  return <Badge color={s.color}>{s.label}</Badge>;
-}
 
 export function QuoteBadge({ status }) {
   const s = QUOTE_STATUS[status] || { label: status, color: 'gray' };

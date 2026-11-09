@@ -1,11 +1,25 @@
 const prisma = require('../../config/database');
 const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
+const { z, pick, CUSTOMER_PUBLIC } = require('../../utils/guards');
+
+const FIELDS = ['firstName', 'lastName', 'phone', 'email', 'address', 'notes'];
+
+const emptyToUndef = (v) => (v === '' || v === null ? undefined : v);
+const createSchema = z.object({
+  firstName: z.string().trim().min(1, 'Requerido'),
+  lastName: z.string().trim().min(1, 'Requerido'),
+  phone: z.string().trim().regex(/^\+?\d{10,15}$/, 'Teléfono inválido'),
+  email: z.preprocess(emptyToUndef, z.string().trim().email('Email inválido').optional()),
+  address: z.preprocess(emptyToUndef, z.string().trim().optional()),
+  notes: z.preprocess(emptyToUndef, z.string().trim().optional()),
+});
+const updateSchema = createSchema.partial();
 
 const list = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
-    const { page, limit, skip } = parsePagination(req.query);
+    const { page, limit, skip } = parsePagination(req.query, 500);
     const search = req.query.search;
 
     const where = {
@@ -27,7 +41,7 @@ const list = async (req, res, next) => {
         skip,
         take: limit,
         orderBy: { firstName: 'asc' },
-        include: { _count: { select: { vehicles: true, workOrders: true } } },
+        select: { ...CUSTOMER_PUBLIC, _count: { select: { vehicles: true, workOrders: true } } },
       }),
       prisma.customer.count({ where }),
     ]);
@@ -38,9 +52,10 @@ const list = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
-    const { workshopId } = req.params;
+    const data = createSchema.parse(pick(req.body, FIELDS));
     const customer = await prisma.customer.create({
-      data: { workshopId, ...req.body },
+      data: { workshopId: req.params.workshopId, ...data },
+      select: CUSTOMER_PUBLIC,
     });
     created(res, customer);
   } catch (e) { next(e); }
@@ -50,7 +65,8 @@ const getOne = async (req, res, next) => {
   try {
     const customer = await prisma.customer.findFirst({
       where: { id: req.params.customerId, workshopId: req.params.workshopId },
-      include: {
+      select: {
+        ...CUSTOMER_PUBLIC,
         vehicles: { where: { isActive: true } },
         _count: { select: { workOrders: true, appointments: true } },
       },
@@ -64,12 +80,16 @@ const update = async (req, res, next) => {
   try {
     const customer = await prisma.customer.findFirst({
       where: { id: req.params.customerId, workshopId: req.params.workshopId },
+      select: { id: true },
     });
     if (!customer) return notFound(res);
 
-    const allowed = ['firstName', 'lastName', 'phone', 'email', 'address', 'notes'];
-    const data = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
-    const updated = await prisma.customer.update({ where: { id: customer.id }, data });
+    const data = updateSchema.parse(pick(req.body, FIELDS));
+    const updated = await prisma.customer.update({
+      where: { id: customer.id },
+      data,
+      select: CUSTOMER_PUBLIC,
+    });
     ok(res, updated);
   } catch (e) { next(e); }
 };

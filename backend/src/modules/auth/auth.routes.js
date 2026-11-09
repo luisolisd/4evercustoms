@@ -1,17 +1,16 @@
 const router = require('express').Router();
-const { loginAdmin, customerStatus, setCustomerPassword, loginCustomer, sendAdminSetupOtp, verifyAdminSetupOtp, sendOtp, verifyOtp, refreshToken, logout, getMe } = require('./auth.controller');
+const { loginAdmin, customerStatus, setCustomerPassword, loginCustomer, sendOtp, verifyOtp, refreshToken, logout, getMe } = require('./auth.controller');
 const authenticate = require('../../middleware/authenticate');
+const { authLimiter, smsLimiter } = require('../../middleware/rateLimiters');
 
-router.post('/admin/login', loginAdmin);
-router.post('/admin/setup-otp', sendAdminSetupOtp);
-router.post('/admin/verify-setup-otp', verifyAdminSetupOtp);
+router.post('/admin/login', authLimiter, loginAdmin);
 // Cliente: teléfono (10 dígitos) + contraseña propia
-router.post('/customer/status', customerStatus);
-router.post('/customer/set-password', setCustomerPassword);
-router.post('/customer/login', loginCustomer);
-router.post('/send-otp', sendOtp);
-router.post('/verify-otp', verifyOtp);
-router.post('/refresh-token', refreshToken);
+router.post('/customer/status', authLimiter, customerStatus);
+router.post('/customer/set-password', authLimiter, setCustomerPassword);
+router.post('/customer/login', authLimiter, loginCustomer);
+router.post('/send-otp', smsLimiter, sendOtp);
+router.post('/verify-otp', authLimiter, verifyOtp);
+router.post('/refresh-token', authLimiter, refreshToken);
 router.post('/logout', authenticate, logout);
 router.get('/me', authenticate, getMe);
 

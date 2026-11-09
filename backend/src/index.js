@@ -47,8 +47,8 @@ app.use(rateLimit({
 }));
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(compression());
 
 // Logging
@@ -73,3 +73,4 @@ process.on('unhandledRejection', (reason) =>
 app.listen(port, () => logger.info(`4EVRcustoms API escuchando en puerto ${port} [${nodeEnv}]`));
 
 module.exports = app;
+

@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, Image, StyleSheet, pdf, Font } from '@react-pdf/renderer';
+import { IVA_FACTOR } from '../constants/tax';
 import QRCode from 'qrcode';
 
 // Evita que react-pdf corte palabras a la mitad (AUTO-MOTRIZ); solo corta en espacios.
@@ -56,15 +57,12 @@ function buildItems(order) {
 
 function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
   const total = Number(order.totalAmount || 0);
-  const subtotal = total / 1.16; // los precios ya incluyen IVA → se desglosa hacia atrás
+  const subtotal = total / IVA_FACTOR; // los precios ya incluyen IVA → se desglosa hacia atrás
   const iva = total - subtotal;
   const items = buildItems(order);
   // Los precios capturados ya incluyen IVA; en los conceptos se muestran SIN IVA (÷1.16)
-  const conceptosTotal = items.reduce((s, i) => s + i.total, 0) / 1.16;
+  const conceptosTotal = items.reduce((s, i) => s + i.total, 0) / IVA_FACTOR;
   const line2 = [workshop?.address, workshop?.city].filter(Boolean).join(', ');
-  const legal = workshop?.legalName
-    ? `${workshop.legalName}${workshop?.taxId ? ` · RFC: ${workshop.taxId}` : ''}`
-    : (workshop?.taxId ? `RFC: ${workshop.taxId}` : '');
   // Pie: DOMICILIO | RAZÓN SOCIAL RFC: XXXX
   const nameRfc = [workshop?.legalName, workshop?.taxId ? `RFC: ${workshop.taxId}` : '']
     .filter(Boolean).join(' ');
@@ -113,9 +111,9 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
         ) : items.map((it, i) => (
           <View key={i} style={styles.itemRow}>
             <Text style={styles.cDesc}>{it.description}</Text>
-            <Text style={styles.cPU}>{money(it.unitPrice / 1.16)}</Text>
+            <Text style={styles.cPU}>{money(it.unitPrice / IVA_FACTOR)}</Text>
             <Text style={styles.cQty}>{it.qty}</Text>
-            <Text style={styles.cTotal}>{money(it.total / 1.16)}</Text>
+            <Text style={styles.cTotal}>{money(it.total / IVA_FACTOR)}</Text>
           </View>
         ))}
 
@@ -190,3 +188,4 @@ export async function downloadWorkOrderPdf(order, workshop) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+

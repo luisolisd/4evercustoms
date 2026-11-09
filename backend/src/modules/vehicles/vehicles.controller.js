@@ -1,12 +1,26 @@
 const prisma = require('../../config/database');
 const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
+const { z, pick, ensure, optionalInt, optionalStr } = require('../../utils/guards');
+
+const FIELDS = ['make', 'model', 'year', 'vin', 'licensePlate', 'color', 'engineType', 'mileage', 'notes'];
+const vehicleSchema = z.object({
+  make: z.string().trim().min(1, 'Requerido'),
+  model: z.string().trim().min(1, 'Requerido'),
+  year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1),
+  vin: optionalStr,
+  licensePlate: optionalStr,
+  color: optionalStr,
+  engineType: optionalStr,
+  mileage: optionalInt,
+  notes: optionalStr,
+});
 
 const list = async (req, res, next) => {
   try {
     const { workshopId } = req.params;
     const { customerId, search } = req.query;
-    const { page, limit, skip } = parsePagination(req.query);
+    const { page, limit, skip } = parsePagination(req.query, 500);
 
     const where = {
       workshopId,
@@ -37,8 +51,11 @@ const list = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
+    const { workshopId } = req.params;
+    await ensure.customer(req.body.customerId, workshopId);
+    const data = vehicleSchema.parse(pick(req.body, FIELDS));
     const vehicle = await prisma.vehicle.create({
-      data: { workshopId: req.params.workshopId, ...req.body },
+      data: { workshopId, customerId: req.body.customerId, ...data },
     });
     created(res, vehicle);
   } catch (e) { next(e); }
@@ -65,8 +82,7 @@ const update = async (req, res, next) => {
     });
     if (!vehicle) return notFound(res);
 
-    const allowed = ['make', 'model', 'year', 'vin', 'licensePlate', 'color', 'engineType', 'mileage', 'notes'];
-    const data = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    const data = vehicleSchema.partial().parse(pick(req.body, FIELDS));
     const updated = await prisma.vehicle.update({ where: { id: vehicle.id }, data });
     ok(res, updated);
   } catch (e) { next(e); }
@@ -74,7 +90,7 @@ const update = async (req, res, next) => {
 
 const getHistory = async (req, res, next) => {
   try {
-    const { page, limit, skip } = parsePagination(req.query);
+    const { page, limit, skip } = parsePagination(req.query, 500);
     const where = { vehicleId: req.params.vehicleId, workshopId: req.params.workshopId };
     const [data, total] = await Promise.all([
       prisma.serviceHistory.findMany({
@@ -99,3 +115,4 @@ const remove = async (req, res, next) => {
 };
 
 module.exports = { list, create, getOne, update, getHistory, remove };
+

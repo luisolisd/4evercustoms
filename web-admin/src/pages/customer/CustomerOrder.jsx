@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { IVA_FACTOR } from '../../constants/tax';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Clock, X, PenLine } from 'lucide-react';
@@ -102,13 +103,13 @@ export default function CustomerOrder() {
                       {q.items?.map((it) => (
                         <li key={it.id} className="flex justify-between text-xs text-gray-600">
                           <span className="truncate pr-2">{it.description} ×{Number(it.quantity)}</span>
-                          <span className="shrink-0">{money(Number(it.total) / 1.16)}</span>
+                          <span className="shrink-0">{money(Number(it.total) / IVA_FACTOR)}</span>
                         </li>
                       ))}
                     </ul>
                     <div className="mt-2 pt-2 border-t space-y-0.5">
-                      <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>{money(Number(q.total) / 1.16)}</span></div>
-                      <div className="flex justify-between text-xs text-gray-500"><span>IVA (16%)</span><span>{money(Number(q.total) - Number(q.total) / 1.16)}</span></div>
+                      <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>{money(Number(q.total) / IVA_FACTOR)}</span></div>
+                      <div className="flex justify-between text-xs text-gray-500"><span>IVA (16%)</span><span>{money(Number(q.total) - Number(q.total) / IVA_FACTOR)}</span></div>
                       <div className="flex justify-between text-sm font-bold text-gray-900"><span>Total (IVA incl.)</span><span>{money(q.total)}</span></div>
                     </div>
                     {pending && (
@@ -139,13 +140,13 @@ export default function CustomerOrder() {
                 {o.workOrderParts.map((p) => (
                   <li key={p.id} className="flex justify-between text-xs text-gray-600">
                     <span className="truncate pr-2">{p.part?.name || 'Refacción'} ×{Number(p.quantity)}</span>
-                    <span className="shrink-0">{money(Number(p.total) / 1.16)}</span>
+                    <span className="shrink-0">{money(Number(p.total) / IVA_FACTOR)}</span>
                   </li>
                 ))}
               </ul>
               {(() => {
                 const totalIva = o.workOrderParts.reduce((s, p) => s + Number(p.total), 0);
-                const subtotal = totalIva / 1.16;
+                const subtotal = totalIva / IVA_FACTOR;
                 return (
                   <div className="mt-2 pt-2 border-t space-y-0.5">
                     <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>{money(subtotal)}</span></div>
@@ -226,3 +227,4 @@ export default function CustomerOrder() {
     </div>
   );
 }
+

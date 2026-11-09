@@ -12,7 +12,7 @@ const workshopAccess = (...allowedRoles) =>
 
     const workshop = await prisma.workshop.findUnique({
       where: { id: workshopId },
-      select: { id: true, name: true, isActive: true },
+      select: { id: true, name: true, timezone: true, isActive: true },
     });
 
     if (!workshop || !workshop.isActive) return notFound(res, 'Taller no encontrado');

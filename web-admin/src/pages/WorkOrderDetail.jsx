@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { IVA_FACTOR } from '../constants/tax';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -8,11 +9,15 @@ import {
 import { getWorkshop } from '../services/workshop';
 import {
   getWorkOrder, updateWOStatus, addWOPart, removeWOPart,
-  uploadWOPhotos, deletePhoto, updateWorkOrder, updateWOPayment, linkQuoteToOrder,
+  uploadWOPhotos, deletePhoto, updateWorkOrder, linkQuoteToOrder,
 } from '../services/workOrders';
 import { getParts } from '../services/inventory';
 import { addQuoteItem, removeQuoteItem, createQuote, updateQuoteStatus, getQuotes } from '../services/quotes';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, selectIsAdmin } from '../store/authStore';
+import { getTechnicians } from '../services/team';
+import PaymentsModal from '../components/PaymentsModal';
+import PhotoSlotsPanel from '../components/PhotoSlotsPanel';
+import { compressImage } from '../utils/image';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -22,19 +27,12 @@ import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import QuoteItemForm from '../components/forms/QuoteItemForm';
 import { useToast } from '../hooks/useToast';
-import { fMoney, fDate, fDateTime, fNumber } from '../utils/formatters';
+import { fMoney, fDate, fDateTime, fNumber, toLocalInput, fromLocalInput } from '../utils/formatters';
 import clsx from 'clsx';
+import { WORK_ORDER_FLOW_OPTS } from '../constants/statuses';
 import { useForm } from 'react-hook-form';
 
-const STATUSES = [
-  { value: 'RECEIVED',         label: 'Recibido' },
-  { value: 'DIAGNOSIS',        label: 'Diagnóstico' },
-  { value: 'AWAITING_AUTH',    label: 'Esp. autorización' },
-  { value: 'IN_REPAIR',        label: 'En reparación' },
-  { value: 'FINAL_TESTING',    label: 'Pruebas finales' },
-  { value: 'READY_FOR_PICKUP', label: 'Listo para entrega' },
-  { value: 'DELIVERED',        label: 'Entregado' },
-];
+const STATUSES = WORK_ORDER_FLOW_OPTS;
 
 const STATUS_IDX = Object.fromEntries(STATUSES.map((s, i) => [s.value, i]));
 
@@ -72,6 +70,7 @@ export default function WorkOrderDetail() {
   const qc = useQueryClient();
   const toast = useToast();
   const photoInput = useRef();
+  const isAdmin = useAuthStore(selectIsAdmin);
 
   const [tab, setTab] = useState('info');
   const [addPartModal, setAddPartModal] = useState(false);
@@ -104,21 +103,28 @@ export default function WorkOrderDetail() {
     enabled: !!workshopId,
   });
 
+  const { data: techRes } = useQuery({
+    queryKey: ['technicians', workshopId],
+    queryFn: () => getTechnicians(workshopId),
+    enabled: !!workshopId,
+  });
+  const technicians = techRes?.data || [];
+
   const [pdfBusy, setPdfBusy] = useState(false);
   const handlePdf = async () => {
     setPdfBusy(true);
     try {
       const { downloadWorkOrderPdf } = await import('../pdf/WorkOrderPDF');
       await downloadWorkOrderPdf(order, workshopRes?.data || {});
-    } catch (e) { toast.error('No se pudo generar el PDF'); }
+    } catch { toast.error('No se pudo generar el PDF'); }
     finally { setPdfBusy(false); }
   };
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['work-order', id] });
 
   const statusMut  = useMutation({ mutationFn: (s) => updateWOStatus(workshopId, id, s), onSuccess: () => { invalidate(); toast.success('Estado actualizado'); }, onError: (e) => toast.error(e.message) });
-  const photoMut   = useMutation({ mutationFn: (fd) => uploadWOPhotos(workshopId, id, fd), onSuccess: () => { invalidate(); toast.success('Fotos subidas'); }, onError: (e) => toast.error('Error al subir fotos') });
-  const delPhotoMut= useMutation({ mutationFn: (pid) => deletePhoto(workshopId, pid), onSuccess: () => { invalidate(); toast.success('Foto eliminada'); } });
+  const photoMut   = useMutation({ mutationFn: (fd) => uploadWOPhotos(workshopId, id, fd), onSuccess: () => { invalidate(); toast.success('Fotos subidas'); }, onError: (e) => toast.error(e.message || 'Error al subir fotos') });
+  const delPhotoMut= useMutation({ mutationFn: (pid) => deletePhoto(workshopId, pid), onSuccess: () => { invalidate(); toast.success('Foto eliminada'); }, onError: (e) => toast.error(e.message || 'No se pudo eliminar') });
   const addPartMut = useMutation({
     mutationFn: () => {
       const part = allParts.find((p) => p.id === selectedPart);
@@ -127,7 +133,7 @@ export default function WorkOrderDetail() {
     onSuccess: () => { invalidate(); setAddPartModal(false); setSelectedPart(''); setPartQty(1); toast.success('Refacción agregada'); },
     onError: (e) => toast.error(e.message),
   });
-  const removePartMut = useMutation({ mutationFn: (pid) => removeWOPart(workshopId, id, pid), onSuccess: () => { invalidate(); setRemovePart(null); toast.success('Refacción removida'); } });
+  const removePartMut = useMutation({ mutationFn: (pid) => removeWOPart(workshopId, id, pid), onSuccess: () => { invalidate(); setRemovePart(null); toast.success('Refacción removida'); }, onError: (e) => toast.error(e.message || 'No se pudo remover') });
 
   const addQuoteMut = useMutation({
     mutationFn: (d) => createQuote(workshopId, { customerId: order.customerId, workOrderId: order.id, ...d }),
@@ -157,6 +163,7 @@ export default function WorkOrderDetail() {
   const quoteStatusMut = useMutation({
     mutationFn: ({ qid, status }) => updateQuoteStatus(workshopId, qid, status),
     onSuccess: () => { invalidate(); toast.success('Cotización actualizada'); },
+    onError: (e) => toast.error(e.message || 'No se pudo actualizar'),
   });
 
   const removeQuoteItemMut = useMutation({
@@ -166,27 +173,20 @@ export default function WorkOrderDetail() {
 
   const phaseRef = useRef('RECEPTION');
   const pickPhotos = (phase) => { phaseRef.current = phase; photoInput.current.click(); };
-  const handlePhotos = (e) => {
+  const handlePhotos = async (e) => {
     const files = Array.from(e.target.files);
+    e.target.value = '';
     if (!files.length) return;
     const fd = new FormData();
-    files.forEach((f) => fd.append('photos', f));
+    for (const f of files) fd.append('photos', await compressImage(f));
     fd.append('phase', phaseRef.current);
     photoMut.mutate(fd);
-    e.target.value = '';
   };
 
-  const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, recommendations: order.recommendations, technicianNotes: order.technicianNotes, estimatedReady: order.estimatedReady?.slice(0,16) } : {} });
+  const editForm = useForm({ values: order ? { diagnosis: order.diagnosis, recommendations: order.recommendations, technicianNotes: order.technicianNotes, estimatedReady: toLocalInput(order.estimatedReady), technicianId: order.technicianId || '' } : {} });
   const editMut = useMutation({
-    mutationFn: (d) => updateWorkOrder(workshopId, id, d),
+    mutationFn: (d) => updateWorkOrder(workshopId, id, { ...d, estimatedReady: fromLocalInput(d.estimatedReady), technicianId: d.technicianId || null }),
     onSuccess: () => { invalidate(); setEditModal(false); toast.success('Orden actualizada'); },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const payForm = useForm({ values: order ? { totalAmount: Number(order.totalAmount), paidAmount: Number(order.paidAmount) } : {} });
-  const payMut = useMutation({
-    mutationFn: (d) => updateWOPayment(workshopId, id, d),
-    onSuccess: () => { invalidate(); setPayModal(false); toast.success('Pago actualizado'); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -209,11 +209,11 @@ export default function WorkOrderDetail() {
               <WorkOrderBadge status={order.status} />
               <PaymentBadge status={order.paymentStatus} />
             </div>
-            <p className="text-gray-500 mt-1">Recibido {fDateTime(order.receivedAt)}</p>
+            <p className="text-gray-500 mt-1">Recibido {fDateTime(order.receivedAt)}{order.technician ? ` · Técnico: ${order.technician.firstName} ${order.technician.lastName}` : ' · Sin técnico asignado'}</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="secondary" icon={FileDown} size="sm" loading={pdfBusy} onClick={handlePdf}>PDF</Button>
-            <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Registrar pago</Button>
+            <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Cobros</Button>
             <Button variant="secondary" icon={Edit2} size="sm" onClick={() => setEditModal(true)}>Editar</Button>
           </div>
         </div>
@@ -326,8 +326,8 @@ export default function WorkOrderDetail() {
                       <tr key={p.id} className="hover:bg-gray-50">
                         <td className="py-3 font-medium">{p.part?.name}<span className="text-xs text-gray-400 ml-2">{p.part?.sku}</span></td>
                         <td className="py-3 text-right">{p.quantity}</td>
-                        <td className="py-3 text-right">{fMoney(Number(p.unitPrice) / 1.16)}</td>
-                        <td className="py-3 text-right font-bold">{fMoney(Number(p.total) / 1.16)}</td>
+                        <td className="py-3 text-right">{fMoney(Number(p.unitPrice) / IVA_FACTOR)}</td>
+                        <td className="py-3 text-right font-bold">{fMoney(Number(p.total) / IVA_FACTOR)}</td>
                         <td className="py-3 text-right">
                           <button onClick={() => setRemovePart(p)} className="p-1 text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
                         </td>
@@ -337,7 +337,7 @@ export default function WorkOrderDetail() {
                   <tfoot>
                     {(() => {
                       const totalIva = order.workOrderParts.reduce((s, p) => s + Number(p.total), 0); // ya incluye IVA
-                      const subtotal = totalIva / 1.16;
+                      const subtotal = totalIva / IVA_FACTOR;
                       return (
                         <>
                           <tr><td colSpan={3} className="pt-4 text-right text-gray-500">Subtotal</td><td className="pt-4 text-right text-gray-700">{fMoney(subtotal)}</td><td /></tr>
@@ -355,10 +355,11 @@ export default function WorkOrderDetail() {
           {/* PHOTOS */}
           {tab === 'photos' && (
             <div className="space-y-8">
+              <PhotoSlotsPanel order={order} workshopId={workshopId} canManage onChanged={invalidate} />
               <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
               <PhotoSection
                 title="Recepción — cómo llega el vehículo"
-                photos={(order.photos || []).filter((p) => p.phase !== 'DELIVERY')}
+                photos={(order.photos || []).filter((p) => !p.slotId && p.phase !== 'DELIVERY')}
                 onUpload={() => pickPhotos('RECEPTION')}
                 loading={photoMut.isPending}
                 onDelete={(id) => delPhotoMut.mutate(id)}
@@ -413,8 +414,8 @@ export default function WorkOrderDetail() {
                           <tr key={item.id} className="border-b hover:bg-gray-50">
                             <td className="px-4 py-2">{item.description}{item.isLabor && <span className="ml-1 text-gray-400">(M.O.)</span>}</td>
                             <td className="px-4 py-2 text-right">{item.quantity}</td>
-                            <td className="px-4 py-2 text-right">{fMoney(Number(item.unitPrice) / 1.16)}</td>
-                            <td className="px-4 py-2 text-right font-semibold">{fMoney(Number(item.total) / 1.16)}</td>
+                            <td className="px-4 py-2 text-right">{fMoney(Number(item.unitPrice) / IVA_FACTOR)}</td>
+                            <td className="px-4 py-2 text-right font-semibold">{fMoney(Number(item.total) / IVA_FACTOR)}</td>
                             <td className="px-4 py-2 text-right">
                               <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} className="text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>
                             </td>
@@ -422,8 +423,8 @@ export default function WorkOrderDetail() {
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr><td colSpan={3} className="px-4 pt-3 text-right text-gray-500">Subtotal</td><td className="px-4 pt-3 text-right text-gray-700">{fMoney(Number(q.total) / 1.16)}</td><td /></tr>
-                        <tr><td colSpan={3} className="px-4 py-0.5 text-right text-gray-500">IVA (16%)</td><td className="px-4 py-0.5 text-right text-gray-700">{fMoney(Number(q.total) - Number(q.total) / 1.16)}</td><td /></tr>
+                        <tr><td colSpan={3} className="px-4 pt-3 text-right text-gray-500">Subtotal</td><td className="px-4 pt-3 text-right text-gray-700">{fMoney(Number(q.total) / IVA_FACTOR)}</td><td /></tr>
+                        <tr><td colSpan={3} className="px-4 py-0.5 text-right text-gray-500">IVA (16%)</td><td className="px-4 py-0.5 text-right text-gray-700">{fMoney(Number(q.total) - Number(q.total) / IVA_FACTOR)}</td><td /></tr>
                         <tr className="font-bold text-sm"><td colSpan={3} className="px-4 pb-3 pt-1 text-right text-gray-900">Total (IVA incl.)</td><td className="px-4 pb-3 pt-1 text-right text-gray-900">{fMoney(q.total)}</td><td /></tr>
                       </tfoot>
                     </table></div>
@@ -447,28 +448,24 @@ export default function WorkOrderDetail() {
           <Textarea label="Recomendaciones (PDF)" rows={3} {...editForm.register('recommendations')} />
           <Textarea label="Notas del técnico (internas)" rows={2} {...editForm.register('technicianNotes')} />
           <Input label="Entrega estimada" type="datetime-local" {...editForm.register('estimatedReady')} />
+          <Select
+            label="Técnico asignado"
+            placeholder="Sin asignar"
+            options={technicians.map((u) => ({ value: u.id, label: `${u.firstName} ${u.lastName}`.trim() }))}
+            {...editForm.register('technicianId')}
+          />
           <div className="flex justify-end"><Button type="submit" loading={editMut.isPending}>Guardar</Button></div>
         </form>
       </Modal>
 
-      {/* Payment modal */}
-      <Modal open={payModal} onClose={() => setPayModal(false)} title="Registrar pago" size="sm">
-        <form onSubmit={payForm.handleSubmit((d) => payMut.mutate(d))} className="space-y-4">
-          <Input label="Total a cobrar (MXN)" type="number" step="0.01" min="0" {...payForm.register('totalAmount', { valueAsNumber: true })} />
-          <Input label="Monto pagado (MXN)" type="number" step="0.01" min="0" {...payForm.register('paidAmount', { valueAsNumber: true })} />
-          <p className="text-xs text-gray-500">
-            El <b>total</b> se calcula automáticamente con las refacciones + cotizaciones aprobadas; aquí puedes corregirlo manualmente.
-            El estatus de pago se deriva: pagado ≥ total → <b>Pagado</b>; pagado &gt; 0 → <b>Parcial</b>; si no, <b>Pendiente</b>. Se le notifica al cliente.
-          </p>
-          <div className="flex justify-between gap-2">
-            <Button type="button" variant="secondary"
-              onClick={() => payForm.setValue('paidAmount', payForm.getValues('totalAmount') || 0)}>
-              Marcar como pagado
-            </Button>
-            <Button type="submit" loading={payMut.isPending}>Guardar</Button>
-          </div>
-        </form>
-      </Modal>
+      <PaymentsModal
+        open={payModal}
+        onClose={() => setPayModal(false)}
+        order={order}
+        workshopId={workshopId}
+        isAdmin={isAdmin}
+        onChanged={invalidate}
+      />
 
       {/* Add part modal */}
       <Modal open={addPartModal} onClose={() => setAddPartModal(false)} title="Agregar refacción" size="sm">
@@ -483,7 +480,7 @@ export default function WorkOrderDetail() {
           <Input label="Cantidad" type="number" min={1} value={partQty} onChange={(e) => setPartQty(Number(e.target.value))} />
           {selectedPartData && (
             <p className="text-sm text-gray-600">
-              P.U. (sin IVA): <strong>{fMoney(Number(selectedPartData.unitPrice) / 1.16)}</strong>
+              P.U. (sin IVA): <strong>{fMoney(Number(selectedPartData.unitPrice) / IVA_FACTOR)}</strong>
               {' · '}Total (IVA incl.): <strong>{fMoney(Number(selectedPartData.unitPrice) * partQty)}</strong>
             </p>
           )}
@@ -553,7 +550,7 @@ function PhotoSection({ title, photos, onUpload, loading, onDelete }) {
           {photos.map((p) => (
             <div key={p.id} className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100">
               <img src={p.thumbnailUrl || p.url} alt={p.caption || ''} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-black/50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <a href={p.url} target="_blank" rel="noreferrer" className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30"><Eye size={14} /></a>
                 <button onClick={() => onDelete(p.id)} className="p-2 bg-white/20 rounded-lg text-white hover:bg-red-500/50"><Trash2 size={14} /></button>
               </div>
@@ -564,3 +561,5 @@ function PhotoSection({ title, photos, onUpload, loading, onDelete }) {
     </div>
   );
 }
+
+

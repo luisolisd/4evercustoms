@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { Users, Car, ClipboardList, CalendarDays, DollarSign, TrendingUp, AlertTriangle, Package } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { Users, ClipboardList, CalendarDays, DollarSign, AlertTriangle } from 'lucide-react';
+import { useAuthStore, selectIsAdmin } from '../store/authStore';
+import { WO_STATUS } from './customer/status';
 import StatsCard from '../components/ui/StatsCard';
-import { getWorkshopStats, getRevenue, getOrdersByStatus, getTopServices } from '../services/reports';
+import { getWorkshopStats, getRevenue, getOrdersByStatus } from '../services/reports';
 import { getLowStock } from '../services/inventory';
-import { fMoney, fDate } from '../utils/formatters';
+import { fMoney } from '../utils/formatters';
 import { WorkOrderBadge } from '../components/ui/Badge';
 import { getWorkOrders } from '../services/workOrders';
 import { getAppointments } from '../services/appointments';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,6 +21,7 @@ const PIE_COLORS = ['#6b7280','#3b82f6','#f59e0b','#ea580c','#8b5cf6','#22c55e',
 export default function DashboardPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
   const wid = workshopId;
+  const isAdmin = useAuthStore(selectIsAdmin); // reportes y finanzas: solo administrador
 
   const { data: stats, isLoading: loadingStats } = useQuery({
     queryKey: ['stats', wid],
@@ -29,14 +31,14 @@ export default function DashboardPage() {
 
   const { data: revenue } = useQuery({
     queryKey: ['revenue', wid],
-    queryFn: () => getRevenue(wid, 6).then((r) => r.data),
-    enabled: !!wid,
+    queryFn: () => getRevenue(wid, { months: 6 }).then((r) => r.data),
+    enabled: !!wid && isAdmin,
   });
 
   const { data: byStatus } = useQuery({
     queryKey: ['orders-by-status', wid],
     queryFn: () => getOrdersByStatus(wid).then((r) => r.data),
-    enabled: !!wid,
+    enabled: !!wid && isAdmin,
   });
 
   const { data: recentOrders } = useQuery({
@@ -68,7 +70,7 @@ export default function DashboardPage() {
   }));
 
   const pieData = (byStatus || []).map((r) => ({
-    name: r.status,
+    name: WO_STATUS[r.status]?.label || r.status,
     value: Number(r.count),
   }));
 
@@ -85,9 +87,10 @@ export default function DashboardPage() {
         <StatsCard icon={Users}         color="blue"   label="Total clientes"     value={stats?.customers}          loading={loadingStats} />
         <StatsCard icon={ClipboardList} color="brand"  label="Órdenes activas"    value={stats?.activeOrders}       loading={loadingStats} />
         <StatsCard icon={CalendarDays}  color="purple" label="Citas pendientes"   value={stats?.pendingAppointments} loading={loadingStats} />
-        <StatsCard icon={DollarSign}    color="green"  label="Ingresos del mes"   value={stats ? fMoney(stats.totalRevenue) : null} loading={loadingStats} />
+        {isAdmin && <StatsCard icon={DollarSign} color="green" label="Ingresos del mes" value={stats ? fMoney(stats.revenueThisMonth) : null} loading={loadingStats} />}
       </div>
 
+      {isAdmin && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue chart */}
         <div className="lg:col-span-2 card p-6">
@@ -119,6 +122,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Today's appointments */}

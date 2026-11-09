@@ -6,5 +6,5 @@ export const updatePart     = (wid, id, d) => api.put(`/workshops/${wid}/parts/$
 export const deletePart     = (wid, id) => api.delete(`/workshops/${wid}/parts/${id}`);
 export const getInventory   = (wid, p) => api.get(`/workshops/${wid}/inventory`, { params: p });
 export const getLowStock    = (wid) => api.get(`/workshops/${wid}/inventory/low-stock`);
-export const addMovement    = (wid, d) => api.post(`/workshops/${wid}/inventory/movements`, d);
-export const createMovement = (wid, partId, d) => api.post(`/workshops/${wid}/inventory/movements`, { ...d, partId });
+export const createMovement = (wid, inventoryId, d) =>
+  api.post(`/workshops/${wid}/inventory/movements`, { ...d, inventoryId });

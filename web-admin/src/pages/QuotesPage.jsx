@@ -169,7 +169,7 @@ export default function QuotesPage() {
 
   const { data: cusRes } = useQuery({
     queryKey: ['customers-list', workshopId],
-    queryFn: () => getCustomers(workshopId, { limit: 200 }),
+    queryFn: () => getCustomers(workshopId, { limit: 500 }),
     enabled: !!workshopId,
   });
   const customers = cusRes?.data || [];
@@ -248,3 +248,4 @@ export default function QuotesPage() {
     </div>
   );
 }
+

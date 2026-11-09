@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Mail, MapPin, Car, ClipboardList, CalendarDays, User } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, Car, ClipboardList, CalendarDays } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { getCustomer } from '../services/customers';
 import { getWorkOrders } from '../services/workOrders';

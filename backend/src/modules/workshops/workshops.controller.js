@@ -1,6 +1,16 @@
 const prisma = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const { ok, error, notFound } = require('../../utils/response');
+const { z, optionalStr } = require('../../utils/guards');
+const { TECHNICIAN } = require('../../utils/roles');
+
+const ROLES = ['WORKSHOP_ADMIN', 'SUPERVISOR', 'TECHNICIAN'];
+
+// Evita dejar el taller sin ningún administrador activo
+const otherActiveAdmins = (workshopId, userId) =>
+  prisma.workshopUser.count({
+    where: { workshopId, role: 'WORKSHOP_ADMIN', isActive: true, NOT: { userId } },
+  });
 
 const getWorkshop = async (req, res, next) => {
   try {
@@ -28,41 +38,97 @@ const updateWorkshop = async (req, res, next) => {
 const getStats = async (req, res, next) => {
   try {
     const wid = req.params.workshopId;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const [customers, activeOrders, pendingAppointments, revenue] = await Promise.all([
       prisma.customer.count({ where: { workshopId: wid, isActive: true } }),
       prisma.workOrder.count({ where: { workshopId: wid, status: { notIn: ['DELIVERED', 'CANCELLED'] } } }),
       prisma.appointment.count({ where: { workshopId: wid, status: { in: ['PENDING', 'CONFIRMED'] } } }),
-      prisma.workOrder.aggregate({
-        where: { workshopId: wid, paymentStatus: 'PAID' },
-        _sum: { totalAmount: true },
+      prisma.payment.aggregate({
+        where: { workshopId: wid, createdAt: { gte: startOfMonth } },
+        _sum: { amount: true },
       }),
     ]);
-    ok(res, { customers, activeOrders, pendingAppointments, totalRevenue: revenue._sum.totalAmount || 0 });
+    ok(res, { customers, activeOrders, pendingAppointments, revenueThisMonth: revenue._sum.amount || 0 });
   } catch (e) { next(e); }
 };
+
+const USER_PUBLIC = { id: true, phone: true, email: true, firstName: true, lastName: true, avatarUrl: true, lastLoginAt: true };
 
 const listUsers = async (req, res, next) => {
   try {
     const users = await prisma.workshopUser.findMany({
-      where: { workshopId: req.params.workshopId, isActive: true },
-      include: { user: { select: { id: true, phone: true, firstName: true, lastName: true, avatarUrl: true } } },
+      where: { workshopId: req.params.workshopId },
+      orderBy: [{ isActive: 'desc' }, { createdAt: 'asc' }],
+      include: { user: { select: USER_PUBLIC } },
     });
     ok(res, users);
   } catch (e) { next(e); }
 };
 
-const addUser = async (req, res, next) => {
+// Técnicos activos (para asignar órdenes). Disponible para supervisor y admin.
+const listTechnicians = async (req, res, next) => {
   try {
-    const { phone, role } = req.body;
-    const user = await prisma.user.findUnique({ where: { phone } });
-    if (!user) return error(res, 'Usuario no encontrado con ese teléfono', 404);
-
-    const wu = await prisma.workshopUser.upsert({
-      where: { workshopId_userId: { workshopId: req.params.workshopId, userId: user.id } },
-      update: { role, isActive: true },
-      create: { workshopId: req.params.workshopId, userId: user.id, role },
+    const rows = await prisma.workshopUser.findMany({
+      where: { workshopId: req.params.workshopId, role: TECHNICIAN, isActive: true, user: { isActive: true } },
+      include: { user: { select: { id: true, firstName: true, lastName: true } } },
+      orderBy: { createdAt: 'asc' },
     });
-    ok(res, wu, 201);
+    ok(res, rows.map((r) => r.user));
+  } catch (e) { next(e); }
+};
+
+const normalizePhone = (v) => {
+  const digits = String(v || '').replace(/\D/g, '').slice(-10);
+  if (digits.length !== 10) throw Object.assign(new Error('El teléfono debe tener 10 dígitos'), { status: 400 });
+  return '+52' + digits;
+};
+
+const createSchema = z.object({
+  firstName: z.string().trim().min(1, 'Nombre requerido').max(60),
+  lastName: z.string().trim().max(60).default(''),
+  email: z.string().trim().toLowerCase().email('Correo inválido'),
+  phone: z.string().min(1, 'Teléfono requerido'),
+  role: z.enum(ROLES),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres').max(100),
+});
+
+// El administrador crea usuarios del taller (técnico, supervisor, admin) con correo y contraseña temporal
+const createUser = async (req, res, next) => {
+  try {
+    const body = createSchema.parse(req.body);
+    const phone = normalizePhone(body.phone);
+
+    const clash = await prisma.user.findFirst({
+      where: { OR: [{ email: body.email }, { phone }] },
+      select: { email: true },
+    });
+    if (clash) {
+      return error(res, clash.email === body.email ? 'Ese correo ya está en uso' : 'Ese teléfono ya está en uso', 409);
+    }
+
+    const passwordHash = await bcrypt.hash(body.password, 12);
+    const user = await prisma.user.create({
+      data: {
+        phone, email: body.email, passwordHash, firstName: body.firstName, lastName: body.lastName,
+        workshops: { create: { workshopId: req.params.workshopId, role: body.role } },
+      },
+      select: USER_PUBLIC,
+    });
+    ok(res, { ...user, role: body.role }, 201);
+  } catch (e) { next(e); }
+};
+
+const resetUserPassword = async (req, res, next) => {
+  try {
+    const { password } = z.object({ password: z.string().min(8).max(100) }).parse(req.body);
+    const wu = await prisma.workshopUser.findFirst({
+      where: { workshopId: req.params.workshopId, userId: req.params.userId },
+      select: { id: true },
+    });
+    if (!wu) return notFound(res);
+    await prisma.user.update({ where: { id: req.params.userId }, data: { passwordHash: await bcrypt.hash(password, 12) } });
+    ok(res, { message: 'Contraseña actualizada' });
   } catch (e) { next(e); }
 };
 
@@ -72,10 +138,34 @@ const updateUser = async (req, res, next) => {
       where: { workshopId: req.params.workshopId, userId: req.params.userId },
     });
     if (!wu) return notFound(res);
+    if (req.body.role !== undefined && !ROLES.includes(req.body.role)) return error(res, 'Rol inválido');
+
+    const losesAdmin = wu.role === 'WORKSHOP_ADMIN' && wu.isActive &&
+      ((req.body.role && req.body.role !== 'WORKSHOP_ADMIN') || req.body.isActive === false);
+    if (losesAdmin && (await otherActiveAdmins(req.params.workshopId, wu.userId)) === 0) {
+      return error(res, 'El taller debe conservar al menos un administrador', 400);
+    }
+
+    const profile = z
+      .object({
+        firstName: z.string().trim().min(1).max(60).optional(),
+        lastName: z.string().trim().max(60).optional(),
+        email: z.string().trim().toLowerCase().email().optional(),
+        phone: optionalStr,
+      })
+      .parse(req.body);
+    const userData = { ...profile };
+    if (profile.phone) userData.phone = normalizePhone(profile.phone);
+    if (Object.keys(userData).length) {
+      await prisma.user.update({ where: { id: wu.userId }, data: userData });
+    }
 
     const updated = await prisma.workshopUser.update({
       where: { id: wu.id },
-      data: { role: req.body.role, isActive: req.body.isActive },
+      data: {
+        ...(req.body.role && { role: req.body.role }),
+        ...(typeof req.body.isActive === 'boolean' && { isActive: req.body.isActive }),
+      },
     });
     ok(res, updated);
   } catch (e) { next(e); }
@@ -83,10 +173,14 @@ const updateUser = async (req, res, next) => {
 
 const removeUser = async (req, res, next) => {
   try {
-    await prisma.workshopUser.updateMany({
+    const wu = await prisma.workshopUser.findFirst({
       where: { workshopId: req.params.workshopId, userId: req.params.userId },
-      data: { isActive: false },
     });
+    if (!wu) return notFound(res);
+    if (wu.role === 'WORKSHOP_ADMIN' && wu.isActive && (await otherActiveAdmins(wu.workshopId, wu.userId)) === 0) {
+      return error(res, 'El taller debe conservar al menos un administrador', 400);
+    }
+    await prisma.workshopUser.update({ where: { id: wu.id }, data: { isActive: false } });
     ok(res, { message: 'Usuario removido del taller' });
   } catch (e) { next(e); }
 };
@@ -161,68 +255,5 @@ const changePassword = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-const createWorkshop = async (req, res, next) => {
-  try {
-    const { name, phone, email, password, address, city, state, zipCode, timezone,
-            firstName, lastName } = req.body;
-    if (!name || !phone) return error(res, 'Nombre y teléfono son requeridos');
-    if (!email) return error(res, 'El email es requerido para el administrador');
-    if (!password || password.length < 6) return error(res, 'La contraseña debe tener al menos 6 caracteres');
+module.exports = { getWorkshop, updateWorkshop, getStats, listUsers, listTechnicians, createUser, resetUserPassword, updateUser, removeUser, getMyProfile, updateMe, changePassword };
 
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-      .slice(0, 60);
-
-    const existing = await prisma.workshopUser.findFirst({
-      where: { userId: req.user.id, isActive: true },
-    });
-    if (existing) return error(res, 'Ya perteneces a un taller', 409);
-
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Update the admin user's profile and credentials
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: {
-        email: email.toLowerCase().trim(),
-        passwordHash,
-        ...(firstName && { firstName }),
-        ...(lastName && { lastName }),
-      },
-    });
-
-    const workshop = await prisma.workshop.create({
-      data: {
-        name, phone,
-        email: email.toLowerCase().trim(),
-        address, city, state, zipCode,
-        timezone: timezone || 'America/Mexico_City',
-        slug: slug + '-' + Date.now().toString(36),
-        users: {
-          create: { userId: req.user.id, role: 'WORKSHOP_ADMIN' },
-        },
-      },
-    });
-
-    const updatedUser = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: {
-        id: true, phone: true, email: true,
-        firstName: true, lastName: true, avatarUrl: true,
-        workshops: {
-          where: { isActive: true },
-          select: {
-            role: true,
-            workshop: { select: { id: true, name: true, slug: true } },
-          },
-        },
-      },
-    });
-
-    ok(res, { workshop, user: updatedUser }, 201);
-  } catch (e) { next(e); }
-};
-
-module.exports = { getWorkshop, updateWorkshop, getStats, listUsers, addUser, updateUser, removeUser, createWorkshop, getMyProfile, updateMe, changePassword };

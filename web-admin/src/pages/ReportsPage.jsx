@@ -4,11 +4,12 @@ import { useAuthStore } from '../store/authStore';
 import { getReports } from '../services/reports';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line, Area, AreaChart,
+  PieChart, Pie, Cell, Legend, Area, AreaChart,
 } from 'recharts';
 import { fMoney, fNumber } from '../utils/formatters';
 import { TrendingUp, DollarSign, ClipboardList, Users } from 'lucide-react';
 import clsx from 'clsx';
+import { WORK_ORDER_STATUS } from '../components/ui/Badge';
 
 const COLORS = ['#ea580c', '#3b82f6', '#22c55e', '#a855f7', '#f59e0b', '#ef4444', '#14b8a6', '#6b7280'];
 
@@ -18,11 +19,7 @@ const RANGES = [
   { value: '90', label: 'Últimos 90 días' },
 ];
 
-const STATUS_LABELS = {
-  RECEIVED: 'Recibido', DIAGNOSIS: 'Diagnóstico', AWAITING_AUTH: 'Esp. autorización',
-  IN_REPAIR: 'En reparación', FINAL_TESTING: 'Pruebas finales',
-  READY_FOR_PICKUP: 'Listo', DELIVERED: 'Entregado', CANCELLED: 'Cancelado',
-};
+const STATUS_LABELS = Object.fromEntries(Object.entries(WORK_ORDER_STATUS).map(([k, v]) => [k, v.label]));
 
 function StatCard({ label, value, icon: Icon, color = 'brand' }) {
   const colors = {
@@ -84,9 +81,10 @@ export default function ReportsPage() {
   const revenueData = (revenue?.data || []).map((d) => ({
     ...d,
     total: Number(d.revenue || d.total || 0),
+    // 90 días se agrupa por mes; 7 y 30 días, por día
     fecha: d.month
-      ? new Date(d.month).toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
-      : (d.date ? new Date(d.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }) : ''),
+      ? new Date(d.month).toLocaleDateString('es-MX', range === '90' ? { month: 'short', year: '2-digit' } : { month: 'short', day: 'numeric', timeZone: 'UTC' })
+      : '',
   }));
 
   const serviceData = (topServices?.data || []).map((d) => ({
@@ -189,3 +187,4 @@ export default function ReportsPage() {
     </div>
   );
 }
+

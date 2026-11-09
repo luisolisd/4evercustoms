@@ -1,5 +1,9 @@
 require('dotenv').config();
 
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
+  throw new Error('JWT_SECRET no está definido (mínimo 16 caracteres). Configúralo en las variables de entorno.');
+}
+
 module.exports = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -22,12 +26,6 @@ module.exports = {
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
 
-  firebase: {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  },
-
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     max: parseInt(process.env.RATE_LIMIT_MAX || '600', 10),
@@ -40,3 +38,4 @@ module.exports = {
 
   allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(','),
 };
+

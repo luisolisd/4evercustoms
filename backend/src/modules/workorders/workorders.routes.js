@@ -2,20 +2,25 @@ const router = require('express').Router({ mergeParams: true });
 const ctrl = require('./workorders.controller');
 const authenticate = require('../../middleware/authenticate');
 const { workshopAccess } = require('../../middleware/workshopAccess');
+const { ADMIN, STAFF, ALL } = require('../../utils/roles');
 
-const auth = [authenticate, workshopAccess()];
-const adminOrTech = [authenticate, workshopAccess('WORKSHOP_ADMIN', 'TECHNICIAN')];
-const adminOnly = [authenticate, workshopAccess('WORKSHOP_ADMIN')];
+const staff = [authenticate, workshopAccess(...STAFF)];
+const adminOnly = [authenticate, workshopAccess(ADMIN)];
+const anyRole = [authenticate, workshopAccess(...ALL)];
 
-router.get('/', ...auth, ctrl.list);
-router.post('/', ...adminOrTech, ctrl.create);
-router.get('/:orderId', ...auth, ctrl.getOne);
-router.put('/:orderId', ...adminOrTech, ctrl.update);
-router.patch('/:orderId/status', ...adminOrTech, ctrl.updateStatus);
-router.patch('/:orderId/payment', ...adminOrTech, ctrl.updatePayment);
-router.patch('/:orderId/link-quote', ...adminOrTech, ctrl.linkQuote);
-router.post('/:orderId/parts', ...adminOrTech, ctrl.addPart);
-router.delete('/:orderId/parts/:partId', ...adminOrTech, ctrl.removePart);
+// El técnico solo ve/edita las órdenes que tiene asignadas (lo aplica el controlador)
+router.get('/', ...anyRole, ctrl.list);
+router.post('/', ...staff, ctrl.create);
+router.get('/:orderId', ...anyRole, ctrl.getOne);
+router.put('/:orderId', ...anyRole, ctrl.update);
+router.patch('/:orderId/status', ...anyRole, ctrl.updateStatus);
+router.patch('/:orderId/payment', ...staff, ctrl.updatePayment);
+router.patch('/:orderId/link-quote', ...staff, ctrl.linkQuote);
+router.get('/:orderId/payments', ...staff, ctrl.listPayments);
+router.post('/:orderId/payments', ...staff, ctrl.addPayment);
+router.delete('/:orderId/payments/:paymentId', ...adminOnly, ctrl.removePayment);
+router.post('/:orderId/parts', ...staff, ctrl.addPart);
+router.delete('/:orderId/parts/:partId', ...staff, ctrl.removePart);
 router.delete('/:orderId', ...adminOnly, ctrl.remove);
 
 module.exports = router;

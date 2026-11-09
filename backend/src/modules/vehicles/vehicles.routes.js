@@ -2,15 +2,15 @@ const router = require('express').Router({ mergeParams: true });
 const ctrl = require('./vehicles.controller');
 const authenticate = require('../../middleware/authenticate');
 const { workshopAccess } = require('../../middleware/workshopAccess');
+const { STAFF } = require('../../utils/roles');
 
-const auth = [authenticate, workshopAccess()];
-const adminOrTech = [authenticate, workshopAccess('WORKSHOP_ADMIN', 'TECHNICIAN')];
+const staff = [authenticate, workshopAccess(...STAFF)];
 
-router.get('/', ...auth, ctrl.list);
-router.post('/', ...adminOrTech, ctrl.create);
-router.get('/:vehicleId', ...auth, ctrl.getOne);
-router.put('/:vehicleId', ...adminOrTech, ctrl.update);
-router.delete('/:vehicleId', ...adminOrTech, ctrl.remove);
-router.get('/:vehicleId/history', ...auth, ctrl.getHistory);
+router.get('/', ...staff, ctrl.list);
+router.post('/', ...staff, ctrl.create);
+router.get('/:vehicleId', ...staff, ctrl.getOne);
+router.put('/:vehicleId', ...staff, ctrl.update);
+router.delete('/:vehicleId', ...staff, ctrl.remove);
+router.get('/:vehicleId/history', ...staff, ctrl.getHistory);
 
 module.exports = router;

@@ -1,6 +1,5 @@
 const prisma = require('../../config/database');
 const { ok, error, notFound } = require('../../utils/response');
-const push = require('../../utils/push');
 const { recalcOrderTotal } = require('../../utils/orderTotals');
 
 // ── Perfil + taller ──────────────────────────────────────────────────────────
@@ -76,6 +75,7 @@ const workOrderDetail = async (req, res, next) => {
           select: { id: true, url: true, thumbnailUrl: true, caption: true, takenAt: true },
         },
         quotes: {
+          where: { status: { not: 'DRAFT' } },
           orderBy: { createdAt: 'desc' },
           select: {
             id: true, quoteNumber: true, status: true, total: true, validUntil: true, notes: true,
@@ -97,7 +97,11 @@ const workOrderDetail = async (req, res, next) => {
 const signWorkOrder = async (req, res, next) => {
   try {
     const { signature } = req.body; // data URL (image/png base64)
-    if (!signature || !String(signature).startsWith('data:image')) {
+    if (
+      typeof signature !== 'string' ||
+      !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature) ||
+      signature.length > 700_000
+    ) {
       return error(res, 'Firma inválida', 400);
     }
     const order = await prisma.workOrder.findFirst({
@@ -142,14 +146,22 @@ const createAppointment = async (req, res, next) => {
     });
     if (!vehicle) return error(res, 'Vehículo inválido', 400);
 
+    const when = new Date(scheduledAt);
+    if (Number.isNaN(when.getTime()) || when.getTime() < Date.now() - 5 * 60 * 1000) {
+      return error(res, 'Elige una fecha y hora futura', 400);
+    }
+    if (typeof serviceType !== 'string' || !serviceType.trim() || serviceType.length > 100) {
+      return error(res, 'Tipo de servicio inválido', 400);
+    }
+
     const appt = await prisma.appointment.create({
       data: {
         workshopId: req.customer.workshopId,
         customerId: req.customer.id,
         vehicleId,
-        scheduledAt: new Date(scheduledAt),
-        serviceType,
-        notes: notes || null,
+        scheduledAt: when,
+        serviceType: serviceType.trim(),
+        notes: notes ? String(notes).slice(0, 500) : null,
         status: 'PENDING',
       },
       select: { id: true, scheduledAt: true, serviceType: true, status: true },
@@ -179,7 +191,7 @@ const quotes = async (req, res, next) => {
     const list = await prisma.quote.findMany({
       where: {
         customerId: req.customer.id,
-        status: { in: ['SENT', 'DRAFT', 'APPROVED', 'REJECTED'] },
+        status: { in: ['SENT', 'APPROVED', 'REJECTED'] }, // los borradores no son visibles para el cliente
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -203,19 +215,24 @@ const respondQuote = async (req, res, next) => {
     }
     const quote = await prisma.quote.findFirst({
       where: { id: req.params.id, customerId: req.customer.id },
-      select: { id: true, status: true, workOrderId: true },
+      select: { id: true, status: true, workOrderId: true, validUntil: true },
     });
     if (!quote) return notFound(res, 'Cotización no encontrada');
-    if (!['SENT', 'DRAFT'].includes(quote.status)) {
+    if (quote.status !== 'SENT') {
       return error(res, 'Esta cotización ya no admite cambios', 400);
     }
-    const updated = await prisma.quote.update({
-      where: { id: quote.id },
+    if (decision === 'APPROVED' && quote.validUntil && quote.validUntil.getTime() < Date.now()) {
+      return error(res, 'Esta cotización ya venció. Pide al taller una nueva.', 400);
+    }
+    // Actualización condicionada al estado: evita doble respuesta con peticiones simultáneas
+    const res2 = await prisma.quote.updateMany({
+      where: { id: quote.id, status: 'SENT' },
       data: decision === 'APPROVED'
         ? { status: 'APPROVED', approvedAt: new Date() }
-        : { status: 'REJECTED', rejectedAt: new Date(), rejectionReason: reason || null },
-      select: { id: true, status: true },
+        : { status: 'REJECTED', rejectedAt: new Date(), rejectionReason: reason ? String(reason).slice(0, 300) : null },
     });
+    if (res2.count === 0) return error(res, 'Esta cotización ya no admite cambios', 400);
+    const updated = { id: quote.id, status: decision };
     // Al aprobar/rechazar, el total de la orden cambia (solo cuentan las aprobadas)
     if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
     ok(res, updated);

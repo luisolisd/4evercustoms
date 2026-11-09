@@ -1,6 +1,6 @@
 const prisma = require('../../config/database');
 const bcrypt = require('bcryptjs');
-const { generateOtp, sendOtp: sendSms } = require('../../utils/sms');
+const { generateOtp, hashOtp, sendOtp: sendSms } = require('../../utils/sms');
 const { sign, signRefresh, verify } = require('../../utils/jwt');
 const { otp: otpCfg } = require('../../config');
 
@@ -32,7 +32,7 @@ const adminLogin = async (email, password) => {
   if (!valid) throw Object.assign(new Error('Credenciales incorrectas'), { status: 401 });
 
   const hasAdminAccess = user.workshops.some(
-    (wu) => ['WORKSHOP_ADMIN', 'TECHNICIAN'].includes(wu.role)
+    (wu) => ['WORKSHOP_ADMIN', 'SUPERVISOR', 'TECHNICIAN'].includes(wu.role)
   );
   if (!hasAdminAccess) {
     throw Object.assign(new Error('Sin acceso al panel de administración'), { status: 403 });
@@ -53,10 +53,15 @@ const adminLogin = async (email, password) => {
 // Normaliza a los últimos 10 dígitos (el cliente escribe su número sin +52)
 const normalizePhone = (phone) => (phone || '').replace(/\D/g, '').slice(-10);
 
-const findCustomerByPhone = (phone) =>
-  prisma.customer.findFirst({
-    where: { phone: { endsWith: normalizePhone(phone) }, isActive: true },
+// Exige exactamente 10 dígitos: con menos, `endsWith` coincidiría con cualquier cliente.
+const findCustomerByPhone = async (phone) => {
+  const last10 = normalizePhone(phone);
+  if (last10.length !== 10) return null;
+  return prisma.customer.findFirst({
+    where: { phone: { endsWith: last10 }, isActive: true },
+    orderBy: { createdAt: 'asc' },
   });
+};
 
 // Crea/vincula el User del cliente y emite los tokens (misma forma de sesión que el resto de la app)
 const issueCustomerSession = async (customer) => {
@@ -91,7 +96,7 @@ const customerAuthStatus = async (phone) => {
   }
   const customer = await findCustomerByPhone(phone);
   if (!customer) return { registered: false, hasPassword: false };
-  return { registered: true, hasPassword: !!customer.passwordHash, firstName: customer.firstName };
+  return { registered: true, hasPassword: !!customer.passwordHash };
 };
 
 // Paso 2a: primera vez → el cliente crea su propia contraseña (solo si el admin ya lo registró)
@@ -125,96 +130,61 @@ const customerLogin = async (phone, password) => {
   return issueCustomerSession(customer);
 };
 
-// ── Mobile: OTP (customers only) ─────────────────────────────────────────────
+// ── OTP por SMS (clientes) ───────────────────────────────────────────────────
 
 const requestOtp = async (phone) => {
-  const customer = await prisma.customer.findFirst({
-    where: { phone, isActive: true },
-  });
+  const customer = await findCustomerByPhone(phone);
   if (!customer) {
     throw Object.assign(
       new Error('Número no registrado. Contacta al taller para que te den acceso.'),
       { status: 404 }
     );
   }
+  const target = customer.phone;
 
-  await prisma.otpCode.deleteMany({
-    where: { phone, usedAt: null, expiresAt: { gt: new Date() } },
-  });
+  await prisma.otpCode.deleteMany({ where: { phone: target, usedAt: null } });
 
   const code = generateOtp();
   const expiresAt = new Date(Date.now() + otpCfg.expiresMinutes * 60 * 1000);
-
-  await prisma.otpCode.create({ data: { phone, code, expiresAt } });
-  await sendSms(phone, code);
+  await prisma.otpCode.create({ data: { phone: target, code: hashOtp(code), expiresAt } });
+  await sendSms(target, code);
 };
 
 const validateOtp = async (phone, code) => {
+  const customer = await findCustomerByPhone(phone);
+  if (!customer) throw Object.assign(new Error('Código no encontrado o expirado'), { status: 400 });
+
   const otp = await prisma.otpCode.findFirst({
-    where: { phone, usedAt: null, expiresAt: { gt: new Date() } },
+    where: { phone: customer.phone, usedAt: null, expiresAt: { gt: new Date() } },
     orderBy: { createdAt: 'desc' },
   });
-
   if (!otp) throw Object.assign(new Error('Código no encontrado o expirado'), { status: 400 });
 
-  await prisma.otpCode.update({
-    where: { id: otp.id },
-    data: { attempts: { increment: 1 } },
-  });
-
-  if (otp.attempts + 1 >= otpCfg.maxAttempts) {
+  if (otp.attempts >= otpCfg.maxAttempts) {
     await prisma.otpCode.update({ where: { id: otp.id }, data: { usedAt: new Date() } });
     throw Object.assign(new Error('Demasiados intentos fallidos'), { status: 429 });
   }
 
-  if (otp.code !== code) throw Object.assign(new Error('Código incorrecto'), { status: 400 });
+  if (otp.code !== hashOtp(code)) {
+    await prisma.otpCode.update({ where: { id: otp.id }, data: { attempts: { increment: 1 } } });
+    throw Object.assign(new Error('Código incorrecto'), { status: 400 });
+  }
 
-  await prisma.otpCode.update({ where: { id: otp.id }, data: { usedAt: new Date() } });
-
-  // Find the customer record to get workshopId + customerId
-  const customer = await prisma.customer.findFirst({
-    where: { phone, isActive: true },
-    select: { id: true, workshopId: true, firstName: true, lastName: true },
+  // Consumo atómico: si dos peticiones llegan a la vez, solo una lo marca como usado
+  const consumed = await prisma.otpCode.updateMany({
+    where: { id: otp.id, usedAt: null },
+    data: { usedAt: new Date() },
   });
+  if (consumed.count === 0) throw Object.assign(new Error('Código no encontrado o expirado'), { status: 400 });
 
-  // Upsert the linked user account
-  let user = await prisma.user.findUnique({ where: { phone } });
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        phone,
-        firstName: customer?.firstName || 'Cliente',
-        lastName: customer?.lastName || '',
-      },
-    });
-  }
-
-  // Link customer → user if not linked yet
-  if (customer && !customer.userId) {
-    await prisma.customer.update({
-      where: { id: customer.id },
-      data: { userId: user.id },
-    }).catch(() => {});
-  }
-
-  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-
-  const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: USER_SELECT });
-
-  return {
-    accessToken: sign({ userId: user.id }),
-    refreshToken: signRefresh({ userId: user.id }),
-    user: fullUser,
-    customerId: customer?.id || null,
-    workshopId: customer?.workshopId || null,
-  };
+  return issueCustomerSession(customer);
 };
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
 
 const refreshAccessToken = async (token) => {
   try {
-    const payload = verify(token);
+    const payload = verify(token, 'refresh');
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user || !user.isActive) throw new Error('Usuario inactivo');
     return { accessToken: sign({ userId: user.id }) };
@@ -223,65 +193,11 @@ const refreshAccessToken = async (token) => {
   }
 };
 
-// ── Admin: first-time setup OTP (no customer check) ─────────────────────────
-
-const requestAdminSetupOtp = async (phone) => {
-  await prisma.otpCode.deleteMany({
-    where: { phone, usedAt: null, expiresAt: { gt: new Date() } },
-  });
-  const code = generateOtp();
-  const expiresAt = new Date(Date.now() + otpCfg.expiresMinutes * 60 * 1000);
-  await prisma.otpCode.create({ data: { phone, code, expiresAt } });
-  await sendSms(phone, code);
-};
-
-const validateAdminSetupOtp = async (phone, code) => {
-  const otp = await prisma.otpCode.findFirst({
-    where: { phone, usedAt: null, expiresAt: { gt: new Date() } },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  if (!otp) throw Object.assign(new Error('Código no encontrado o expirado'), { status: 400 });
-
-  await prisma.otpCode.update({
-    where: { id: otp.id },
-    data: { attempts: { increment: 1 } },
-  });
-
-  if (otp.attempts + 1 >= otpCfg.maxAttempts) {
-    await prisma.otpCode.update({ where: { id: otp.id }, data: { usedAt: new Date() } });
-    throw Object.assign(new Error('Demasiados intentos fallidos'), { status: 429 });
-  }
-
-  if (otp.code !== code) throw Object.assign(new Error('Código incorrecto'), { status: 400 });
-
-  await prisma.otpCode.update({ where: { id: otp.id }, data: { usedAt: new Date() } });
-
-  let user = await prisma.user.findUnique({ where: { phone } });
-  if (!user) {
-    user = await prisma.user.create({
-      data: { phone, firstName: 'Admin', lastName: '' },
-    });
-  }
-
-  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-
-  const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: USER_SELECT });
-
-  return {
-    accessToken: sign({ userId: user.id }),
-    refreshToken: signRefresh({ userId: user.id }),
-    user: fullUser,
-  };
-};
-
 module.exports = {
   adminLogin,
   customerAuthStatus,
   customerSetPassword,
   customerLogin,
-  requestAdminSetupOtp,
-  validateAdminSetupOtp,
   requestOtp,
   validateOtp,
   refreshAccessToken,

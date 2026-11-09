@@ -14,17 +14,31 @@ customerApi.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshing = null;
+const refreshAccessToken = (refreshToken) => {
+  if (!refreshing) {
+    refreshing = axios
+      .post(`${BASE}/auth/refresh-token`, { refreshToken })
+      .then((res) => res.data.data.accessToken)
+      .finally(() => { refreshing = null; });
+  }
+  return refreshing;
+};
+
 customerApi.interceptors.response.use(
   (res) => res.data,
   async (err) => {
-    if (err.response?.status === 401) {
+    const original = err.config;
+    const isAuthCall = original?.url?.includes('/auth/');
+    if (err.response?.status === 401 && original && !original._retry && !isAuthCall) {
+      original._retry = true;
       const { refreshToken, setSession, logout, customer } = useCustomerStore.getState();
       if (refreshToken) {
         try {
-          const res = await axios.post(`${BASE}/auth/refresh-token`, { refreshToken });
-          setSession(res.data.data.accessToken, refreshToken, customer);
-          err.config.headers.Authorization = `Bearer ${res.data.data.accessToken}`;
-          return customerApi(err.config);
+          const accessToken = await refreshAccessToken(refreshToken);
+          setSession(accessToken, refreshToken, customer);
+          original.headers.Authorization = `Bearer ${accessToken}`;
+          return customerApi(original);
         } catch {
           logout();
         }

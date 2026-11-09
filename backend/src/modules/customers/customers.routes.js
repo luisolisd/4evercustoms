@@ -2,14 +2,15 @@ const router = require('express').Router({ mergeParams: true });
 const ctrl = require('./customers.controller');
 const authenticate = require('../../middleware/authenticate');
 const { workshopAccess } = require('../../middleware/workshopAccess');
+const { ADMIN, STAFF } = require('../../utils/roles');
 
-const auth = [authenticate, workshopAccess()];
-const adminOrTech = [authenticate, workshopAccess('WORKSHOP_ADMIN', 'TECHNICIAN')];
+const staff = [authenticate, workshopAccess(...STAFF)];
+const adminOnly = [authenticate, workshopAccess(ADMIN)];
 
-router.get('/', ...auth, ctrl.list);
-router.post('/', ...adminOrTech, ctrl.create);
-router.get('/:customerId', ...auth, ctrl.getOne);
-router.put('/:customerId', ...adminOrTech, ctrl.update);
-router.delete('/:customerId', authenticate, workshopAccess('WORKSHOP_ADMIN'), ctrl.remove);
+router.get('/', ...staff, ctrl.list);
+router.post('/', ...staff, ctrl.create);
+router.get('/:customerId', ...staff, ctrl.getOne);
+router.put('/:customerId', ...staff, ctrl.update);
+router.delete('/:customerId', ...adminOnly, ctrl.remove);
 
 module.exports = router;

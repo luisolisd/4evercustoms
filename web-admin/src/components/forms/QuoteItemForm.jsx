@@ -8,7 +8,7 @@ import { useAuthStore } from '../../store/authStore';
 
 export default function QuoteItemForm({ onSubmit, loading }) {
   const workshopId = useAuthStore((s) => s.workshopId);
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     defaultValues: { isLabor: false, quantity: 1, unitPrice: 0 },
   });
 
@@ -25,7 +25,6 @@ export default function QuoteItemForm({ onSubmit, loading }) {
     label: `${p.name}${p.sku ? ` (${p.sku})` : ''} — $${Number(p.unitPrice).toFixed(2)}`,
   }));
 
-  const partId = watch('partId');
   const handlePartChange = (e) => {
     const part = parts?.find((p) => p.id === e.target.value);
     if (part) setValue('unitPrice', Number(part.unitPrice));
@@ -73,3 +72,4 @@ export default function QuoteItemForm({ onSubmit, loading }) {
     </form>
   );
 }
+

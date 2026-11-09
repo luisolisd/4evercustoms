@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Package, AlertTriangle, Edit2, ArrowUpDown, Trash2 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, selectIsAdmin } from '../store/authStore';
 import {
-  getParts, createPart, updatePart, deletePart,
+  createPart, updatePart, deletePart,
   getInventory, createMovement,
 } from '../services/inventory';
 import Button from '../components/ui/Button';
@@ -24,7 +24,7 @@ import clsx from 'clsx';
 const MOVEMENT_OPTS = [
   { value: 'IN',          label: 'Entrada de stock' },
   { value: 'OUT',         label: 'Salida de stock' },
-  { value: 'ADJUSTMENT',  label: 'Ajuste de inventario' },
+  { value: 'ADJUSTMENT',  label: 'Ajuste (fijar existencia al conteo)' },
 ];
 
 function StockBadge({ quantity, minQuantity }) {
@@ -37,6 +37,7 @@ function StockBadge({ quantity, minQuantity }) {
 
 export default function InventoryPage() {
   const workshopId = useAuthStore((s) => s.workshopId);
+  const isAdmin = useAuthStore(selectIsAdmin);
   const qc = useQueryClient();
   const toast = useToast();
 
@@ -73,11 +74,11 @@ export default function InventoryPage() {
     onError: (e) => toast.error(e.message),
   });
 
-  const movForm = useForm({ defaultValues: { type: 'IN', quantity: 1, reason: '', unitCost: '' } });
+  const movForm = useForm({ defaultValues: { type: 'IN', quantity: 1, reason: '' } });
 
   const movementMut = useMutation({
-    mutationFn: (d) => createMovement(workshopId, movementModal?.part?.id, d),
-    onSuccess: () => { invalidate(); setMovementModal(null); movForm.reset({ type: 'IN', quantity: 1, reason: '', unitCost: '' }); toast.success('Movimiento registrado'); },
+    mutationFn: (d) => createMovement(workshopId, movementModal?.inventoryId, { type: d.type, quantity: d.quantity, reason: d.reason }),
+    onSuccess: () => { invalidate(); setMovementModal(null); movForm.reset({ type: 'IN', quantity: 1, reason: '' }); toast.success('Movimiento registrado'); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -123,11 +124,10 @@ export default function InventoryPage() {
           <EmptyState icon={Package} title="Sin refacciones" description={search ? 'Ninguna refacción coincide.' : 'Agrega la primera refacción al inventario.'} action={!search ? 'Agregar refacción' : undefined} onAction={() => setPartModal('create')} />
         ) : (
           <>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-5 py-3">Refacción</th>
-                  <th className="text-left px-5 py-3">Categoría</th>
                   <th className="text-right px-5 py-3">Precio unit. (IVA incl.)</th>
                   <th className="text-right px-5 py-3">Stock</th>
                   <th className="text-right px-5 py-3">Mínimo</th>
@@ -151,7 +151,6 @@ export default function InventoryPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-gray-600">{item.part?.category || '—'}</td>
                       <td className="px-5 py-4 text-right font-medium text-gray-900">{fMoney(item.part?.unitPrice)}</td>
                       <td className={clsx('px-5 py-4 text-right font-bold text-lg', qty === 0 ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-green-700')}>
                         {fNumber(qty)}
@@ -170,19 +169,21 @@ export default function InventoryPage() {
                             <ArrowUpDown size={14} />
                           </button>
                           <button
-                            onClick={() => setPartModal({ mode: 'edit', part: { ...item.part, minQuantity: item.minQuantity, quantity: item.quantity } })}
+                            onClick={() => setPartModal({ mode: 'edit', part: { ...item.part, minQuantity: item.minQuantity, quantity: item.quantity, location: item.location } })}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             title="Editar"
                           >
                             <Edit2 size={14} />
                           </button>
-                          <button
+                          {isAdmin && (
+<button
                             onClick={() => setDeleting(item.part)}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Eliminar"
                           >
                             <Trash2 size={14} />
                           </button>
+)}
                         </div>
                       </td>
                     </tr>
@@ -225,16 +226,10 @@ export default function InventoryPage() {
           <Input
             label="Cantidad"
             type="number"
-            min={1}
-            {...movForm.register('quantity', { required: true, min: 1, valueAsNumber: true })}
+            min={0}
+            step="any"
+            {...movForm.register('quantity', { required: true, min: 0, valueAsNumber: true })}
             error={movForm.formState.errors.quantity?.message}
-          />
-          <Input
-            label="Costo unitario (opcional)"
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            {...movForm.register('unitCost', { valueAsNumber: true })}
           />
           <Textarea
             label="Razón / nota"
@@ -260,3 +255,5 @@ export default function InventoryPage() {
     </div>
   );
 }
+
+

@@ -1,6 +1,11 @@
+const crypto = require('crypto');
 const { twilio: cfg } = require('../config');
 
-const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+// Código de 6 dígitos con CSPRNG
+const generateOtp = () => String(crypto.randomInt(100000, 1000000));
+
+// El código se guarda hasheado (no en texto plano)
+const hashOtp = (code) => crypto.createHash('sha256').update(String(code)).digest('hex');
 
 let _client = null;
 const getClient = () => {
@@ -23,4 +28,4 @@ const sendOtp = async (phone, code) => {
   });
 };
 
-module.exports = { generateOtp, sendOtp };
+module.exports = { generateOtp, hashOtp, sendOtp };

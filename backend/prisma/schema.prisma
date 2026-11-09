@@ -12,8 +12,24 @@ datasource db {
 enum UserRole {
   SUPER_ADMIN
   WORKSHOP_ADMIN
+  SUPERVISOR
   TECHNICIAN
   CLIENT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  OTHER
+}
+
+enum ReminderStatus {
+  PENDING
+  CONTACTED
+  CONFIRMED
+  DONE
+  CANCELLED
 }
 
 enum AppointmentStatus {
@@ -99,6 +115,10 @@ model Workshop {
   serviceHistory ServiceHistory[]
   auditLogs      AuditLog[]
   promotions     Promotion[]
+  payments       Payment[]
+  cashCuts       CashCut[]
+  reminders      ServiceReminder[]
+  photoTemplates PhotoTemplate[]
 
   @@index([slug])
   @@map("workshops")
@@ -118,9 +138,10 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  workshops     WorkshopUser[]
-  notifications Notification[]
-  auditLogs     AuditLog[]
+  workshops      WorkshopUser[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  assignedOrders WorkOrder[]    @relation("OrderTechnician")
 
   @@index([phone])
   @@map("users")
@@ -179,6 +200,7 @@ model Customer {
   quotes            Quote[]
   notifications     Notification[]
   pushSubscriptions PushSubscription[]
+  reminders         ServiceReminder[]
 
   @@unique([workshopId, phone])
   @@index([workshopId])
@@ -203,11 +225,12 @@ model Vehicle {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  workshop       Workshop         @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  customer       Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  workshop       Workshop          @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer       Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
   appointments   Appointment[]
   workOrders     WorkOrder[]
   serviceHistory ServiceHistory[]
+  reminders      ServiceReminder[]
 
   @@index([workshopId])
   @@index([customerId])
@@ -244,46 +267,53 @@ model Appointment {
 }
 
 model WorkOrder {
-  id              String          @id @default(uuid())
-  workshopId      String
-  customerId      String
-  vehicleId       String
-  appointmentId   String?         @unique
-  orderNumber     String
-  status          WorkOrderStatus @default(RECEIVED)
-  description     String?
-  diagnosis       String?
-  recommendations String?
-  technicianNotes String?
-  technicianId    String?
-  receivedAt      DateTime        @default(now())
-  estimatedReady  DateTime?
-  deliveredAt     DateTime?
-  mileageIn       Int?
-  mileageOut      Int?
-  paymentStatus   PaymentStatus   @default(PENDING)
-  totalAmount     Decimal         @default(0) @db.Decimal(10, 2)
-  paidAmount      Decimal         @default(0) @db.Decimal(10, 2)
-  customerSignature String?       @db.Text
-  signedAt        DateTime?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id                String          @id @default(uuid())
+  workshopId        String
+  customerId        String
+  vehicleId         String
+  appointmentId     String?         @unique
+  orderNumber       String
+  status            WorkOrderStatus @default(RECEIVED)
+  description       String?
+  diagnosis         String?
+  recommendations   String?
+  technicianNotes   String?
+  technicianId      String?
+  receivedAt        DateTime        @default(now())
+  estimatedReady    DateTime?
+  deliveredAt       DateTime?
+  mileageIn         Int?
+  mileageOut        Int?
+  paymentStatus     PaymentStatus   @default(PENDING)
+  totalAmount       Decimal         @default(0) @db.Decimal(10, 2)
+  paidAmount        Decimal         @default(0) @db.Decimal(10, 2)
+  paidAt            DateTime?
+  customerSignature String?         @db.Text
+  signedAt          DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
-  workshop       Workshop         @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  customer       Customer         @relation(fields: [customerId], references: [id])
-  vehicle        Vehicle          @relation(fields: [vehicleId], references: [id])
-  appointment    Appointment?     @relation(fields: [appointmentId], references: [id])
+  workshop       Workshop          @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer       Customer          @relation(fields: [customerId], references: [id])
+  vehicle        Vehicle           @relation(fields: [vehicleId], references: [id])
+  appointment    Appointment?      @relation(fields: [appointmentId], references: [id])
   quotes         Quote[]
   photos         Photo[]
   serviceHistory ServiceHistory[]
   workOrderParts WorkOrderPart[]
+  technician     User?             @relation("OrderTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
+  photoSlots     OrderPhotoSlot[]
+  payments       Payment[]
+  reminders      ServiceReminder[]
 
   @@unique([workshopId, orderNumber])
+  @@index([technicianId])
   @@index([workshopId])
   @@index([customerId])
   @@index([vehicleId])
   @@index([status])
   @@index([receivedAt])
+  @@index([paidAt])
   @@map("work_orders")
 }
 
@@ -342,15 +372,21 @@ model Photo {
   url          String
   thumbnailUrl String?
   caption      String?
-  phase        String?  // 'RECEPTION' (cómo llega) | 'DELIVERY' (cómo se entrega)
+  phase        String? // 'RECEPTION' (cómo llega) | 'DELIVERY' (cómo se entrega)
+  slotId       String?
+  publicId     String?
+  bytes        Int?
   uploadedById String
   takenAt      DateTime @default(now())
   createdAt    DateTime @default(now())
 
-  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  workOrder WorkOrder       @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  slot      OrderPhotoSlot? @relation(fields: [slotId], references: [id], onDelete: SetNull)
 
   @@index([workOrderId])
   @@index([workshopId])
+  @@index([slotId])
+  @@index([createdAt])
   @@map("photos")
 }
 
@@ -527,4 +563,102 @@ model Promotion {
   @@index([workshopId])
   @@index([isActive])
   @@map("promotions")
+}
+
+// ─── Fotos requeridas por servicio ───────────────────────────────────────────
+
+// Catálogo del taller (lista de fotos que el supervisor/admin puede pedir al técnico)
+model PhotoTemplate {
+  id         String   @id @default(uuid())
+  workshopId String
+  label      String
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  workshop Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@unique([workshopId, label])
+  @@index([workshopId])
+  @@map("photo_templates")
+}
+
+// Foto solicitada para una orden concreta (puede ser del catálogo o "otro: especificar")
+model OrderPhotoSlot {
+  id          String   @id @default(uuid())
+  workOrderId String
+  label       String
+  createdAt   DateTime @default(now())
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  photos    Photo[]
+
+  @@index([workOrderId])
+  @@map("order_photo_slots")
+}
+
+// ─── Pagos y corte de caja ───────────────────────────────────────────────────
+
+model Payment {
+  id           String        @id @default(uuid())
+  workshopId   String
+  workOrderId  String
+  amount       Decimal       @db.Decimal(10, 2)
+  method       PaymentMethod @default(CASH)
+  note         String?
+  receivedById String?
+  createdAt    DateTime      @default(now())
+
+  workshop  Workshop  @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workshopId, createdAt])
+  @@index([workOrderId])
+  @@map("payments")
+}
+
+model CashCut {
+  id           String   @id @default(uuid())
+  workshopId   String
+  fromAt       DateTime
+  toAt         DateTime
+  totals       Json // { CASH, CARD, TRANSFER, OTHER, total, count }
+  countedCash  Decimal? @db.Decimal(10, 2)
+  difference   Decimal? @db.Decimal(10, 2)
+  notes        String?
+  closedById   String?
+  closedByName String?
+  createdAt    DateTime @default(now())
+
+  workshop Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@index([workshopId, toAt])
+  @@map("cash_cuts")
+}
+
+// ─── Recordatorios de servicio ───────────────────────────────────────────────
+
+model ServiceReminder {
+  id          String         @id @default(uuid())
+  workshopId  String
+  customerId  String
+  vehicleId   String?
+  workOrderId String?
+  serviceType String
+  dueDate     DateTime
+  notes       String?
+  status      ReminderStatus @default(PENDING)
+  contactedAt DateTime?
+  confirmedAt DateTime?
+  createdById String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  workshop  Workshop   @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  customer  Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+
+  @@index([workshopId, status, dueDate])
+  @@map("service_reminders")
 }
