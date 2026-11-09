@@ -53,6 +53,23 @@ services:
     envVars:
       - key: VITE_API_URL
         sync: false
+    # Sin caché para los manifiestos, el service worker y los HTML: así un cambio de app instalable se aplica al instante
+    headers:
+      - path: /manifest-taller.webmanifest
+        name: Cache-Control
+        value: no-cache
+      - path: /manifest-cliente.webmanifest
+        name: Cache-Control
+        value: no-cache
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /cliente.html
+        name: Cache-Control
+        value: no-cache
     routes:
       # El portal de clientes tiene su propio HTML (manifiesto de PWA propio)
       - type: rewrite
@@ -64,5 +81,6 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
 
 
