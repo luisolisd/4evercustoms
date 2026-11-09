@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
@@ -57,13 +57,14 @@ function NavItem({ to, icon: Icon, label, onClick }) {
   );
 }
 
-export default function Layout() {
-  const { user, logout } = useAuthStore();
+// Menú lateral: componente propio (no se vuelve a crear al cambiar de ruta, conserva su scroll)
+function Sidebar({ mobile = false, onNavigate }) {
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
   const workshopId = useAuthStore((s) => s.workshopId);
   const role = useAuthStore(selectRole);
   const code = ROLE_CODE[role] || '';
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: wRes } = useQuery({
     queryKey: ['workshop', workshopId],
@@ -71,11 +72,9 @@ export default function Layout() {
     enabled: !!workshopId,
   });
   const workshopName = wRes?.data?.name;
-
   const handleLogout = () => { logout(); navigate('/login'); };
-  const close = () => setSidebarOpen(false);
 
-  const Sidebar = ({ mobile = false }) => (
+  return (
     <div className={clsx('relative flex flex-col h-full bg-ink-gradient', mobile ? 'w-72' : 'w-64')}>
       {/* Halo de marca en la parte superior */}
       <div className="pointer-events-none absolute inset-0 bg-mesh opacity-70" />
@@ -93,12 +92,12 @@ export default function Layout() {
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {nav
             .filter((item) => item.roles.includes(code))
-            .map(({ roles, ...item }) => <NavItem key={item.to} {...item} onClick={mobile ? close : undefined} />)}
+            .map(({ roles, ...item }) => <NavItem key={item.to} {...item} onClick={mobile ? onNavigate : undefined} />)}
         </nav>
 
         {/* User */}
         <div className="px-4 py-4 border-t border-white/10">
-          <Link to="/profile" onClick={mobile ? close : undefined} className="flex items-center gap-3 mb-3 group px-2 rounded-xl hover:bg-white/5 py-2 -mx-1 transition-colors">
+          <Link to="/profile" onClick={mobile ? onNavigate : undefined} className="flex items-center gap-3 mb-3 group px-2 rounded-xl hover:bg-white/5 py-2 -mx-1 transition-colors">
             <div className="w-9 h-9 rounded-xl bg-brand-gradient flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-glow">
               {(user?.firstName?.[0] || 'A')}{user?.lastName?.[0] || ''}
             </div>
@@ -120,6 +119,12 @@ export default function Layout() {
       </div>
     </div>
   );
+}
+
+export default function Layout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const close = () => setSidebarOpen(false);
+
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -133,7 +138,7 @@ export default function Layout() {
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-ink-950/60 backdrop-blur-sm animate-fade-in" onClick={close} />
           <div className="relative z-50 animate-slide-in-right">
-            <Sidebar mobile />
+            <Sidebar mobile onNavigate={close} />
           </div>
         </div>
       )}
@@ -152,7 +157,9 @@ export default function Layout() {
         {/* Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto p-5 sm:p-6 lg:p-8 animate-fade-up">
-            <Outlet />
+            <Suspense fallback={<div className="flex justify-center py-24"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

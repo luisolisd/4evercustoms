@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, Calendar, LogOut, Tag, Bell } from 'lucide-react';
 import clsx from 'clsx';
@@ -40,7 +41,9 @@ export default function CustomerLayout() {
         className="flex-1 max-w-lg w-full mx-auto px-4 pt-4"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)' }}
       >
-        <Outlet />
+        <Suspense fallback={<div className="flex justify-center py-16"><div className="animate-spin h-7 w-7 rounded-full border-4 border-brand-600 border-t-transparent" /></div>}>
+          <Outlet />
+        </Suspense>
         <p className="text-center text-[10px] text-gray-400 pt-6">4EVRcustoms {APP_VERSION}</p>
       </main>
 
