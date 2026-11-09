@@ -1,9 +1,14 @@
 import clsx from 'clsx';
 import { forwardRef } from 'react';
 
-const Select = forwardRef(({ label, error, hint, options = [], placeholder, className, ...props }, ref) => (
+const Select = forwardRef(({ label, labelAction, error, hint, options = [], placeholder, className, ...props }, ref) => (
   <div className="flex flex-col gap-1 min-w-0 w-full sm:w-auto">
-    {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+    {(label || labelAction) && (
+      <div className="flex items-center justify-between gap-2">
+        {label ? <label className="text-sm font-medium text-gray-700">{label}</label> : <span />}
+        {labelAction}
+      </div>
+    )}
     <select
       ref={ref}
       className={clsx(

@@ -1,6 +1,7 @@
 import { Document, Page, View, Text, Image, StyleSheet, pdf, Font } from '@react-pdf/renderer';
 import { IVA_FACTOR } from '../constants/tax';
 import QRCode from 'qrcode';
+import { RECEPTION_STATEMENT, FUEL_LEVELS } from '../constants/reception';
 
 // Evita que react-pdf corte palabras a la mitad (AUTO-MOTRIZ); solo corta en espacios.
 Font.registerHyphenationCallback((word) => [word]);
@@ -41,6 +42,15 @@ const styles = StyleSheet.create({
   sigName: { width: 140, textAlign: 'center', fontFamily: 'Helvetica-Bold', marginTop: 2 },
   sigImg: { width: 120, height: 46, objectFit: 'contain' },
   qr: { width: 66, height: 66 },
+  recGrid: { flexDirection: 'row', marginTop: 12, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 4 },
+  recCell: { flex: 1, padding: 8 },
+  recLabel: { fontSize: 7, color: '#6b7280', marginBottom: 3 },
+  recBlock: { marginTop: 10, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 4, padding: 8 },
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 },
+  photoCell: { width: '32%', marginRight: '1.3%', marginBottom: 8 },
+  photoImg: { width: '100%', height: 96, objectFit: 'cover', borderRadius: 3, backgroundColor: '#f3f4f6' },
+  photoLabel: { fontSize: 7, color: '#374151', marginTop: 2 },
+  statement: { marginTop: 16, fontSize: 9, color: '#374151', lineHeight: 1.4, textAlign: 'center' },
   bottom: { borderTopWidth: 1, borderTopColor: '#111827', marginTop: 16, paddingTop: 6, textAlign: 'center', fontSize: 8, color: '#374151' },
 });
 
@@ -51,11 +61,11 @@ function buildItems(order) {
     .forEach((q) => (q.items || []).forEach((it) =>
       items.push({ description: it.description, unitPrice: Number(it.unitPrice), qty: Number(it.quantity), total: Number(it.total) })));
   (order.workOrderParts || []).forEach((p) =>
-    items.push({ description: p.part?.name || 'Refacción', unitPrice: Number(p.unitPrice), qty: Number(p.quantity), total: Number(p.total) }));
+    items.push({ description: p.part?.name || p.description || 'Refacción', unitPrice: Number(p.unitPrice), qty: Number(p.quantity), total: Number(p.total) }));
   return items;
 }
 
-function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
+function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl, rec }) {
   const total = Number(order.totalAmount || 0);
   const subtotal = total / IVA_FACTOR; // los precios ya incluyen IVA → se desglosa hacia atrás
   const iva = total - subtotal;
@@ -154,6 +164,64 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
         <Text style={styles.bottom}>{footerLine}</Text>
         </View>
       </Page>
+
+      {rec ? (
+        <Page size="A4" style={styles.page}>
+          <View style={styles.rowBetween}>
+            <View>
+              <Text style={styles.title}>CONSTANCIA DE RECEPCIÓN</Text>
+              <Text style={styles.sub}>#{order.orderNumber}  |  {fdate(order.receivedAt)}</Text>
+            </View>
+            {logoDataUrl ? <Image style={styles.logo} src={logoDataUrl} /> : null}
+          </View>
+          <View style={styles.hr} />
+          <Text style={styles.vehicle}>{order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}{order.vehicle?.licensePlate ? `  ·  ${order.vehicle.licensePlate}` : ''}</Text>
+          <Text style={styles.falla}>Cliente: {cliente}</Text>
+
+          <View style={styles.recGrid}>
+            <View style={styles.recCell}><Text style={styles.recLabel}>KILOMETRAJE DE ENTRADA</Text><Text>{order.mileageIn != null ? `${Number(order.mileageIn).toLocaleString('es-MX')} km` : '—'}</Text></View>
+            <View style={styles.recCell}><Text style={styles.recLabel}>COMBUSTIBLE</Text><Text>{FUEL_LEVELS.find((l) => l.value === order.fuelLevel)?.label || '—'}</Text></View>
+            <View style={styles.recCell}><Text style={styles.recLabel}>FECHA Y HORA</Text><Text>{order.receivedAt ? new Date(order.receivedAt).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}</Text></View>
+          </View>
+
+          {order.belongings ? <View style={styles.recBlock}><Text style={styles.bold}>Pertenencias y accesorios</Text><Text style={styles.notesText}>{order.belongings}</Text></View> : null}
+          {order.receptionNotes ? <View style={styles.recBlock}><Text style={styles.bold}>Anotaciones del estado de llegada</Text><Text style={styles.notesText}>{order.receptionNotes}</Text></View> : null}
+
+          {rec.damages.length > 0 ? (
+            <View style={styles.recBlock}>
+              <Text style={styles.bold}>Daños y observaciones registrados</Text>
+              {rec.damages.map((d, i) => (
+                <Text key={i} style={styles.notesText}>• {d.label}{d.note ? `: ${d.note}` : ''}</Text>
+              ))}
+            </View>
+          ) : null}
+
+          {rec.photos.length > 0 ? (
+            <View>
+              <Text style={[styles.bold, { marginTop: 12 }]}>Fotografías de recepción</Text>
+              <View style={styles.photoGrid}>
+                {rec.photos.map((ph, i) => (
+                  <View key={i} style={styles.photoCell} wrap={false}>
+                    <Image style={styles.photoImg} src={ph.dataUrl} />
+                    <Text style={styles.photoLabel}>{ph.label}{ph.note ? ` · ${ph.note}` : ''}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          <View wrap={false} style={{ marginTop: 'auto' }}>
+            <Text style={styles.statement}>{RECEPTION_STATEMENT}</Text>
+            <View style={{ alignItems: 'center', marginTop: 14 }}>
+              {order.receptionSignature ? <Image style={styles.sigImg} src={order.receptionSignature} /> : <View style={{ height: 46 }} />}
+              <View style={styles.sigLine}><Text style={styles.sigLabel}>Firma del cliente · conformidad de recepción</Text></View>
+              <Text style={styles.sigName}>{order.receptionSignedBy || cliente}</Text>
+              {order.receptionSignedAt ? <Text style={{ fontSize: 7, color: '#9ca3af', marginTop: 2 }}>Firmado el {new Date(order.receptionSignedAt).toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' })}</Text> : <Text style={{ fontSize: 7, color: '#b45309', marginTop: 2 }}>Pendiente de firma</Text>}
+            </View>
+            <Text style={styles.bottom}>{footerLine}</Text>
+          </View>
+        </Page>
+      ) : null}
     </Document>
   );
 }
@@ -168,6 +236,42 @@ async function toDataUrl(url) {
   });
 }
 
+// El generador de PDF solo admite PNG y JPEG; las fotos se guardan en WebP, así que se convierten a JPEG
+async function toJpegDataUrl(url, maxSide = 480) {
+  const blob = await (await fetch(url)).blob();
+  const bmp = await createImageBitmap(blob);
+  const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bmp.width * scale);
+  canvas.height = Math.round(bmp.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close?.();
+  return canvas.toDataURL('image/jpeg', 0.82);
+}
+
+// Fotos de recepción + daños listos para imprimir (se descargan como imagen; las que fallen se omiten)
+async function buildReception(order) {
+  const slotPhotos = (order.photoSlots || [])
+    .filter((s) => s.kind === 'RECEPTION')
+    .map((s) => ({ label: s.label, photo: s.photos?.[0] }));
+  const damagePhotos = (order.photos || [])
+    .filter((ph) => ph.phase === 'RECEPTION' && !ph.slotId)
+    .map((ph) => ({ label: ph.tag || 'Observación', note: ph.caption, photo: ph }));
+
+  const hasData = order.receptionSignedAt || order.fuelLevel || order.belongings || order.receptionNotes || order.mileageIn != null;
+  const withPhoto = [...slotPhotos, ...damagePhotos].filter((x) => x.photo).slice(0, 15);
+  if (!hasData && withPhoto.length === 0) return null;
+
+  const photos = (await Promise.all(withPhoto.map(async (x) => {
+    try { return { label: x.label, note: x.note, dataUrl: await toJpegDataUrl(x.photo.url) }; } catch { return null; }
+  }))).filter(Boolean);
+
+  return { photos, damages: damagePhotos.map((d) => ({ label: d.label, note: d.note })) };
+}
+
 export async function downloadWorkOrderPdf(order, workshop) {
   const trackUrl = `${window.location.origin}/cliente/orden/${order.id}`;
   let qrDataUrl = null;
@@ -175,8 +279,11 @@ export async function downloadWorkOrderPdf(order, workshop) {
   try { qrDataUrl = await QRCode.toDataURL(trackUrl, { margin: 1, width: 220 }); } catch { /* ignore */ }
   try { logoDataUrl = await toDataUrl('/color.png'); } catch { /* ignore */ }
 
+  let rec = null;
+  try { rec = await buildReception(order); } catch { /* la constancia es opcional */ }
+
   const blob = await pdf(
-    <WorkOrderDocument order={order} workshop={workshop} qrDataUrl={qrDataUrl} logoDataUrl={logoDataUrl} />
+    <WorkOrderDocument order={order} workshop={workshop} qrDataUrl={qrDataUrl} logoDataUrl={logoDataUrl} rec={rec} />
   ).toBlob();
 
   const url = URL.createObjectURL(blob);
@@ -188,4 +295,5 @@ export async function downloadWorkOrderPdf(order, workshop) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
 

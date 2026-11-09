@@ -7,6 +7,7 @@ import Button from '../ui/Button';
 import { getCustomers } from '../../services/customers';
 import { getVehicles } from '../../services/vehicles';
 import { useAuthStore } from '../../store/authStore';
+import { NewCustomerButton, NewVehicleButton } from '../QuickCreate';
 import { useWatch } from 'react-hook-form';
 import { getTechnicians } from '../../services/team';
 import { toLocalInput, fromLocalInput } from '../../utils/formatters';
@@ -18,7 +19,7 @@ const SERVICES = [
 
 export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
   const workshopId = useAuthStore((s) => s.workshopId);
-  const { register, handleSubmit, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
     defaultValues: defaultValues
       ? { ...defaultValues, scheduledAt: toLocalInput(defaultValues.scheduledAt), customerId: defaultValues.customerId, vehicleId: defaultValues.vehicleId }
       : undefined,
@@ -56,6 +57,7 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
     <form onSubmit={handleSubmit((d) => onSubmit({ ...d, scheduledAt: fromLocalInput(d.scheduledAt) }))} className="space-y-4">
       <Select
         label="Cliente *"
+        labelAction={<NewCustomerButton onCreated={(c) => setValue('customerId', c.id, { shouldValidate: true })} />}
         placeholder="Seleccionar cliente"
         options={customerOpts}
         error={errors.customerId?.message}
@@ -63,6 +65,8 @@ export default function AppointmentForm({ defaultValues, onSubmit, loading }) {
       />
       <Select
         label="Vehículo *"
+        labelAction={<NewVehicleButton customerId={customerId} onCreated={(v) => setValue('vehicleId', v.id, { shouldValidate: true })} />}
+        hint={customerId && vehicles && vehicles.length === 0 ? 'Este cliente no tiene vehículos. Agrégalo con «Nuevo vehículo».' : undefined}
         placeholder={customerId ? 'Seleccionar vehículo' : 'Primero elige un cliente'}
         options={vehicleOpts}
         disabled={!customerId}

@@ -18,6 +18,7 @@ import PaymentsModal from '../components/PaymentsModal';
 import PhotoSlotsPanel from '../components/PhotoSlotsPanel';
 import DamagePanel from '../components/DamagePanel';
 import OrderProgress from '../components/OrderProgress';
+import { ReceptionDataPanel, ReceptionSignature } from '../components/ReceptionPanels';
 import AssignTechniciansModal from '../components/AssignTechniciansModal';
 import NextServiceModal from '../components/NextServiceModal';
 import { compressImage } from '../utils/image';
@@ -89,6 +90,8 @@ export default function WorkOrderDetail() {
   const [removePart, setRemovePart] = useState(null);
   const [selectedPart, setSelectedPart] = useState('');
   const [partQty, setPartQty] = useState(1);
+  const [partDesc, setPartDesc] = useState('');
+  const [partPrice, setPartPrice] = useState('');
 
   const { data: orderRes, isLoading } = useQuery({
     queryKey: ['work-order', id],
@@ -126,15 +129,19 @@ export default function WorkOrderDetail() {
   const statusMut  = useMutation({ mutationFn: (s) => updateWOStatus(workshopId, id, s), onSuccess: (_, s) => { invalidate(); toast.success('Estado actualizado'); if (s === 'DELIVERED') setNextServiceModal(true); }, onError: (e) => toast.error(e.message) });
   const photoMut   = useMutation({ mutationFn: (fd) => uploadWOPhotos(workshopId, id, fd), onSuccess: () => { invalidate(); toast.success('Fotos subidas'); }, onError: (e) => toast.error(e.message || 'Error al subir fotos') });
   const delPhotoMut= useMutation({ mutationFn: (pid) => deletePhoto(workshopId, pid), onSuccess: () => { invalidate(); toast.success('Foto eliminada'); }, onError: (e) => toast.error(e.message || 'No se pudo eliminar') });
+  const resetPartForm = () => { setSelectedPart(''); setPartQty(1); setPartDesc(''); setPartPrice(''); };
   const addPartMut = useMutation({
-    mutationFn: () => {
-      const part = allParts.find((p) => p.id === selectedPart);
-      return addWOPart(workshopId, id, { partId: selectedPart, quantity: partQty, unitPrice: Number(part.unitPrice) });
-    },
-    onSuccess: () => { invalidate(); setAddPartModal(false); setSelectedPart(''); setPartQty(1); toast.success('Refacción agregada'); },
+    // Refacción del inventario o concepto escrito a mano (descripción + precio)
+    mutationFn: () => addWOPart(workshopId, id, {
+      partId: selectedPart || undefined,
+      description: partDesc.trim() || undefined,
+      quantity: partQty,
+      unitPrice: partPrice === '' ? undefined : Number(partPrice),
+    }),
+    onSuccess: () => { invalidate(); setAddPartModal(false); resetPartForm(); toast.success('Línea agregada'); },
     onError: (e) => toast.error(e.message),
   });
-  const removePartMut = useMutation({ mutationFn: (pid) => removeWOPart(workshopId, id, pid), onSuccess: () => { invalidate(); setRemovePart(null); toast.success('Refacción removida'); }, onError: (e) => toast.error(e.message || 'No se pudo remover') });
+  const removePartMut = useMutation({ mutationFn: (lineId) => removeWOPart(workshopId, id, lineId), onSuccess: () => { invalidate(); setRemovePart(null); toast.success('Refacción removida'); }, onError: (e) => toast.error(e.message || 'No se pudo remover') });
 
   const addQuoteMut = useMutation({
     mutationFn: (d) => createQuote(workshopId, { customerId: order.customerId, workOrderId: order.id, ...d }),
@@ -194,7 +201,7 @@ export default function WorkOrderDetail() {
   if (isLoading) return <div className="flex justify-center py-24"><div className="animate-spin h-10 w-10 rounded-full border-4 border-brand-600 border-t-transparent" /></div>;
   if (!order) return null;
 
-  const selectedPartData = allParts.find((p) => p.id === selectedPart);
+  const canAddPart = partQty > 0 && (selectedPart || partDesc.trim()) && partPrice !== '';
 
   return (
     <div className="space-y-6">
@@ -358,7 +365,7 @@ export default function WorkOrderDetail() {
                 <ResponsiveTable
   rows={order.workOrderParts}
   columns={[
-    { key: 'part', header: 'Refacción', mobile: 'title', cell: (p) => <span className="font-medium">{p.part?.name}<span className="block text-xs text-gray-400 font-normal">{p.part?.sku}</span></span> },
+    { key: 'part', header: 'Refacción', mobile: 'title', cell: (p) => <span className="font-medium">{p.part?.name || p.description}<span className="block text-xs text-gray-400 font-normal">{p.part?.sku}</span></span> },
     { key: 'qty', header: 'Cant.', align: 'right', cell: (p) => p.quantity },
     { key: 'pu', header: 'P.U.', align: 'right', cell: (p) => fMoney(Number(p.unitPrice) / IVA_FACTOR) },
     { key: 'total', header: 'Total', align: 'right', cell: (p) => <span className="font-bold">{fMoney(Number(p.total) / IVA_FACTOR)}</span> },
@@ -388,8 +395,10 @@ export default function WorkOrderDetail() {
           {/* RECEPCIÓN: cómo llega el vehículo (supervisor/admin) */}
           {tab === 'reception' && (
             <div className="space-y-8">
-              <PhotoSlotsPanel order={order} workshopId={workshopId} kind="RECEPTION" title="Fotos de recepción (obligatorias)" canDelete onChanged={invalidate} />
-              <DamagePanel order={order} workshopId={workshopId} canDelete onChanged={invalidate} />
+              <ReceptionDataPanel order={order} workshopId={workshopId} locked={!!order.receptionSignedAt} onChanged={invalidate} />
+              <PhotoSlotsPanel order={order} workshopId={workshopId} kind="RECEPTION" title="Fotos de recepción (obligatorias)" canDelete={!order.receptionSignedAt} locked={!!order.receptionSignedAt} onChanged={invalidate} />
+              <DamagePanel order={order} workshopId={workshopId} canDelete={!order.receptionSignedAt} locked={!!order.receptionSignedAt} onChanged={invalidate} />
+              <ReceptionSignature order={order} workshopId={workshopId} isAdmin={isAdmin} onChanged={invalidate} />
             </div>
           )}
 
@@ -462,7 +471,7 @@ export default function WorkOrderDetail() {
 </div>
                     {['DRAFT','SENT'].includes(q.status) && (
                       <div className="px-4 pb-4">
-                        <QuoteItemForm onSubmit={(d) => addQuoteItemMut.mutate({ qid: q.id, data: d })} loading={addQuoteItemMut.isPending} />
+                        <QuoteItemForm onSubmit={(d, done) => addQuoteItemMut.mutate({ qid: q.id, data: d }, { onSuccess: done })} loading={addQuoteItemMut.isPending} />
                       </div>
                     )}
                   </div>
@@ -498,37 +507,55 @@ export default function WorkOrderDetail() {
       />
 
       {/* Add part modal */}
-      <Modal open={addPartModal} onClose={() => setAddPartModal(false)} title="Agregar refacción" size="sm">
-        <div className="space-y-4">
+      <Modal open={addPartModal} onClose={() => { setAddPartModal(false); resetPartForm(); }} title="Agregar refacción o concepto" size="sm">
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (canAddPart) addPartMut.mutate(); }}
+          className="space-y-4"
+        >
           <Select
-            label="Refacción"
-            placeholder="Seleccionar"
+            label="Refacción del inventario (opcional)"
+            placeholder="Ninguna: escribiré el concepto"
             options={allParts.map((p) => ({ value: p.id, label: `${p.name}${p.sku ? ` (${p.sku})` : ''} — ${fMoney(p.unitPrice)}` }))}
             value={selectedPart}
-            onChange={(e) => setSelectedPart(e.target.value)}
+            onChange={(e) => {
+              const part = allParts.find((p) => p.id === e.target.value);
+              setSelectedPart(e.target.value);
+              setPartDesc(part ? part.name : '');
+              setPartPrice(part ? String(Number(part.unitPrice)) : '');
+            }}
           />
-          <Input label="Cantidad" type="number" min={1} value={partQty} onChange={(e) => setPartQty(Number(e.target.value))} />
-          {selectedPartData && (
+          <Input
+            label="Descripción *"
+            placeholder="Nombre del concepto o pieza"
+            value={partDesc}
+            onChange={(e) => setPartDesc(e.target.value)}
+            maxLength={300}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Cantidad" type="number" min={0.01} step="any" value={partQty} onChange={(e) => setPartQty(Number(e.target.value))} />
+            <Input label="Precio unit. (IVA incl.) *" type="number" min={0} step="0.01" value={partPrice} onChange={(e) => setPartPrice(e.target.value)} />
+          </div>
+          {partPrice !== '' && (
             <p className="text-sm text-gray-600">
-              P.U. (sin IVA): <strong>{fMoney(Number(selectedPartData.unitPrice) / IVA_FACTOR)}</strong>
-              {' · '}Total (IVA incl.): <strong>{fMoney(Number(selectedPartData.unitPrice) * partQty)}</strong>
+              P.U. (sin IVA): <strong>{fMoney(Number(partPrice) / IVA_FACTOR)}</strong>
+              {' · '}Total (IVA incl.): <strong>{fMoney(Number(partPrice) * partQty)}</strong>
             </p>
           )}
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setAddPartModal(false)}>Cancelar</Button>
-            <Button onClick={() => addPartMut.mutate()} loading={addPartMut.isPending} disabled={!selectedPart}>Agregar</Button>
+            <Button type="button" variant="secondary" onClick={() => { setAddPartModal(false); resetPartForm(); }}>Cancelar</Button>
+            <Button type="submit" loading={addPartMut.isPending} disabled={!canAddPart}>Agregar</Button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       {/* Remove part confirm */}
       <ConfirmDialog
         open={!!removePart}
         onClose={() => setRemovePart(null)}
-        onConfirm={() => removePartMut.mutate(removePart?.partId)}
+        onConfirm={() => removePartMut.mutate(removePart?.id)}
         loading={removePartMut.isPending}
         title="Remover refacción"
-        message={`¿Remover "${removePart?.part?.name}" de esta orden?`}
+        message={`¿Remover "${removePart?.part?.name || removePart?.description}" de esta orden?`}
       />
 
       {/* New quote modal */}

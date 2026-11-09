@@ -8,6 +8,7 @@ import { getCustomers } from '../../services/customers';
 import { useAuthStore } from '../../store/authStore';
 import { CAR_BRANDS } from '../../constants/brands';
 import BrandLogo from '../ui/BrandLogo';
+import { NewCustomerButton } from '../QuickCreate';
 
 const COLORS = ['Blanco', 'Negro', 'Gris', 'Plata', 'Rojo', 'Azul', 'Verde', 'Amarillo', 'Naranja', 'Café', 'Otro'];
 const currentYear = new Date().getFullYear();
@@ -29,7 +30,7 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
       }
     : { year: currentYear };
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: initialValues,
   });
   const makeVal = watch('make');
@@ -56,6 +57,7 @@ export default function VehicleForm({ defaultValues, onSubmit, loading, fixedCus
       {!fixedCustomerId && (
         <Select
           label="Cliente *"
+          labelAction={<NewCustomerButton onCreated={(c) => setValue('customerId', c.id, { shouldValidate: true })} />}
           placeholder="Seleccionar cliente"
           options={customerOptions}
           error={errors.customerId?.message}

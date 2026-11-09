@@ -7,11 +7,12 @@ import Button from '../ui/Button';
 import { getCustomers } from '../../services/customers';
 import { getVehicles } from '../../services/vehicles';
 import { useAuthStore } from '../../store/authStore';
+import { NewCustomerButton, NewVehicleButton } from '../QuickCreate';
 import { fromLocalInput } from '../../utils/formatters';
 
 export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
   const workshopId = useAuthStore((s) => s.workshopId);
-  const { register, handleSubmit, control, formState: { errors } } = useForm({ defaultValues });
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({ defaultValues });
   const customerId = useWatch({ control, name: 'customerId' });
 
   const { data: customers } = useQuery({
@@ -30,6 +31,7 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
     <form onSubmit={handleSubmit((d) => onSubmit({ ...d, estimatedReady: fromLocalInput(d.estimatedReady) }))} className="space-y-4">
       <Select
         label="Cliente *"
+        labelAction={<NewCustomerButton onCreated={(c) => setValue('customerId', c.id, { shouldValidate: true })} />}
         placeholder="Seleccionar cliente"
         options={(customers || []).map((c) => ({
           value: c.id,
@@ -40,6 +42,8 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
       />
       <Select
         label="Vehículo *"
+        labelAction={<NewVehicleButton customerId={customerId} onCreated={(v) => setValue('vehicleId', v.id, { shouldValidate: true })} />}
+        hint={customerId && vehicles && vehicles.length === 0 ? 'Este cliente no tiene vehículos. Agrégalo con «Nuevo vehículo».' : undefined}
         placeholder={customerId ? 'Seleccionar vehículo' : 'Elige un cliente primero'}
         options={(vehicles || []).map((v) => ({
           value: v.id,

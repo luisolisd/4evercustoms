@@ -16,11 +16,13 @@ router.put('/:orderId', ...anyRole, ctrl.update);
 router.patch('/:orderId/status', ...anyRole, ctrl.updateStatus);
 router.patch('/:orderId/payment', ...staff, ctrl.updatePayment);
 router.patch('/:orderId/link-quote', ...staff, ctrl.linkQuote);
+router.post('/:orderId/reception-signature', ...staff, ctrl.signReception);
+router.delete('/:orderId/reception-signature', ...adminOnly, ctrl.clearReceptionSignature);
 router.get('/:orderId/payments', ...staff, ctrl.listPayments);
 router.post('/:orderId/payments', ...staff, ctrl.addPayment);
 router.delete('/:orderId/payments/:paymentId', ...adminOnly, ctrl.removePayment);
 router.post('/:orderId/parts', ...staff, ctrl.addPart);
-router.delete('/:orderId/parts/:partId', ...staff, ctrl.removePart);
+router.delete('/:orderId/parts/:lineId', ...staff, ctrl.removePart);
 router.delete('/:orderId', ...adminOnly, ctrl.remove);
 
 module.exports = router;

@@ -18,7 +18,7 @@ const detailFor = (key, flow) => {
   if (!f) return '';
   switch (key) {
     case 'reception':
-      return f.reception.total ? `${f.reception.done}/${f.reception.total} fotos` : '';
+      return f.reception.total ? `${f.reception.done}/${f.reception.total} fotos${f.reception.signed ? ' · firmada' : ''}` : '';
     case 'diagnosis':
       return f.started ? 'Notas o fotos registradas' : f.technicians ? 'Falta nota o foto del técnico' : 'Sin técnico asignado';
     case 'auth':
@@ -36,6 +36,7 @@ const nextHint = (status, flow) => {
   if (!f || status === 'DELIVERED' || status === 'CANCELLED') return null;
   if (status === 'READY_FOR_PICKUP') return 'Vehículo listo: entrégalo al cliente para cerrar la orden.';
   if (f.reception.total && f.reception.done < f.reception.total) return `Faltan fotos de recepción (${f.reception.done}/${f.reception.total}).`;
+  if (f.reception.total && f.reception.done === f.reception.total && !f.reception.signed) return 'Fotos de recepción completas: pide la firma de conformidad del cliente en Recepción.';
   if (!f.technicians) return 'Asigna un técnico y pide las fotos que debe registrar.';
   if (!f.started) return 'El técnico debe registrar su diagnóstico o subir su primera foto: el estatus avanzará solo.';
   if (f.quote === 'PENDING') return 'Cotización enviada: esperando que el cliente la autorice.';

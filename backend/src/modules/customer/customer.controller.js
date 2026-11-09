@@ -68,7 +68,7 @@ const workOrderDetail = async (req, res, next) => {
         vehicle: { select: { id: true, make: true, model: true, year: true, licensePlate: true } },
         workOrderParts: {
           select: {
-            id: true, quantity: true, unitPrice: true, total: true,
+            id: true, quantity: true, unitPrice: true, total: true, description: true,
             part: { select: { name: true, sku: true } },
           },
         },

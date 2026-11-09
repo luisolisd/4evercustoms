@@ -20,6 +20,7 @@ import SearchInput from '../components/ui/SearchInput';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../hooks/useToast';
 import QuoteDecision from '../components/QuoteDecision';
+import { NewCustomerButton, NewVehicleButton } from '../components/QuickCreate';
 import { SERVICES } from '../constants/services';
 import { fDate, fMoney } from '../utils/formatters';
 
@@ -196,11 +197,14 @@ export default function RemindersPage() {
         <form onSubmit={(e) => { e.preventDefault(); if (formValid) createMut.mutate(); }} className="space-y-4">
           <Select
             label="Cliente *" placeholder="Seleccionar cliente"
+            labelAction={<NewCustomerButton onCreated={(c) => setForm((f) => ({ ...f, customerId: c.id, vehicleId: '' }))} />}
             options={(customers || []).map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName} — ${c.phone}` }))}
             value={form.customerId} onChange={(e) => setForm((f) => ({ ...f, customerId: e.target.value, vehicleId: '' }))}
           />
           <Select
-            label="Vehículo" placeholder={form.customerId ? 'Seleccionar vehículo (opcional)' : 'Primero elige un cliente'} disabled={!form.customerId}
+            label="Vehículo"
+            labelAction={<NewVehicleButton customerId={form.customerId} onCreated={(v) => setForm((f) => ({ ...f, vehicleId: v.id }))} />}
+            placeholder={form.customerId ? 'Seleccionar vehículo (opcional)' : 'Primero elige un cliente'} disabled={!form.customerId}
             options={(vehicles || []).map((v) => ({ value: v.id, label: `${v.year} ${v.make} ${v.model}${v.licensePlate ? ` (${v.licensePlate})` : ''}` }))}
             value={form.vehicleId} onChange={set('vehicleId')}
           />

@@ -17,7 +17,7 @@ import { useToast } from '../hooks/useToast';
  *  canEditSlots: supervisor/admin pueden pedir o quitar fotos (solo tipo TECH).
  *  canDelete: pueden eliminar fotos ya subidas. Los técnicos solo suben.
  */
-export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', title, canEditSlots = false, canDelete = false, onChanged }) {
+export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', title, canEditSlots = false, canDelete = false, locked = false, onChanged }) {
   const toast = useToast();
   const inputRef = useRef(null);
   const activeSlot = useRef(null);
@@ -57,6 +57,7 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
   };
 
   const pick = (slotId) => {
+    if (locked) return toast.error('La recepción ya fue firmada: las fotos de recepción no se pueden modificar.');
     if (storageDown) return toast.error('El servidor no tiene configurado el almacenamiento de fotos. Avisa al administrador.');
     activeSlot.current = slotId;
     inputRef.current?.click();
@@ -122,7 +123,7 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
                 <button
                   type="button"
                   onClick={() => pick(s.id)}
-                  disabled={busy}
+                  disabled={busy || locked}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
                 >
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}

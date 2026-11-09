@@ -25,7 +25,7 @@ const accessibleOrder = async (req) => {
       workshopId: req.params.workshopId,
       ...(req.workshopUser.role === TECHNICIAN && { technicians: { some: { userId: req.user.id } } }),
     },
-    select: { id: true },
+    select: { id: true, receptionSignedAt: true },
   });
   if (!order) throw httpError('Orden no encontrada', 404);
   return order;
@@ -44,9 +44,11 @@ const list = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+const LOCKED_MSG = 'La recepción ya fue firmada por el cliente: las fotos de recepción no se pueden modificar. Un administrador puede anular la firma.';
+
 const upload = async (req, res, next) => {
   try {
-    await accessibleOrder(req);
+    const order = await accessibleOrder(req);
     if (!cloudinaryReady()) {
       return error(res, 'La carga de fotos no está configurada. Falta conectar Cloudinary en el servidor.', 503);
     }
@@ -62,11 +64,13 @@ const upload = async (req, res, next) => {
     if (req.body.slotId) {
       const slot = await prisma.orderPhotoSlot.findFirst({
         where: { id: String(req.body.slotId), workOrderId: req.params.orderId },
-        select: { id: true },
+        select: { id: true, kind: true },
       });
       if (!slot) return error(res, 'El requerimiento de foto no existe en esta orden', 400);
       slotId = slot.id;
+      if (order.receptionSignedAt && slot.kind === 'RECEPTION') return error(res, LOCKED_MSG, 409);
     }
+    if (order.receptionSignedAt && phase === 'RECEPTION') return error(res, LOCKED_MSG, 409);
 
     const uploads = await Promise.all(
       req.files.map(async (file) => {
@@ -107,8 +111,10 @@ const remove = async (req, res, next) => {
   try {
     const photo = await prisma.photo.findFirst({
       where: { id: req.params.photoId, workshopId: req.params.workshopId },
+      include: { workOrder: { select: { receptionSignedAt: true } }, slot: { select: { kind: true } } },
     });
     if (!photo) return notFound(res);
+    if (photo.workOrder?.receptionSignedAt && (photo.phase === 'RECEPTION' || photo.slot?.kind === 'RECEPTION')) return error(res, LOCKED_MSG, 409);
 
     await destroyCloudPhotos([photo]);
     await prisma.photo.delete({ where: { id: photo.id } });
@@ -120,15 +126,20 @@ const remove = async (req, res, next) => {
 const bulkRemove = async (req, res, next) => {
   try {
     const { ids } = z.object({ ids: z.array(z.string().min(1)).min(1).max(200) }).parse(req.body);
-    const photos = await prisma.photo.findMany({
+    const found = await prisma.photo.findMany({
       where: { id: { in: ids }, workshopId: req.params.workshopId },
-      select: { id: true, url: true, publicId: true },
+      select: { id: true, url: true, publicId: true, phase: true, workOrder: { select: { receptionSignedAt: true } }, slot: { select: { kind: true } } },
     });
-    if (!photos.length) return notFound(res, 'No se encontraron fotos');
+    if (!found.length) return notFound(res, 'No se encontraron fotos');
+    // Las fotos de recepción de una orden con recepción firmada se conservan
+    const isLocked = (p) => p.workOrder?.receptionSignedAt && (p.phase === 'RECEPTION' || p.slot?.kind === 'RECEPTION');
+    const photos = found.filter((p) => !isLocked(p));
+    const skipped = found.length - photos.length;
+    if (!photos.length) return error(res, LOCKED_MSG, 409);
 
     await destroyCloudPhotos(photos);
     const del = await prisma.photo.deleteMany({ where: { id: { in: photos.map((p) => p.id) } } });
-    ok(res, { deleted: del.count });
+    ok(res, { deleted: del.count, skipped });
   } catch (e) { next(e); }
 };
 

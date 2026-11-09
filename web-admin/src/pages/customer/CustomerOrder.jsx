@@ -139,7 +139,7 @@ export default function CustomerOrder() {
               <ul className="space-y-1">
                 {o.workOrderParts.map((p) => (
                   <li key={p.id} className="flex justify-between text-xs text-gray-600">
-                    <span className="truncate pr-2">{p.part?.name || 'Refacción'} ×{Number(p.quantity)}</span>
+                    <span className="truncate pr-2">{p.part?.name || p.description || 'Refacción'} ×{Number(p.quantity)}</span>
                     <span className="shrink-0">{money(Number(p.total) / IVA_FACTOR)}</span>
                   </li>
                 ))}

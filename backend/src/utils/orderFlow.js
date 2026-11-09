@@ -20,7 +20,7 @@ async function getFacts(orderId) {
   const [order, slots, quotes, techs] = await Promise.all([
     prisma.workOrder.findUnique({
       where: { id: orderId },
-      select: { id: true, status: true, diagnosis: true, technicianNotes: true, customerId: true, workshopId: true, orderNumber: true },
+      select: { id: true, status: true, diagnosis: true, technicianNotes: true, customerId: true, workshopId: true, orderNumber: true, receptionSignedAt: true },
     }),
     prisma.orderPhotoSlot.findMany({ where: { workOrderId: orderId }, select: { kind: true, _count: { select: { photos: true } } } }),
     prisma.quote.findMany({ where: { workOrderId: orderId }, select: { status: true } }),
@@ -49,7 +49,7 @@ async function getFacts(orderId) {
     order,
     target,
     facts: {
-      reception: { total: rec.length, done: recDone },
+      reception: { total: rec.length, done: recDone, signed: !!order.receptionSignedAt },
       tech: { total: tech.length, done: techDone },
       technicians: techs,
       started,

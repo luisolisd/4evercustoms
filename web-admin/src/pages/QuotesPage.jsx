@@ -9,6 +9,7 @@ import {
 import { getCustomers } from '../services/customers';
 import Button from '../components/ui/Button';
 import CreateOrderFromQuoteModal from '../components/CreateOrderFromQuoteModal';
+import { NewCustomerButton } from '../components/QuickCreate';
 import { Link } from 'react-router-dom';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -170,7 +171,7 @@ function QuoteRow({ quote, workshopId, onDelete }) {
           {editable && (
             <div className="border-t border-gray-100 px-4 pb-5 pt-4">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Agregar ítem</p>
-              <QuoteItemForm onSubmit={(d) => addItemMut.mutate(d)} loading={addItemMut.isPending} />
+              <QuoteItemForm onSubmit={(d, done) => addItemMut.mutate(d, { onSuccess: done })} loading={addItemMut.isPending} />
             </div>
           )}
         </div>
@@ -258,6 +259,7 @@ export default function QuotesPage() {
         <form onSubmit={form.handleSubmit((d) => createMut.mutate(d))} className="space-y-4">
           <Select
             label="Cliente"
+            labelAction={<NewCustomerButton onCreated={(c) => form.setValue('customerId', c.id, { shouldValidate: true })} />}
             placeholder="Seleccionar cliente"
             options={customers.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName} · ${c.phone}` }))}
             error={form.formState.errors.customerId?.message}

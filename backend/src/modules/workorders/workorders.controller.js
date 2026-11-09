@@ -36,7 +36,13 @@ const orderSchema = z.object({
   estimatedReady: z.preprocess((v) => (v === '' || v === null ? undefined : v), dateStr.optional()),
   mileageIn: optionalInt,
   mileageOut: optionalInt,
+  fuelLevel: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.enum(['E', '1/4', '1/2', '3/4', 'F']).optional()),
+  belongings: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.string().trim().max(500).optional()),
+  receptionNotes: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.string().trim().max(1500).optional()),
 });
+
+// Datos de recepción: quedan bloqueados cuando el cliente firma la conformidad
+const RECEPTION_FIELDS = ['mileageIn', 'fuelLevel', 'belongings', 'receptionNotes'];
 
 const parseDate = (v, name) => {
   const d = new Date(v);
@@ -88,10 +94,10 @@ const shapeTechs = (o) => (o.technicians ? { ...o, technicians: o.technicians.ma
 // Vista reducida para el técnico: sin dinero, cotizaciones ni datos de contacto
 const forTechnician = (o) => {
   const {
-    totalAmount, paidAmount, paymentStatus, paidAt, customerSignature, signedAt, quotes, payments, workOrderParts, ...rest
+    totalAmount, paidAmount, paymentStatus, paidAt, customerSignature, signedAt, receptionSignature, quotes, payments, workOrderParts, ...rest
   } = o;
   void totalAmount; void paidAmount; void paymentStatus; void paidAt; void customerSignature; void signedAt;
-  void quotes; void payments; void workOrderParts;
+  void quotes; void payments; void workOrderParts; void receptionSignature;
   if (rest.photoSlots) rest.photoSlots = rest.photoSlots.filter((s) => s.kind === 'TECH');
   return rest;
 };
@@ -180,9 +186,9 @@ const list = async (req, res, next) => {
     // Avance de fotos requeridas: cuántas ya tienen al menos una foto
     const data = rows.map((o) => {
       const slots = (o.photoSlots || []).filter((s) => s.kind === 'TECH');
-      const { photoSlots, ...rest } = shapeTechs(o);
-      void photoSlots;
-      const shaped = { ...rest, slotProgress: { total: slots.length, done: slots.filter((s) => s._count.photos > 0).length } };
+      const { photoSlots, customerSignature, receptionSignature, ...rest } = shapeTechs(o);
+      void photoSlots; void customerSignature; void receptionSignature;
+      const shaped = { ...rest, receptionSigned: !!o.receptionSignedAt, slotProgress: { total: slots.length, done: slots.filter((s) => s._count.photos > 0).length } };
       return tech ? forTechnician(shaped) : shaped;
     });
 
@@ -265,14 +271,18 @@ const getOne = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const order = await loadOrder(req, { select: { id: true, workshopId: true } });
+    const order = await loadOrder(req, { select: { id: true, workshopId: true, receptionSignedAt: true } });
     if (!order) return notFound(res);
 
     // El técnico solo escribe diagnóstico, recomendaciones y sus notas
     const fields = isTech(req)
       ? ['diagnosis', 'recommendations', 'technicianNotes']
-      : ['description', 'diagnosis', 'recommendations', 'technicianNotes', 'estimatedReady', 'mileageIn', 'mileageOut'];
+      : ['description', 'diagnosis', 'recommendations', 'technicianNotes', 'estimatedReady', 'mileageIn', 'mileageOut', 'fuelLevel', 'belongings', 'receptionNotes'];
     const data = orderSchema.partial().parse(pick(req.body, fields));
+
+    if (order.receptionSignedAt && RECEPTION_FIELDS.some((k) => k in data)) {
+      return error(res, 'La recepción ya fue firmada por el cliente. Un administrador debe anular la firma para modificar estos datos.', 409);
+    }
 
     // Asignación de técnicos (uno o varios): reemplaza la lista completa
     let technicianIds = null;
@@ -427,24 +437,68 @@ const linkQuote = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-const partSchema = z.object({
-  partId: z.string().min(1),
-  quantity: num.positive('La cantidad debe ser mayor a 0'),
-  unitPrice: num.min(0).optional(),
+// Línea de la orden: refacción del inventario O concepto libre (se escribe la descripción y el precio)
+// Firma de conformidad del cliente al dejar su vehículo (se captura en el mostrador)
+const signSchema = z.object({
+  signature: z.string().regex(/^data:image\/png;base64,[A-Za-z0-9+/=]+$/, 'Firma inválida').max(700_000, 'Firma demasiado grande'),
+  signedBy: z.string().trim().min(2, 'Escribe el nombre de quien firma').max(120),
 });
+
+const signReception = async (req, res, next) => {
+  try {
+    const { orderId, workshopId } = req.params;
+    const order = await prisma.workOrder.findFirst({ where: { id: orderId, workshopId }, select: { id: true, receptionSignedAt: true } });
+    if (!order) return notFound(res);
+    if (order.receptionSignedAt) return error(res, 'La recepción ya está firmada', 409);
+
+    // Se firma sobre un estado documentado: todas las fotos de recepción deben existir
+    const slots = await prisma.orderPhotoSlot.findMany({ where: { workOrderId: orderId, kind: 'RECEPTION' }, select: { _count: { select: { photos: true } } } });
+    const missing = slots.filter((s) => s._count.photos === 0).length;
+    if (missing > 0) return error(res, `Faltan ${missing} foto(s) de recepción antes de pedir la firma del cliente.`, 409);
+
+    const body = signSchema.parse(req.body);
+    const upd = await prisma.workOrder.updateMany({
+      where: { id: orderId, receptionSignedAt: null }, // condicionado: evita doble firma simultánea
+      data: { receptionSignature: body.signature, receptionSignedAt: new Date(), receptionSignedBy: body.signedBy },
+    });
+    if (upd.count === 0) return error(res, 'La recepción ya está firmada', 409);
+    ok(res, { message: 'Recepción firmada', receptionSignedAt: new Date() });
+  } catch (e) { next(e); }
+};
+
+// Solo administrador: anula la firma para corregir la recepción (después se vuelve a firmar)
+const clearReceptionSignature = async (req, res, next) => {
+  try {
+    const { orderId, workshopId } = req.params;
+    await ensure.workOrder(orderId, workshopId);
+    await prisma.workOrder.update({ where: { id: orderId }, data: { receptionSignature: null, receptionSignedAt: null, receptionSignedBy: null } });
+    ok(res, { message: 'Firma anulada' });
+  } catch (e) { next(e); }
+};
+
+const partSchema = z
+  .object({
+    partId: optionalStr,
+    description: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.string().trim().max(300).optional()),
+    quantity: num.positive('La cantidad debe ser mayor a 0'),
+    unitPrice: num.min(0, 'El precio no puede ser negativo').optional(),
+  })
+  .refine((d) => d.partId || d.description, { message: 'Elige una refacción o escribe una descripción', path: ['description'] })
+  .refine((d) => d.partId || d.unitPrice !== undefined, { message: 'Escribe el precio del concepto', path: ['unitPrice'] });
 
 const addPart = async (req, res, next) => {
   try {
     const { orderId, workshopId } = req.params;
     await ensure.workOrder(orderId, workshopId);
     const body = partSchema.parse(req.body);
-    const part = await ensure.part(body.partId, workshopId);
+    const part = body.partId ? await ensure.part(body.partId, workshopId) : null;
     const unitPrice = body.unitPrice ?? Number(part.unitPrice);
 
     const row = await prisma.workOrderPart.create({
       data: {
         workOrderId: orderId,
-        partId: body.partId,
+        partId: body.partId || null,
+        description: body.description || null,
         quantity: body.quantity,
         unitPrice,
         total: Math.round(body.quantity * unitPrice * 100) / 100,
@@ -456,13 +510,15 @@ const addPart = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// Se quita por id de la línea (las líneas libres no tienen refacción)
 const removePart = async (req, res, next) => {
   try {
-    const { orderId, workshopId, partId } = req.params;
+    const { orderId, workshopId, lineId } = req.params;
     await ensure.workOrder(orderId, workshopId);
-    await prisma.workOrderPart.deleteMany({ where: { workOrderId: orderId, partId } });
+    const del = await prisma.workOrderPart.deleteMany({ where: { id: lineId, workOrderId: orderId } });
+    if (del.count === 0) return notFound(res, 'Línea no encontrada');
     await recalcOrderTotal(orderId);
-    ok(res, { message: 'Refacción removida' });
+    ok(res, { message: 'Línea removida' });
   } catch (e) { next(e); }
 };
 
@@ -492,7 +548,7 @@ const remove = async (req, res, next) => {
 
 module.exports = {
   createOrderRecord, list, create, getOne, update, updateStatus, updatePayment, linkQuote,
-  listPayments, addPayment, removePayment, addPart, removePart, remove,
+  listPayments, addPayment, removePayment, addPart, removePart, signReception, clearReceptionSignature, remove,
 };
 
 

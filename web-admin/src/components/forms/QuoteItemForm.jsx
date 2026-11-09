@@ -8,7 +8,7 @@ import { useAuthStore } from '../../store/authStore';
 
 export default function QuoteItemForm({ onSubmit, loading }) {
   const workshopId = useAuthStore((s) => s.workshopId);
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm({
     defaultValues: { isLabor: false, quantity: 1, unitPrice: 0 },
   });
 
@@ -32,20 +32,21 @@ export default function QuoteItemForm({ onSubmit, loading }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    // Al agregarse la línea, el formulario se limpia para capturar la siguiente
+    <form onSubmit={handleSubmit((d) => onSubmit(d, () => reset({ isLabor: false, quantity: 1, unitPrice: 0, partId: '', description: '' })))} className="space-y-4">
       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
         <input type="checkbox" id="isLabor" {...register('isLabor')} className="rounded" />
         <label htmlFor="isLabor" className="text-sm font-medium text-gray-700">Es mano de obra</label>
       </div>
       <Select
-        label="Refacción del inventario"
-        placeholder="Seleccionar (opcional)"
+        label="Refacción del inventario (opcional)"
+        placeholder="Ninguna: escribiré la descripción"
         options={partOptions}
         {...register('partId')}
         onChange={(e) => { register('partId').onChange(e); handlePartChange(e); }}
       />
       <Input
-        label="Descripción *"
+        label="Descripción * (lo que escribas se agrega a la cotización)"
         placeholder="Nombre del servicio o pieza"
         error={errors.description?.message}
         {...register('description', { required: 'Requerido' })}

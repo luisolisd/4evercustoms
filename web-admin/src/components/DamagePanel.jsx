@@ -10,7 +10,7 @@ import { useToast } from '../hooks/useToast';
 // Daños y observaciones que se registran al recibir el vehículo
 export const DAMAGE_TAGS = ['Golpe', 'Rayón', 'Abolladura', 'Estrellado', 'Faltante', 'Pintura', 'Rotura', 'Óxido'];
 
-export default function DamagePanel({ order, workshopId, canDelete, onChanged }) {
+export default function DamagePanel({ order, workshopId, canDelete, locked = false, onChanged }) {
   const toast = useToast();
   const inputRef = useRef(null);
   const [tag, setTag] = useState(DAMAGE_TAGS[0]);
@@ -59,6 +59,7 @@ export default function DamagePanel({ order, workshopId, canDelete, onChanged })
         <p className="text-xs text-gray-500">Elige el tipo, escribe dónde está (opcional) y toma la foto. Repite por cada daño.</p>
       </div>
 
+      <fieldset disabled={locked} className={locked ? 'space-y-4 opacity-50' : 'space-y-4'}>
       <div className="flex flex-wrap gap-2">
         {[...DAMAGE_TAGS, 'Otro'].map((t) => (
           <button
@@ -103,6 +104,7 @@ export default function DamagePanel({ order, workshopId, canDelete, onChanged })
         {busy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
         Tomar foto de {finalTag ? finalTag.toLowerCase() : 'daño'}
       </button>
+      </fieldset>
 
       {photos.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

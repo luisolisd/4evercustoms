@@ -271,30 +271,37 @@ model Appointment {
 }
 
 model WorkOrder {
-  id                String          @id @default(uuid())
-  workshopId        String
-  customerId        String
-  vehicleId         String
-  appointmentId     String?         @unique
-  orderNumber       String
-  status            WorkOrderStatus @default(RECEIVED)
-  description       String?
-  diagnosis         String?
-  recommendations   String?
-  technicianNotes   String?
-  receivedAt        DateTime        @default(now())
-  estimatedReady    DateTime?
-  deliveredAt       DateTime?
-  mileageIn         Int?
-  mileageOut        Int?
-  paymentStatus     PaymentStatus   @default(PENDING)
-  totalAmount       Decimal         @default(0) @db.Decimal(10, 2)
-  paidAmount        Decimal         @default(0) @db.Decimal(10, 2)
-  paidAt            DateTime?
-  customerSignature String?         @db.Text
-  signedAt          DateTime?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id                 String          @id @default(uuid())
+  workshopId         String
+  customerId         String
+  vehicleId          String
+  appointmentId      String?         @unique
+  orderNumber        String
+  status             WorkOrderStatus @default(RECEIVED)
+  description        String?
+  diagnosis          String?
+  recommendations    String?
+  technicianNotes    String?
+  receivedAt         DateTime        @default(now())
+  estimatedReady     DateTime?
+  deliveredAt        DateTime?
+  mileageIn          Int?
+  mileageOut         Int?
+  paymentStatus      PaymentStatus   @default(PENDING)
+  totalAmount        Decimal         @default(0) @db.Decimal(10, 2)
+  paidAmount         Decimal         @default(0) @db.Decimal(10, 2)
+  paidAt             DateTime?
+  customerSignature  String?         @db.Text
+  signedAt           DateTime?
+  // Recepción del vehículo: datos al dejarlo y conformidad firmada por el cliente en el mostrador
+  fuelLevel          String? // E | 1/4 | 1/2 | 3/4 | F
+  belongings         String? // pertenencias / accesorios que deja el cliente
+  receptionNotes     String? // anotaciones relevantes del estado de llegada
+  receptionSignature String?         @db.Text
+  receptionSignedAt  DateTime?
+  receptionSignedBy  String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   workshop       Workshop              @relation(fields: [workshopId], references: [id], onDelete: Cascade)
   customer       Customer              @relation(fields: [customerId], references: [id])
@@ -455,14 +462,15 @@ model InventoryMovement {
 model WorkOrderPart {
   id          String   @id @default(uuid())
   workOrderId String
-  partId      String
+  partId      String?
+  description String? // concepto escrito a mano cuando no es una refacción del inventario
   quantity    Decimal  @db.Decimal(10, 2)
   unitPrice   Decimal  @db.Decimal(10, 2)
   total       Decimal  @db.Decimal(10, 2)
   createdAt   DateTime @default(now())
 
   workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
-  part      Part      @relation(fields: [partId], references: [id])
+  part      Part?     @relation(fields: [partId], references: [id])
 
   @@index([workOrderId])
   @@map("work_order_parts")

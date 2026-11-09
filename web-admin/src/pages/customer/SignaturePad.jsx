@@ -1,8 +1,9 @@
 import { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Eraser } from 'lucide-react';
 
 // Pad de firma con canvas + eventos de puntero (sin dependencias).
-export default function SignaturePad({ onClose, onSave, loading }) {
+export default function SignaturePad({ onClose, onSave, loading, title = 'Firma tu orden', subtitle = 'Firma con el dedo dentro del recuadro.', extra = null }) {
   const canvasRef = useRef(null);
   const drawing = useRef(false);
   const dirty = useRef(false);
@@ -61,14 +62,16 @@ export default function SignaturePad({ onClose, onSave, loading }) {
     onSave(canvasRef.current.toDataURL('image/png'));
   };
 
-  return (
-    <div className="fixed inset-0 z-40 bg-black/50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+  // Se dibuja sobre el documento (portal): dentro de un contenedor animado, "fixed" se quedaría recortado
+  return createPortal(
+    <div className="fixed inset-0 z-[70] bg-black/50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[92dvh] overflow-y-auto pb-safe" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-gray-900">Firma tu orden</h2>
+          <h2 className="text-lg font-bold text-gray-900">{title}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"><X size={18} /></button>
         </div>
-        <p className="text-xs text-gray-500 mb-2">Firma con el dedo dentro del recuadro.</p>
+        {extra}
+        <p className="text-xs text-gray-500 mb-2">{subtitle}</p>
         <div className="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50">
           <canvas
             ref={canvasRef}
@@ -88,6 +91,7 @@ export default function SignaturePad({ onClose, onSave, loading }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

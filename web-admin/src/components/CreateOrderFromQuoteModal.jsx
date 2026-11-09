@@ -6,6 +6,7 @@ import Button from './ui/Button';
 import Select from './ui/Select';
 import { getVehicles } from '../services/vehicles';
 import { createOrderFromQuote } from '../services/quotes';
+import { NewVehicleButton } from './QuickCreate';
 import { useToast } from '../hooks/useToast';
 
 /**
@@ -50,13 +51,14 @@ export default function CreateOrderFromQuoteModal({ open, onClose, quote, worksh
         </p>
         <Select
           label="Vehículo *"
+          labelAction={<NewVehicleButton customerId={quote?.customer?.id} onCreated={(v) => setVehicleId(v.id)} />}
           placeholder={isLoading ? 'Cargando…' : vehicles.length ? 'Seleccionar vehículo' : 'El cliente no tiene vehículos'}
           options={vehicles.map((v) => ({ value: v.id, label: `${v.year} ${v.make} ${v.model}${v.licensePlate ? ` (${v.licensePlate})` : ''}` }))}
           value={vehicleId}
           onChange={(e) => setVehicleId(e.target.value)}
         />
         {!isLoading && vehicles.length === 0 && (
-          <p className="text-xs text-amber-700 rounded-md bg-amber-50 border border-amber-200 px-3 py-2">Registra primero el vehículo del cliente en Vehículos.</p>
+          <p className="text-xs text-amber-700 rounded-md bg-amber-50 border border-amber-200 px-3 py-2">Este cliente no tiene vehículos. Usa «Nuevo vehículo» para agregarlo aquí mismo.</p>
         )}
         <div className="flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
