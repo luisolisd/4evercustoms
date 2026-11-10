@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Camera, Plus, Trash2, ChevronRight, DollarSign,
-  Clock, Car, Edit2, Eye, FileDown,
+  Clock, Car, Edit2, Eye, FileDown, ClipboardList,
 } from 'lucide-react';
 import { getWorkshop } from '../services/workshop';
 import {
@@ -124,6 +124,18 @@ export default function WorkOrderDetail() {
     finally { setPdfBusy(false); }
   };
 
+  // Orden de recepción (formato impreso del taller); "Recibió" es quien la genera
+  const user = useAuthStore((s) => s.user);
+  const [recBusy, setRecBusy] = useState(false);
+  const handleReceptionPdf = async () => {
+    setRecBusy(true);
+    try {
+      const { downloadReceptionOrderPdf } = await import('../pdf/ReceptionOrderPDF');
+      await downloadReceptionOrderPdf(order, workshopRes?.data || {}, `${user?.firstName || ''} ${user?.lastName || ''}`.trim());
+    } catch { toast.error('No se pudo generar la orden de recepción'); }
+    finally { setRecBusy(false); }
+  };
+
   const invalidate = () => qc.invalidateQueries({ queryKey: ['work-order', id] });
 
   const statusMut  = useMutation({ mutationFn: (s) => updateWOStatus(workshopId, id, s), onSuccess: (_, s) => { invalidate(); toast.success('Estado actualizado'); if (s === 'DELIVERED') setNextServiceModal(true); }, onError: (e) => toast.error(e.message) });
@@ -223,6 +235,7 @@ export default function WorkOrderDetail() {
             {order.status === 'DELIVERED' && (
               <Button variant="secondary" icon={Clock} size="sm" onClick={() => setNextServiceModal(true)}>Próximo servicio</Button>
             )}
+            <Button variant="secondary" icon={ClipboardList} size="sm" loading={recBusy} onClick={handleReceptionPdf}>Orden de recepción</Button>
             <Button variant="secondary" icon={FileDown} size="sm" loading={pdfBusy} onClick={handlePdf}>PDF</Button>
             <Button variant="secondary" icon={DollarSign} size="sm" onClick={() => setPayModal(true)}>Cobros</Button>
             <Button variant="secondary" icon={Edit2} size="sm" onClick={() => setEditModal(true)}>Editar</Button>
