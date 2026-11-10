@@ -12,7 +12,7 @@ export default function StatsCard({ icon: Icon, label, value, trend, trendLabel,
   const c = colors[color] || colors.brand;
 
   return (
-    <div className={clsx('group card p-6 ring-1 ring-transparent hover:shadow-elevated hover:-translate-y-1 transition-all duration-300', c.ring)}>
+    <div className={clsx('group card p-6 ring-1 ring-transparent hover:border-gray-300 transition-colors', c.ring)}>
       <div className="flex items-start justify-between mb-4">
         <div className={clsx('p-3 rounded-2xl text-white', c.icon)}>
           <Icon size={20} />

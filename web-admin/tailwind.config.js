@@ -39,13 +39,18 @@ module.exports = {
       },
       boxShadow: {
         soft:     '0 1px 2px 0 rgb(16 18 27 / 0.04), 0 1px 3px 0 rgb(16 18 27 / 0.06)',
-        card:     '0 1px 3px rgb(16 18 27 / 0.05), 0 8px 24px -12px rgb(16 18 27 / 0.12)',
-        elevated: '0 4px 12px -2px rgb(16 18 27 / 0.10), 0 18px 40px -16px rgb(16 18 27 / 0.22)',
+        card:     '0 1px 2px rgb(16 18 27 / 0.06)',
+        elevated: '0 2px 8px -2px rgb(16 18 27 / 0.12), 0 8px 24px -12px rgb(16 18 27 / 0.20)',
         glow:     '0 8px 24px -8px rgb(234 88 12 / 0.45)',
         'inner-top': 'inset 0 1px 0 0 rgb(255 255 255 / 0.06)',
       },
+      // Esquinas sobrias en todo el panel (mismo criterio que el dashboard: rounded-md en tarjetas, rounded en chips)
       borderRadius: {
-        '4xl': '2rem',
+        lg: '0.3125rem',
+        xl: '0.375rem',
+        '2xl': '0.375rem',
+        '3xl': '0.4375rem',
+        '4xl': '0.5rem',
       },
       backgroundImage: {
         'brand-gradient': 'linear-gradient(135deg, #fb923c 0%, #ea580c 55%, #c2410c 100%)',
