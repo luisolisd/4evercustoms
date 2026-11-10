@@ -130,7 +130,7 @@ export default function UsersPage() {
             <Input label="Apellido" value={form.lastName} onChange={set('lastName')} />
           </div>
           <Input label="Correo (para iniciar sesión) *" type="email" value={form.email} onChange={set('email')} required />
-          <Input label="Teléfono (10 dígitos) *" inputMode="numeric" value={form.phone} onChange={set('phone')} required />
+          <Input label="Teléfono (10 dígitos, sin +52) *" type="tel" inputMode="numeric" maxLength={10} value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} required />
           <Select label="Rol *" options={ROLE_OPTS} value={form.role} onChange={set('role')} />
           {modal?.mode === 'create' && (
             <div>

@@ -44,6 +44,17 @@ export default function CustomerForm({ defaultValues, onSubmit, loading }) {
           pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Email inválido' },
         })}
       />
+      <Input
+        label="RFC (opcional)"
+        placeholder="Para facturar, ej. XAXX010101000"
+        maxLength={13}
+        autoCapitalize="characters"
+        error={errors.rfc?.message}
+        {...register('rfc', {
+          setValueAs: (v) => String(v ?? '').replace(/\s/g, '').toUpperCase(),
+          pattern: { value: /^([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})?$/, message: 'RFC inválido (12 o 13 caracteres)' },
+        })}
+      />
       <Input label="Dirección" placeholder="Av. Principal 123" {...register('address')} />
       <Textarea label="Notas" placeholder="Información adicional..." rows={2} {...register('notes')} />
       <div className="flex justify-end gap-3 pt-2">

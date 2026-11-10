@@ -79,7 +79,7 @@ const ensure = {
 // Campos del cliente seguros para exponer (sin passwordHash)
 const CUSTOMER_PUBLIC = {
   id: true, workshopId: true, userId: true, firstName: true, lastName: true,
-  phone: true, email: true, address: true, notes: true, isActive: true,
+  phone: true, email: true, rfc: true, address: true, notes: true, isActive: true,
   createdAt: true, updatedAt: true,
 };
 

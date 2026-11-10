@@ -70,7 +70,11 @@ process.on('unhandledRejection', (reason) =>
   logger.error('unhandledRejection: ' + (reason && reason.message ? reason.message : reason))
 );
 
-app.listen(port, () => logger.info(`4EVRcustoms API escuchando en puerto ${port} [${nodeEnv}]`));
+app.listen(port, () => {
+  logger.info(`4EVRcustoms API escuchando en puerto ${port} [${nodeEnv}]`);
+  // Usuarios existentes con +52 → solo 10 dígitos (no bloquea el arranque si falla)
+  require('./utils/normalizeUserPhones').normalizeUserPhones().catch((e) => logger.warn('normalizeUserPhones: ' + e.message));
+});
 
 module.exports = app;
 

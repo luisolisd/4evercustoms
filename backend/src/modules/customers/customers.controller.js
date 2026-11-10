@@ -3,7 +3,7 @@ const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { z, pick, CUSTOMER_PUBLIC } = require('../../utils/guards');
 
-const FIELDS = ['firstName', 'lastName', 'phone', 'email', 'address', 'notes'];
+const FIELDS = ['firstName', 'lastName', 'phone', 'email', 'rfc', 'address', 'notes'];
 
 const emptyToUndef = (v) => (v === '' || v === null ? undefined : v);
 const createSchema = z.object({
@@ -15,6 +15,11 @@ const createSchema = z.object({
     return d.length > 10 && d.startsWith('52') ? d.slice(2) : d;
   }).refine((d) => /^\d{10}$/.test(d), 'El teléfono debe tener 10 dígitos'),
   email: z.preprocess(emptyToUndef, z.string().trim().email('Email inválido').optional()),
+  // RFC opcional (12 o 13 caracteres); vacío = sin RFC (también sirve para borrarlo al editar)
+  rfc: z.preprocess(
+    (v) => (v === '' || v === undefined ? (v === '' ? null : undefined) : typeof v === 'string' ? v.replace(/\s/g, '').toUpperCase() : v),
+    z.string().regex(/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/, 'RFC inválido (12 o 13 caracteres)').nullable().optional()
+  ),
   address: z.preprocess(emptyToUndef, z.string().trim().optional()),
   notes: z.preprocess(emptyToUndef, z.string().trim().optional()),
 });

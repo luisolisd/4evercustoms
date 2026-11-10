@@ -57,14 +57,14 @@ export default function QuoteItemForm({ onSubmit, loading }) {
           type="number"
           step="0.01"
           error={errors.quantity?.message}
-          {...register('quantity', { required: true, valueAsNumber: true, min: 0.01 })}
+          {...register('quantity', { required: 'Escribe la cantidad', valueAsNumber: true, min: { value: 0.01, message: 'Debe ser mayor a 0' }, validate: (v) => !Number.isNaN(v) || 'Escribe la cantidad' })}
         />
         <Input
           label="Precio unit. (IVA incl.) *"
           type="number"
           step="0.01"
           error={errors.unitPrice?.message}
-          {...register('unitPrice', { required: true, valueAsNumber: true, min: 0 })}
+          {...register('unitPrice', { required: 'Escribe el precio (0 si no tiene costo)', valueAsNumber: true, min: { value: 0, message: 'No puede ser negativo' }, validate: (v) => !Number.isNaN(v) || 'Escribe el precio (0 si no tiene costo)' })}
         />
       </div>
       <div className="flex justify-end pt-2">

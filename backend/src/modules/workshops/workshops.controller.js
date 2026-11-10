@@ -65,7 +65,7 @@ const listTechnicians = async (req, res, next) => {
 const normalizePhone = (v) => {
   const digits = String(v || '').replace(/\D/g, '').slice(-10);
   if (digits.length !== 10) throw Object.assign(new Error('El teléfono debe tener 10 dígitos'), { status: 400 });
-  return '+52' + digits;
+  return digits; // se guarda solo con los 10 dígitos, sin +52
 };
 
 const createSchema = z.object({
@@ -187,11 +187,11 @@ const updateMe = async (req, res, next) => {
       Object.entries(req.body).filter(([k]) => allowed.includes(k) && req.body[k] !== '')
     );
 
-    // Teléfono: normaliza a +52XXXXXXXXXX y libera el número si lo tiene otro usuario
+    // Teléfono: 10 dígitos (sin +52) y libera el número si lo tiene otro usuario
     if (data.phone) {
       const digits = String(data.phone).replace(/\D/g, '').slice(-10);
       if (digits.length !== 10) return error(res, 'El teléfono debe tener 10 dígitos', 400);
-      data.phone = `+52${digits}`;
+      data.phone = digits;
 
       const holder = await prisma.user.findUnique({ where: { phone: data.phone } });
       if (holder && holder.id !== req.user.id) {

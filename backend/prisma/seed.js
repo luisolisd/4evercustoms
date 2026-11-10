@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 const isProd = process.env.NODE_ENV === 'production';
 
 const ADMIN_EMAIL = (process.env.SEED_ADMIN_EMAIL || 'forevercustoms472@gmail.com').toLowerCase();
-const ADMIN_PHONE = process.env.SEED_ADMIN_PHONE || '+524721082970';
+const ADMIN_PHONE = String(process.env.SEED_ADMIN_PHONE || '4721082970').replace(/\D/g, '').slice(-10);
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
 
 async function main() {

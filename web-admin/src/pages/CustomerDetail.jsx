@@ -55,6 +55,7 @@ export default function CustomerDetail() {
             <h1 className="text-2xl font-bold text-gray-900">{c.firstName} {c.lastName}</h1>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-600">
               <span className="flex items-center gap-1.5"><Phone size={13} className="text-gray-400" /> {c.phone}</span>
+            {c.rfc && <span className="flex items-center gap-1.5"><span className="text-[11px] font-semibold text-gray-400">RFC</span> {c.rfc}</span>}
               {c.email && <span className="flex items-center gap-1.5"><Mail size={13} className="text-gray-400" /> {c.email}</span>}
               {c.address && <span className="flex items-center gap-1.5"><MapPin size={13} className="text-gray-400" /> {c.address}</span>}
             </div>

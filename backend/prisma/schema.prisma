@@ -190,6 +190,7 @@ model Customer {
   phone        String
   passwordHash String?
   email        String?
+  rfc          String?
   address      String?
   notes        String?
   isActive     Boolean  @default(true)
