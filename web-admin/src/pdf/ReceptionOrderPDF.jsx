@@ -203,8 +203,8 @@ function ReceptionOrderDocument({ order, workshop, photos = [], carsSrc }) {
           </Cell>
         </View>
 
-        <Bar title="3. SERVICIO SOLICITADO / FALLA QUE REPORTA EL CLIENTE" />
-        {/* Descripción del problema (falla) de la orden; si es corta, quedan 3 renglones para escribir a mano */}
+        <Bar title="3. SERVICIO SOLICITADO" />
+        {/* Servicio de la orden; si es corto, quedan 3 renglones para escribir a mano */}
         <View style={{ height: 39, position: 'relative', overflow: 'hidden' }}>
           {[1, 2, 3].map((i) => <View key={i} style={{ position: 'absolute', left: 0, right: 0, top: i * 13 - 0.5, borderBottomWidth: 0.6, borderBottomColor: LINE, borderBottomStyle: 'dashed' }} />)}
           <Text maxLines={3} style={{ fontSize: 8.2, lineHeight: 1.58, paddingHorizontal: 4, paddingTop: 0.5 }}>{order.description || ' '}</Text>

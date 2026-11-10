@@ -340,7 +340,7 @@ export default function WorkOrderDetail() {
               ))}
               {order.description && (
                 <div className="col-span-full bg-gray-50 rounded-md p-4">
-                  <p className="text-xs text-gray-500 mb-1">Descripción del problema (Falla)</p>
+                  <p className="text-xs text-gray-500 mb-1">Servicio</p>
                   <p className="text-sm text-gray-800 whitespace-pre-line">{order.description}</p>
                 </div>
               )}

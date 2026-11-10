@@ -67,8 +67,8 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
         />
       </div>
       <Textarea
-        label="Descripción del problema *"
-        placeholder="Describe el problema reportado por el cliente..."
+        label="Servicio *"
+        placeholder="Servicio solicitado por el cliente (ej. afinación, cambio de aceite, revisión de frenos)..."
         rows={3}
         error={errors.description?.message}
         {...register('description', { required: 'Requerido' })}

@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, CalendarDays, ClipboardList,
-  FileText, Package, BarChart3, LogOut, Menu,
+  FileText, FileSpreadsheet, Package, BarChart3, LogOut, Menu,
   ChevronRight, Megaphone, BellRing, Wallet, Images, UserCog, User, LayoutGrid, Bell,
 } from 'lucide-react';
 import { useAuthStore, ROLE_LABELS, selectRole } from '../store/authStore';
@@ -30,6 +30,7 @@ const nav = [
   { to: '/inventory',    icon: Package,         label: 'Inventario',    roles: 'AS' },
   { to: '/photos',       icon: Images,          label: 'Fotos',         roles: 'AS' },
   { to: '/promotions',   icon: Megaphone,       label: 'Promociones',   roles: 'AS' },
+  { to: '/export',       icon: FileSpreadsheet, label: 'Exportar Excel', roles: 'AS' },
   { to: '/reports',      icon: BarChart3,       label: 'Reportes',      roles: 'A' },
   { to: '/users',        icon: UserCog,         label: 'Usuarios',      roles: 'A' },
 ];

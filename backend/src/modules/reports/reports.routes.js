@@ -4,6 +4,10 @@ const authenticate = require('../../middleware/authenticate');
 const { workshopAccess } = require('../../middleware/workshopAccess');
 
 const admin = [authenticate, workshopAccess('WORKSHOP_ADMIN')];
+const staff = [authenticate, workshopAccess('WORKSHOP_ADMIN', 'SUPERVISOR')];
+
+// Exportación a Excel (administrador y supervisor), por día o rango de fechas
+router.get('/export', ...staff, require('./export').exportExcel);
 
 router.get('/summary', ...admin, ctrl.summary);
 router.get('/revenue', ...admin, ctrl.revenue);

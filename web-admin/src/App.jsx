@@ -26,6 +26,7 @@ const QuotesPage = lazy(() => import('./pages/QuotesPage'));
 const InventoryPage = lazy(() => import('./pages/InventoryPage'));
 const PromotionsPage = lazy(() => import('./pages/PromotionsPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const ExportPage = lazy(() => import('./pages/ExportPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
@@ -119,6 +120,7 @@ export default function App() {
         <Route path="reminders"     element={<StaffRoute><RemindersPage /></StaffRoute>} />
         <Route path="cash-close"    element={<StaffRoute><CashClosePage /></StaffRoute>} />
         <Route path="photos"        element={<StaffRoute><PhotosPage /></StaffRoute>} />
+        <Route path="export"        element={<StaffRoute><ExportPage /></StaffRoute>} />
         <Route path="reports"       element={<AdminRoute><ReportsPage /></AdminRoute>} />
         <Route path="users"         element={<AdminRoute><UsersPage /></AdminRoute>} />
         <Route path="mis-ordenes"     element={<TechRoute><TechOrdersPage /></TechRoute>} />

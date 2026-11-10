@@ -93,7 +93,7 @@ export default function TechOrdersPage() {
                     <WorkOrderBadge status={o.status} />
                   </div>
                   <p className="text-sm text-gray-700 truncate">{o.vehicle?.year} {o.vehicle?.make} {o.vehicle?.model}{o.vehicle?.licensePlate ? ` · ${o.vehicle.licensePlate}` : ''}</p>
-                  <p className="text-xs text-gray-400 truncate">{o.description || 'Sin descripción'} · recibido {fDate(o.receivedAt)}</p>
+                  <p className="text-xs text-gray-400 truncate">{o.description || 'Sin servicio'} · recibido {fDate(o.receivedAt)}</p>
                   {p.total > 0 && (
                     <p className={clsx('mt-1 inline-flex items-center gap-1 text-xs font-medium', p.done === p.total ? 'text-emerald-600' : 'text-brand-600')}>
                       <Camera size={12} /> Fotos {p.done}/{p.total}
