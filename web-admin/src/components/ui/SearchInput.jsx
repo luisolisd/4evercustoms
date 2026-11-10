@@ -10,7 +10,7 @@ export default function SearchInput({ value, onChange, placeholder = 'Buscar...'
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-h-[44px] sm:min-h-0 pl-9 pr-9 py-2.5 text-sm bg-white border border-gray-200 rounded-xl shadow-soft transition hover:border-gray-300 focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500"
+        className="w-full min-h-[44px] sm:min-h-0 pl-9 pr-9 py-2.5 text-sm bg-white border border-gray-200 rounded-md shadow-sm transition hover:border-gray-300 focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500"
       />
       {value && (
         <button onClick={() => onChange('')} className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">

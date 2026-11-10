@@ -26,7 +26,7 @@ function Toast({ id, type, message }) {
   }, [id, remove]);
 
   return (
-    <div className={clsx('flex items-start gap-3 px-4 py-3 rounded-2xl border shadow-elevated w-full sm:max-w-sm animate-slide-in-right', STYLES[type])}>
+    <div className={clsx('flex items-start gap-3 px-4 py-3 rounded-md border shadow-sm w-full sm:max-w-sm animate-slide-in-right', STYLES[type])}>
       <Icon size={18} className="shrink-0 mt-0.5" />
       <p className="text-sm flex-1">{message}</p>
       <button onClick={() => remove(id)} className="shrink-0 opacity-60 hover:opacity-100">

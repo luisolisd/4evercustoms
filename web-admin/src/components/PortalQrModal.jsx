@@ -52,7 +52,7 @@ export default function PortalQrModal({ open, onClose }) {
           <a
             href={dataUrl || undefined}
             download="qr-portal-clientes.png"
-            className={`inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 min-h-[44px] sm:min-h-0 sm:py-2.5 text-sm font-semibold text-gray-700 shadow-soft hover:bg-gray-50 ${dataUrl ? '' : 'pointer-events-none opacity-50'}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 min-h-[44px] sm:min-h-0 sm:py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 ${dataUrl ? '' : 'pointer-events-none opacity-50'}`}
           >
             <Download size={14} /> Descargar
           </a>

@@ -24,9 +24,9 @@ export default function Button({
     <button
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 font-semibold rounded-xl',
+        'inline-flex items-center justify-center gap-2 font-semibold rounded-md',
         'focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200',
-        'disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0 disabled:shadow-none',
+        'disabled:opacity-50 disabled:cursor-not-allowed  disabled:shadow-none',
         variants[variant],
         sizes[size],
         className

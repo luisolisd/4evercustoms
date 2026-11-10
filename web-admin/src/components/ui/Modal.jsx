@@ -28,13 +28,13 @@ export default function Modal({ open, onClose, title, children, size = 'md', foo
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       <div className="absolute inset-0 bg-ink-950/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className={clsx('relative bg-white rounded-t-3xl sm:rounded-3xl shadow-elevated ring-1 ring-black/5 w-full flex flex-col max-h-[92dvh] sm:max-h-[90vh] animate-fade-up sm:animate-scale-in', SIZES[size])}>
+      <div className={clsx('relative bg-white rounded-t-md sm:rounded-md shadow-sm  w-full flex flex-col max-h-[92dvh] sm:max-h-[90vh] animate-fade-up sm:animate-scale-in', SIZES[size])}>
         {/* Header */}
         <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 shrink-0">
           <h2 className="font-display text-base sm:text-lg font-bold text-gray-900 min-w-0">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2.5 -mr-2 sm:p-1.5 sm:mr-0 shrink-0 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-2.5 -mr-2 sm:p-1.5 sm:mr-0 shrink-0 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <X size={18} />
           </button>

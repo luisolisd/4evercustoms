@@ -36,10 +36,10 @@ export default function CustomerHome() {
           const st = last ? WO_STATUS[last.status] : null;
           return (
             <Link key={v.id} to={`/cliente/vehiculo/${v.id}`}
-              className="block card p-4 hover:shadow-elevated hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200">
+              className="block card p-4 hover:shadow-sm  active:scale-[0.99] transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 rounded-xl shrink-0 w-11 h-11 flex items-center justify-center shadow-soft"><BrandLogo make={v.make} size={26} /></div>
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 rounded-md shrink-0 w-11 h-11 flex items-center justify-center shadow-sm"><BrandLogo make={v.make} size={26} /></div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{v.make} {v.model} {v.year}</p>
                     <p className="text-xs text-gray-500 truncate">
@@ -51,7 +51,7 @@ export default function CustomerHome() {
               </div>
               <div className="mt-3 flex items-center justify-between">
                 {st ? (
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${st.color}`}>{st.label}</span>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded ${st.color}`}>{st.label}</span>
                 ) : (
                   <span className="text-xs text-gray-400">Sin servicios activos</span>
                 )}
@@ -103,12 +103,12 @@ function PendingQuotes() {
         <FileText size={15} className="text-brand-600" /> Cotizaciones por aprobar
       </p>
       {pending.map((q) => (
-        <div key={q.id} className="bg-white rounded-xl p-4 shadow-sm border border-amber-100">
+        <div key={q.id} className="bg-white rounded-md p-4 shadow-sm border border-amber-100">
           <div className="flex items-center justify-between">
             <p className="font-medium text-gray-900 text-sm">
               #{q.quoteNumber}{q.workOrder ? ` · Orden ${q.workOrder.orderNumber}` : ''}
             </p>
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${QUOTE_STATUS[q.status]?.color || ''}`}>
+            <span className={`text-xs font-medium px-2.5 py-1 rounded ${QUOTE_STATUS[q.status]?.color || ''}`}>
               {QUOTE_STATUS[q.status]?.label || q.status}
             </span>
           </div>
@@ -127,12 +127,12 @@ function PendingQuotes() {
           <div className="flex gap-2 mt-3">
             <button disabled={respond.isPending}
               onClick={() => respond.mutate({ id: q.id, decision: 'APPROVED' })}
-              className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1">
+              className="flex-1 bg-green-600 text-white rounded py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1">
               <Check size={15} /> Aprobar
             </button>
             <button disabled={respond.isPending}
               onClick={() => respond.mutate({ id: q.id, decision: 'REJECTED' })}
-              className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-sm font-medium hover:bg-red-100 disabled:opacity-50 flex items-center justify-center gap-1">
+              className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded py-2 text-sm font-medium hover:bg-red-100 disabled:opacity-50 flex items-center justify-center gap-1">
               <X size={15} /> Rechazar
             </button>
           </div>

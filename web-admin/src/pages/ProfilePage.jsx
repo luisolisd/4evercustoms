@@ -121,7 +121,7 @@ function SecurityTab({ workshopId }) {
 
   return (
     <form onSubmit={handleSubmit((d) => mut.mutate(d))} className="space-y-5 max-w-md">
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700">
+      <div className="bg-blue-50 border border-blue-100 rounded-md p-4 text-sm text-blue-700">
         Para cambiar tu contraseña debes ingresar la contraseña actual y la nueva.
       </div>
       <Input
@@ -171,7 +171,7 @@ export default function ProfilePage() {
         <p className="text-sm text-gray-500 mt-1">Configura tu cuenta y preferencias</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex border-b border-gray-100 overflow-x-auto [scrollbar-width:none]">
           {tabs.map((t) => (
             <button

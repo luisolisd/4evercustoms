@@ -73,7 +73,7 @@ export default function PhotoPicker({ value, onChange, disabledLabels = [] }) {
                 disabled={disabled}
                 onClick={() => toggle(t.id)}
                 className={clsx(
-                  'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition',
+                  'inline-flex items-center gap-1 rounded border px-3 py-1.5 text-xs font-medium transition',
                   disabled && 'opacity-40 cursor-not-allowed bg-gray-50 border-gray-200 text-gray-500',
                   !disabled && on && 'bg-brand-600 border-brand-600 text-white',
                   !disabled && !on && 'bg-white border-gray-200 text-gray-700 hover:border-brand-300'
@@ -90,7 +90,7 @@ export default function PhotoPicker({ value, onChange, disabledLabels = [] }) {
       {value.custom.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {value.custom.map((c) => (
-            <span key={c} className="inline-flex items-center gap-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200 px-3 py-1.5 text-xs font-medium">
+            <span key={c} className="inline-flex items-center gap-1 rounded bg-brand-50 text-brand-700 border border-brand-200 px-3 py-1.5 text-xs font-medium">
               Otro: {c}
               <button type="button" onClick={() => onChange({ ...value, custom: value.custom.filter((x) => x !== c) })} aria-label="Quitar">
                 <X size={12} />
@@ -100,7 +100,7 @@ export default function PhotoPicker({ value, onChange, disabledLabels = [] }) {
         </div>
       )}
 
-      <div className="rounded-xl border border-dashed border-gray-300 p-3 space-y-2">
+      <div className="rounded-md border border-dashed border-gray-300 p-3 space-y-2">
         <label className="block text-xs font-medium text-gray-600">Otro (especificar)</label>
         <input
           value={other}
@@ -108,15 +108,15 @@ export default function PhotoPicker({ value, onChange, disabledLabels = [] }) {
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
           maxLength={80}
           placeholder="Ej. Banda de distribución"
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+          className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
         />
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={addCustom} disabled={!other.trim()}
-            className="inline-flex items-center gap-1 rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium disabled:opacity-40">
+            className="inline-flex items-center gap-1 rounded bg-gray-900 text-white px-3 py-1.5 text-xs font-medium disabled:opacity-40">
             <Plus size={12} /> Solo en esta orden
           </button>
           <button type="button" onClick={() => saveMut.mutate(other.trim())} disabled={!other.trim() || saveMut.isPending}
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 disabled:opacity-40">
+            className="inline-flex items-center gap-1 rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 disabled:opacity-40">
             <Plus size={12} /> Guardar en el catálogo
           </button>
         </div>

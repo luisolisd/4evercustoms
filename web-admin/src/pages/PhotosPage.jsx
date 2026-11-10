@@ -96,7 +96,7 @@ function Gallery() {
           {photos.map((p) => {
             const on = selected.has(p.id);
             return (
-              <div key={p.id} className={clsx('rounded-xl overflow-hidden border bg-white', on ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-gray-200')}>
+              <div key={p.id} className={clsx('rounded-md overflow-hidden border bg-white', on ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-gray-200')}>
                 <div className="relative aspect-square bg-gray-100">
                   <img src={p.thumbnailUrl || p.url} alt="" className="w-full h-full object-cover" loading="lazy" />
                   <button
@@ -162,7 +162,7 @@ function Catalog() {
       <p className="text-sm text-gray-500">Lista de fotos que supervisores y administradores pueden pedir al técnico en cada orden. Desactiva las que no uses o agrega nuevas.</p>
       <form onSubmit={(e) => { e.preventDefault(); if (label.trim()) addMut.mutate(); }} className="flex gap-2">
         <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={80} placeholder="Nueva foto, ej. Banda de distribución"
-          className="flex-1 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500" />
+          className="flex-1 border border-gray-200 rounded-md px-3.5 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500" />
         <Button type="submit" icon={Plus} loading={addMut.isPending} disabled={!label.trim()}>Agregar</Button>
       </form>
       <div className="card divide-y divide-gray-100">
@@ -187,10 +187,10 @@ export default function PhotosPage() {
         <h1 className="page-title">Fotos</h1>
         <p className="page-subtitle">Revisa lo guardado en el servidor, elimina fotos y administra la lista de fotos requeridas</p>
       </div>
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-md w-fit">
         {[['gallery', 'Galería'], ['catalog', 'Catálogo de fotos requeridas']].map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)}
-            className={clsx('px-4 py-1.5 rounded-lg text-sm font-medium transition', tab === k ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>{l}</button>
+            className={clsx('px-4 py-1.5 rounded text-sm font-medium transition', tab === k ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>{l}</button>
         ))}
       </div>
       {tab === 'gallery' ? <Gallery /> : <Catalog />}

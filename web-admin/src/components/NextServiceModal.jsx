@@ -60,7 +60,7 @@ export default function NextServiceModal({ open, onClose, order, workshopId }) {
   return (
     <Modal open={open} onClose={onClose} title="Próximo servicio" size="md">
       <form onSubmit={(e) => { e.preventDefault(); if (valid) createMut.mutate(); }} className="space-y-4">
-        <div className="flex items-start gap-3 rounded-xl bg-brand-50 p-3 text-sm text-brand-800">
+        <div className="flex items-start gap-3 rounded-md bg-brand-50 p-3 text-sm text-brand-800">
           <BellRing size={18} className="mt-0.5 shrink-0" />
           <p>
             Vehículo entregado{order?.vehicle ? `: ${order.vehicle.year} ${order.vehicle.make} ${order.vehicle.model}` : ''}. Programa el recordatorio del siguiente servicio;

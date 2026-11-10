@@ -98,7 +98,7 @@ export default function CashClosePage() {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
               {METHOD_CARDS.map(({ key, icon: Icon, color }) => (
                 <div key={key} className="card p-4">
-                  <div className={`inline-flex p-2 rounded-lg ${color}`}><Icon size={16} /></div>
+                  <div className={`inline-flex p-2 rounded ${color}`}><Icon size={16} /></div>
                   <p className="text-xs text-gray-500 mt-2">{methodLabel(key)}</p>
                   <p className="text-lg font-bold text-gray-900">{fMoney(totals[key])}</p>
                 </div>
@@ -112,9 +112,9 @@ export default function CashClosePage() {
             <div className="card p-5 space-y-4 print:hidden">
               <p className="text-sm font-semibold text-gray-800">Arqueo de efectivo</p>
               <div className="grid sm:grid-cols-3 gap-3 sm:gap-4 items-end">
-                <div className="rounded-xl bg-gray-50 p-3"><p className="text-xs text-gray-500">Efectivo esperado</p><p className="font-bold">{fMoney(totals.CASH)}</p></div>
+                <div className="rounded-md bg-gray-50 p-3"><p className="text-xs text-gray-500">Efectivo esperado</p><p className="font-bold">{fMoney(totals.CASH)}</p></div>
                 <Input label="Efectivo contado" type="number" step="0.01" min="0" value={counted} onChange={(e) => setCounted(e.target.value)} />
-                <div className={`rounded-xl p-3 ${difference === null ? 'bg-gray-50' : difference === 0 ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+                <div className={`rounded-md p-3 ${difference === null ? 'bg-gray-50' : difference === 0 ? 'bg-emerald-50' : 'bg-amber-50'}`}>
                   <p className="text-xs text-gray-500">Diferencia</p>
                   <p className="font-bold">{difference === null ? '—' : fMoney(difference)}</p>
                 </div>

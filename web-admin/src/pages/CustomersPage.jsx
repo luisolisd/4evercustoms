@@ -90,7 +90,7 @@ export default function CustomersPage() {
       />
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" />

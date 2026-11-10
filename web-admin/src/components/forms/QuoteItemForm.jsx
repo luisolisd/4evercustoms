@@ -54,15 +54,15 @@ export default function QuoteItemForm({ onSubmit, loading }) {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1">
+      <div className="grid grid-cols-2 gap-1 rounded-md bg-gray-100 p-1">
         {[{ v: false, t: 'Refacción' }, { v: true, t: 'Mano de obra' }].map((o) => (
           <button
             key={o.t}
             type="button"
             onClick={() => setLabor(o.v)}
             className={clsx(
-              'min-h-[44px] sm:min-h-0 sm:py-2 rounded-lg text-sm font-semibold transition',
-              labor === o.v ? 'bg-white text-brand-700 shadow-soft' : 'text-gray-500 hover:text-gray-700'
+              'min-h-[44px] sm:min-h-0 sm:py-2 rounded text-sm font-semibold transition',
+              labor === o.v ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}
           >
             {o.t}

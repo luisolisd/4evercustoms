@@ -189,7 +189,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-5">
+    // En pantallas de escritorio grandes el dashboard se amplía para aprovechar todo el ancho
+    <div className="space-y-5 xl:[zoom:1.1] 2xl:[zoom:1.25]">
       {/* Encabezado */}
       <div className="flex flex-wrap items-end justify-between gap-3 pb-4 border-b border-gray-200">
         <div>

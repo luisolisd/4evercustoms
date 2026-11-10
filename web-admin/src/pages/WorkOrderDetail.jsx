@@ -51,7 +51,7 @@ function StatusStepper({ current, onSelect, loading }) {
           disabled={loading}
           onClick={() => onSelect(s.value)}
           className={clsx(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+            'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all',
             s.value === current
               ? 'bg-brand-600 text-white shadow-sm'
               : i < curIdx
@@ -244,7 +244,7 @@ export default function WorkOrderDetail() {
       </div>
 
       {/* Avance de la orden: se actualiza solo con notas, fotos y cotizaciones */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 space-y-4">
+      <div className="bg-white rounded-md p-4 sm:p-5 shadow-sm border border-gray-200 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avance de la orden</p>
           <span className="text-[11px] text-gray-400">Avanza solo con notas, fotos y cotizaciones</span>
@@ -260,7 +260,7 @@ export default function WorkOrderDetail() {
 
       {/* Info cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-3">
+        <div className="bg-white rounded-md p-5 shadow-sm border border-gray-200 space-y-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente</p>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold">
@@ -272,17 +272,17 @@ export default function WorkOrderDetail() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-3">
+        <div className="bg-white rounded-md p-5 shadow-sm border border-gray-200 space-y-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vehículo</p>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-gray-100 rounded-xl"><Car size={18} className="text-gray-500" /></div>
+            <div className="p-2.5 bg-gray-100 rounded-md"><Car size={18} className="text-gray-500" /></div>
             <div>
               <p className="font-semibold text-gray-900">{order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</p>
               <p className="text-sm text-gray-500">{order.vehicle?.licensePlate || 'Sin placa'}{order.mileageIn ? ` · ${fNumber(order.mileageIn)} km` : ''}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-3">
+        <div className="bg-white rounded-md p-5 shadow-sm border border-gray-200 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Técnico(s)</p>
             <button onClick={() => setAssignModal(true)} className="text-xs font-semibold text-brand-600 hover:text-brand-700">
@@ -292,14 +292,14 @@ export default function WorkOrderDetail() {
           {order.technicians?.length ? (
             <div className="flex flex-wrap gap-2">
               {order.technicians.map((t) => (
-                <span key={t.id} className="inline-flex items-center gap-2 rounded-full bg-gray-100 pl-1 pr-3 py-1 text-sm font-medium text-gray-800">
+                <span key={t.id} className="inline-flex items-center gap-2 rounded bg-gray-100 pl-1 pr-3 py-1 text-sm font-medium text-gray-800">
                   <span className="h-6 w-6 rounded-full bg-gray-800 text-white text-[10px] font-bold flex items-center justify-center">{t.firstName?.[0]}{t.lastName?.[0]}</span>
                   {t.firstName} {t.lastName}
                 </span>
               ))}
             </div>
           ) : (
-            <button onClick={() => setAssignModal(true)} className="w-full rounded-xl border border-dashed border-amber-300 bg-amber-50 px-3 py-3 text-sm font-medium text-amber-800 hover:bg-amber-100">
+            <button onClick={() => setAssignModal(true)} className="w-full rounded-md border border-dashed border-amber-300 bg-amber-50 px-3 py-3 text-sm font-medium text-amber-800 hover:bg-amber-100">
               Sin técnico · Asignar ahora
             </button>
           )}
@@ -307,7 +307,7 @@ export default function WorkOrderDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex border-b overflow-x-auto overscroll-x-contain [scrollbar-width:none]">
           {['info', 'reception', 'photos', 'parts', 'quotes'].map((t) => (
             <button
@@ -333,31 +333,31 @@ export default function WorkOrderDetail() {
                 { label: 'Entrega estimada', value: order.estimatedReady ? fDate(order.estimatedReady) : '—', icon: Clock },
                 { label: 'Entregado', value: order.deliveredAt ? fDate(order.deliveredAt) : '—', icon: Clock },
               ].map((item) => (
-                <div key={item.label} className="bg-gray-50 rounded-xl p-4">
+                <div key={item.label} className="bg-gray-50 rounded-md p-4">
                   <p className="text-xs text-gray-500 mb-1">{item.label}</p>
                   <p className="font-bold text-gray-900">{item.value}</p>
                 </div>
               ))}
               {order.description && (
-                <div className="col-span-full bg-gray-50 rounded-xl p-4">
+                <div className="col-span-full bg-gray-50 rounded-md p-4">
                   <p className="text-xs text-gray-500 mb-1">Descripción del problema (Falla)</p>
                   <p className="text-sm text-gray-800 whitespace-pre-line">{order.description}</p>
                 </div>
               )}
               {order.diagnosis && (
-                <div className="col-span-full bg-gray-50 rounded-xl p-4">
+                <div className="col-span-full bg-gray-50 rounded-md p-4">
                   <p className="text-xs text-gray-500 mb-1">Observaciones / Diagnóstico</p>
                   <p className="text-sm text-gray-800 whitespace-pre-line">{order.diagnosis}</p>
                 </div>
               )}
               {order.recommendations && (
-                <div className="col-span-full bg-gray-50 rounded-xl p-4">
+                <div className="col-span-full bg-gray-50 rounded-md p-4">
                   <p className="text-xs text-gray-500 mb-1">Recomendaciones</p>
                   <p className="text-sm text-gray-800 whitespace-pre-line">{order.recommendations}</p>
                 </div>
               )}
               {order.technicianNotes && (
-                <div className="col-span-full bg-amber-50 border border-amber-100 rounded-xl p-4">
+                <div className="col-span-full bg-amber-50 border border-amber-100 rounded-md p-4">
                   <p className="text-xs text-amber-700 mb-1">Notas del técnico (internas)</p>
                   <p className="text-sm text-gray-800 whitespace-pre-line">{order.technicianNotes}</p>
                 </div>
@@ -384,7 +384,7 @@ export default function WorkOrderDetail() {
     { key: 'total', header: 'Total', align: 'right', cell: (p) => <span className="font-bold">{fMoney(Number(p.total) / IVA_FACTOR)}</span> },
   ]}
   actions={(p, { mobile }) => (
-    <button onClick={() => setRemovePart(p)} className={mobile ? 'inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'p-1 text-gray-400 hover:text-red-600'}>
+    <button onClick={() => setRemovePart(p)} className={mobile ? 'inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'p-1 text-gray-400 hover:text-red-600'}>
       <Trash2 size={14} />{mobile && 'Quitar'}
     </button>
   )}
@@ -441,11 +441,11 @@ export default function WorkOrderDetail() {
                 <p className="text-center text-gray-400 py-8 text-sm">No hay cotizaciones</p>
               ) : (
                 order.quotes.map((q) => (
-                  <div key={q.id} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div key={q.id} className="border border-gray-200 rounded-md overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
                       <div className="flex items-center gap-3">
                         <span className="font-mono font-bold text-gray-900">{q.quoteNumber}</span>
-                        <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium', {
+                        <span className={clsx('px-2 py-0.5 rounded text-xs font-medium', {
                           DRAFT:'bg-gray-100 text-gray-700', SENT:'bg-blue-100 text-blue-700',
                           APPROVED:'bg-green-100 text-green-700', REJECTED:'bg-red-100 text-red-700',
                         }[q.status] || 'bg-gray-100')}>{q.status}</span>
@@ -472,7 +472,7 @@ export default function WorkOrderDetail() {
     { key: 't', header: 'Total', align: 'right', cell: (item) => <span className="font-semibold">{fMoney(Number(item.total) / IVA_FACTOR)}</span> },
   ]}
   actions={(item, { mobile }) => (
-    <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} className={mobile ? 'inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'text-gray-400 hover:text-red-500'}>
+    <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} className={mobile ? 'inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'text-gray-400 hover:text-red-500'}>
       <Trash2 size={13} />{mobile && 'Quitar'}
     </button>
   )}
@@ -589,7 +589,7 @@ export default function WorkOrderDetail() {
           {unlinkedQuotes.length === 0 ? (
             <p className="text-center text-gray-400 py-6 text-sm">No hay cotizaciones sin orden para este cliente.</p>
           ) : unlinkedQuotes.map((q) => (
-            <div key={q.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2">
+            <div key={q.id} className="flex items-center justify-between border border-gray-200 rounded px-3 py-2">
               <div className="min-w-0">
                 <p className="font-mono font-medium text-sm text-gray-900">{q.quoteNumber}</p>
                 <p className="text-xs text-gray-500">{q.status} · {fMoney(q.total)} · {q._count?.items ?? 0} líneas</p>
@@ -611,18 +611,18 @@ function PhotoSection({ title, photos, onUpload, loading, onDelete }) {
         <Button icon={Camera} size="sm" variant="secondary" onClick={onUpload} loading={loading}>Subir fotos</Button>
       </div>
       {photos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+        <div className="flex flex-col items-center justify-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-md">
           <Camera size={28} className="mb-2 opacity-30" />
           <p className="text-xs">Sin fotos</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {photos.map((p) => (
-            <div key={p.id} className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100">
+            <div key={p.id} className="relative group rounded-md overflow-hidden aspect-square bg-gray-100">
               <img src={p.thumbnailUrl || p.url} alt={p.caption || ''} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <a href={p.url} target="_blank" rel="noreferrer" className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30"><Eye size={14} /></a>
-                <button onClick={() => onDelete(p.id)} className="p-2 bg-white/20 rounded-lg text-white hover:bg-red-500/50"><Trash2 size={14} /></button>
+                <a href={p.url} target="_blank" rel="noreferrer" className="p-2 bg-white/20 rounded text-white hover:bg-white/30"><Eye size={14} /></a>
+                <button onClick={() => onDelete(p.id)} className="p-2 bg-white/20 rounded text-white hover:bg-red-500/50"><Trash2 size={14} /></button>
               </div>
             </div>
           ))}

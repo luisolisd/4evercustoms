@@ -73,14 +73,14 @@ export default function TechOrderPage() {
           <WorkOrderBadge status={order.status} />
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gray-100 rounded-xl"><Car size={20} className="text-gray-500" /></div>
+          <div className="p-2.5 bg-gray-100 rounded-md"><Car size={20} className="text-gray-500" /></div>
           <div>
             <p className="font-semibold text-gray-900">{order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</p>
             <p className="text-sm text-gray-500">{order.vehicle?.licensePlate || 'Sin placa'}{order.mileageIn ? ` · ${fNumber(order.mileageIn)} km` : ''}{order.vehicle?.color ? ` · ${order.vehicle.color}` : ''}</p>
           </div>
         </div>
         {order.description && (
-          <div className="rounded-xl bg-gray-50 p-3">
+          <div className="rounded-md bg-gray-50 p-3">
             <p className="text-xs text-gray-500 mb-1">Servicio solicitado</p>
             <p className="text-sm text-gray-800 whitespace-pre-line">{order.description}</p>
           </div>
@@ -102,7 +102,7 @@ export default function TechOrderPage() {
                 disabled={statusMut.isPending || order.status === s}
                 onClick={() => statusMut.mutate(s)}
                 className={clsx(
-                  'rounded-xl px-3 py-3 text-sm font-medium border transition',
+                  'rounded-md px-3 py-3 text-sm font-medium border transition',
                   order.status === s ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-gray-200 text-gray-700 active:bg-gray-50'
                 )}
               >

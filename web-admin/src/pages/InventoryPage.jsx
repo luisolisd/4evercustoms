@@ -31,9 +31,9 @@ const MOVEMENT_OPTS = [
 function StockBadge({ quantity, minQuantity }) {
   const qty = Number(quantity);
   const min = Number(minQuantity);
-  if (qty === 0)    return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Sin stock</span>;
-  if (qty <= min)   return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">Stock bajo</span>;
-  return               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">OK</span>;
+  if (qty === 0)    return <span className="px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">Sin stock</span>;
+  if (qty <= min)   return <span className="px-2 py-0.5 rounded text-xs font-semibold bg-yellow-100 text-yellow-700">Stock bajo</span>;
+  return               <span className="px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">OK</span>;
 }
 
 export default function InventoryPage() {
@@ -118,7 +118,7 @@ export default function InventoryPage() {
         </label>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>
         ) : inventory.length === 0 ? (

@@ -31,7 +31,7 @@ export default function CustomerNotices() {
         <div className="flex items-center gap-1">
           {items?.length > 0 && (
             <button onClick={onClear} disabled={clear.isPending} aria-label="Borrar todos"
-              className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 active:scale-95 transition">
+              className="p-2 rounded text-gray-500 hover:text-red-600 hover:bg-red-50 active:scale-95 transition">
               <Trash2 size={18} />
             </button>
           )}
@@ -43,7 +43,7 @@ export default function CustomerNotices() {
 
       {isLoading && <p className="text-gray-400 text-sm">Cargando…</p>}
       {!isLoading && (!items || items.length === 0) && (
-        <div className="bg-white rounded-xl p-6 text-center text-gray-500 text-sm shadow-sm">
+        <div className="bg-white rounded-md p-6 text-center text-gray-500 text-sm shadow-sm">
           <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
           No tienes avisos todavía.
         </div>
@@ -52,7 +52,7 @@ export default function CustomerNotices() {
       <div className="space-y-2">
         {items?.map((n) => (
           <button key={n.id} onClick={() => !n.isRead && read.mutate(n.id)}
-            className={`w-full text-left rounded-xl p-4 shadow-sm transition ${n.isRead ? 'bg-white' : 'bg-brand-50 border border-brand-100'}`}>
+            className={`w-full text-left rounded-md p-4 shadow-sm transition ${n.isRead ? 'bg-white' : 'bg-brand-50 border border-brand-100'}`}>
             <div className="flex items-start gap-2">
               {!n.isRead && <span className="mt-1.5 w-2 h-2 rounded-full bg-brand-600 shrink-0" />}
               <div className="min-w-0">
@@ -89,7 +89,7 @@ export function PushBanner() {
 
   if (status === 'denied') {
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
+      <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-xs text-amber-700">
         Las notificaciones están bloqueadas. Actívalas desde los ajustes del navegador para esta página.
       </div>
     );
@@ -97,7 +97,7 @@ export function PushBanner() {
 
   return (
     <button onClick={activate} disabled={busy}
-      className="w-full flex items-center gap-3 bg-gray-900 text-white rounded-xl p-3 text-sm">
+      className="w-full flex items-center gap-3 bg-gray-900 text-white rounded-md p-3 text-sm">
       <BellRing size={18} className="shrink-0" />
       <span className="flex-1 text-left">{busy ? 'Activando…' : 'Activa las notificaciones para enterarte del estatus de tu vehículo y promociones.'}</span>
     </button>

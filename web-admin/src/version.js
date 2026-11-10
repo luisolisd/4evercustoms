@@ -1,5 +1,5 @@
 // Versión de la app. ⚠️ Actualizar en CADA cambio (panel y portal de cliente comparten este valor).
-export const APP_VERSION = 'v1.9.5';
+export const APP_VERSION = 'v1.9.6';
 
 
 

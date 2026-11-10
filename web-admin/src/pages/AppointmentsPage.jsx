@@ -49,7 +49,7 @@ function StatusSelect({ value, onChange, disabled }) {
         onChange={(e) => onChange(e.target.value)}
         title="Cambiar estado de la cita"
         className={clsx(
-          'appearance-none cursor-pointer rounded-full pl-3 pr-8 py-2 md:py-1 text-xs font-semibold ring-1 ring-inset transition',
+          'appearance-none cursor-pointer rounded pl-3 pr-8 py-2 md:py-1 text-xs font-semibold ring-1 ring-inset transition',
           'focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-60 disabled:cursor-wait',
           SELECT_COLORS[color]
         )}

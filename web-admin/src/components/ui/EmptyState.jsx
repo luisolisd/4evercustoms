@@ -5,7 +5,7 @@ export default function EmptyState({ icon: Icon, title, description, action, onA
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center animate-fade-up">
       {Icon && (
-        <div className="p-5 bg-gradient-to-br from-gray-50 to-gray-100 ring-1 ring-gray-100 rounded-3xl mb-4 shadow-soft">
+        <div className="p-5 bg-gradient-to-br from-gray-50 to-gray-100 ring-1 ring-gray-100 rounded-md mb-4 shadow-sm">
           <Icon size={32} className="text-gray-400" />
         </div>
       )}

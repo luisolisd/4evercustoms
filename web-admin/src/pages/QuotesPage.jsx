@@ -60,7 +60,7 @@ function QuoteRow({ quote, workshopId, onDelete }) {
   const editable = ['DRAFT', 'SENT'].includes(quote.status);
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
+    <div className="border border-gray-200 rounded-md overflow-hidden">
       <div
         className="px-4 py-3 bg-white hover:bg-gray-50 cursor-pointer select-none"
         onClick={() => setExpanded((v) => !v)}
@@ -87,12 +87,12 @@ function QuoteRow({ quote, workshopId, onDelete }) {
             <Button size="xs" onClick={() => setOrderModal(true)}>Crear orden</Button>
           )}
           {quote.workOrderId && (
-            <Link to={`/work-orders/${quote.workOrderId}`} className="inline-flex items-center rounded-xl border border-gray-200 px-3 py-2 sm:py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50">Ver orden</Link>
+            <Link to={`/work-orders/${quote.workOrderId}`} className="inline-flex items-center rounded-md border border-gray-200 px-3 py-2 sm:py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50">Ver orden</Link>
           )}
           {!quote.workOrderId && quote.status !== 'APPROVED' && ['DRAFT', 'SENT'].includes(quote.status) && (
             <span className="text-[11px] text-gray-400">Se podrá crear la orden cuando el cliente la apruebe</span>
           )}
-          <button onClick={() => onDelete(quote)} className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2 sm:py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors">
+          <button onClick={() => onDelete(quote)} className="ml-auto inline-flex items-center gap-1.5 rounded-md px-3 py-2 sm:py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors">
             <Trash2 size={14} /> Eliminar
           </button>
         </div>
@@ -248,7 +248,7 @@ export default function QuotesPage() {
             <QuoteRow key={q.id} quote={q} workshopId={workshopId} onDelete={setDeleting} />
           ))}
           {pagination && (
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
               <Pagination {...pagination} onPageChange={setPage} />
             </div>
           )}

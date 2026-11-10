@@ -29,13 +29,13 @@ function StatCard({ label, value, icon: Icon, color = 'brand' }) {
     purple:'bg-purple-50 text-purple-600',
   };
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-md p-5 shadow-sm border border-gray-200">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
         </div>
-        <div className={clsx('p-2.5 rounded-xl', colors[color])}>
+        <div className={clsx('p-2.5 rounded-md', colors[color])}>
           <Icon size={18} />
         </div>
       </div>
@@ -99,13 +99,13 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
           <p className="text-sm text-gray-500 mt-1">Métricas del taller</p>
         </div>
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-md">
           {RANGES.map((r) => (
             <button
               key={r.value}
               onClick={() => setRange(r.value)}
               className={clsx(
-                'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                'px-3 py-1.5 rounded text-xs font-medium transition-all',
                 range === r.value ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
               )}
             >
@@ -124,7 +124,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Revenue chart */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200">
         <h2 className="font-semibold text-gray-900 mb-5">Ingresos en el período</h2>
         {revenueData.length === 0 ? (
           <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Sin datos para este período</div>
@@ -149,7 +149,7 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Orders by status */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200">
           <h2 className="font-semibold text-gray-900 mb-5">Órdenes por estado</h2>
           {pieData.length === 0 ? (
             <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Sin datos</div>
@@ -167,7 +167,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Top services */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200">
           <h2 className="font-semibold text-gray-900 mb-5">Servicios más solicitados</h2>
           {serviceData.length === 0 ? (
             <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Sin datos</div>

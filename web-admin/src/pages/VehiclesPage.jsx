@@ -87,7 +87,7 @@ export default function VehiclesPage() {
         className="max-w-md"
       />
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>
         ) : vehicles.length === 0 ? (
@@ -99,7 +99,7 @@ export default function VehiclesPage() {
   columns={[
     { key: 'vehicle', header: 'Vehículo', mobile: 'title', cell: (v) => (
       <div className="flex items-center gap-3 min-w-0">
-        <div className="p-1.5 bg-white border border-gray-100 rounded-xl w-10 h-10 md:w-9 md:h-9 flex items-center justify-center shrink-0"><BrandLogo make={v.make} size={22} /></div>
+        <div className="p-1.5 bg-white border border-gray-200 rounded-md w-10 h-10 md:w-9 md:h-9 flex items-center justify-center shrink-0"><BrandLogo make={v.make} size={22} /></div>
         <div className="min-w-0">
           <p className="font-semibold text-gray-900 truncate">{v.year} {v.make} {v.model}</p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">

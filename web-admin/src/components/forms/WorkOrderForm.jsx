@@ -79,7 +79,7 @@ export default function WorkOrderForm({ defaultValues, onSubmit, loading }) {
         rows={2}
         {...register('diagnosis')}
       />
-      <p className="text-xs text-gray-500 rounded-lg bg-gray-50 p-3">Al crear la orden podrás tomar las fotos de recepción del vehículo. Después asignas técnico(s) y eliges las fotos que se les pedirán.</p>
+      <p className="text-xs text-gray-500 rounded bg-gray-50 p-3">Al crear la orden podrás tomar las fotos de recepción del vehículo. Después asignas técnico(s) y eliges las fotos que se les pedirán.</p>
       <div className="flex justify-end gap-3 pt-2">
         <Button type="submit" className="w-full sm:w-auto" loading={loading}>Crear orden y tomar fotos</Button>
       </div>

@@ -138,7 +138,7 @@ export default function UsersPage() {
               <p className="text-xs text-gray-500 mt-1">Compártela con la persona; puede cambiarla desde su perfil.</p>
             </div>
           )}
-          <p className="text-xs text-gray-500 rounded-lg bg-gray-50 p-3">
+          <p className="text-xs text-gray-500 rounded bg-gray-50 p-3">
             <b>Administrador:</b> todo. <b>Supervisor:</b> clientes, órdenes, cotizaciones, cobros, fotos y recordatorios. <b>Técnico:</b> solo sus órdenes asignadas (estatus, notas y fotos).
           </p>
           <div className="flex justify-end">

@@ -10,7 +10,7 @@ export default function Pagination({ page, pages, total, limit, onPageChange }) 
   const pages_ = [];
   for (let i = Math.max(1, page - 2); i <= Math.min(pages, page + 2); i++) pages_.push(i);
 
-  const arrow = 'h-11 w-11 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-xl border border-gray-200 sm:border-0 hover:bg-gray-100 disabled:opacity-40';
+  const arrow = 'h-11 w-11 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-md border border-gray-200 sm:border-0 hover:bg-gray-100 disabled:opacity-40';
 
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
@@ -31,8 +31,8 @@ export default function Pagination({ page, pages, total, limit, onPageChange }) 
               key={p}
               onClick={() => onPageChange(p)}
               className={clsx(
-                'min-w-[34px] h-8 rounded-lg px-2 font-semibold transition',
-                p === page ? 'bg-brand-gradient text-white shadow-glow' : 'text-gray-600 hover:bg-gray-100'
+                'min-w-[34px] h-8 rounded px-2 font-semibold transition',
+                p === page ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
               )}
             >
               {p}

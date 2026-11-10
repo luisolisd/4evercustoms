@@ -109,7 +109,7 @@ export function RowAction({ icon: Icon, label, onClick, tone = 'gray', mobile, t
       onClick={onClick}
       title={title || label}
       className={clsx(
-        'inline-flex items-center justify-center gap-1.5 rounded-xl transition-colors font-medium',
+        'inline-flex items-center justify-center gap-1.5 rounded-md transition-colors font-medium',
         mobile ? 'min-h-[40px] px-3.5 text-sm border border-gray-200 bg-white' : 'p-1.5',
         tones[tone]
       )}

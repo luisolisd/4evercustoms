@@ -65,14 +65,14 @@ export default function SignaturePad({ onClose, onSave, loading, title = 'Firma 
   // Se dibuja sobre el documento (portal): dentro de un contenedor animado, "fixed" se quedaría recortado
   return createPortal(
     <div className="fixed inset-0 z-[70] bg-black/50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[92dvh] overflow-y-auto pb-safe" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-md p-5 w-full max-w-sm max-h-[92dvh] overflow-y-auto pb-safe" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"><X size={18} /></button>
+          <button onClick={onClose} className="p-1.5 rounded text-gray-400 hover:bg-gray-100"><X size={18} /></button>
         </div>
         {extra}
         <p className="text-xs text-gray-500 mb-2">{subtitle}</p>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50">
+        <div className="border-2 border-dashed border-gray-300 rounded-md overflow-hidden bg-gray-50">
           <canvas
             ref={canvasRef}
             className="w-full touch-none"
@@ -82,11 +82,11 @@ export default function SignaturePad({ onClose, onSave, loading, title = 'Firma 
           />
         </div>
         <div className="flex gap-2 mt-4">
-          <button onClick={clear} className="flex items-center gap-1.5 border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-600">
+          <button onClick={clear} className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-600">
             <Eraser size={15} /> Borrar
           </button>
           <button onClick={save} disabled={empty || loading}
-            className="flex-1 bg-brand-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-brand-700 disabled:opacity-50">
+            className="flex-1 bg-brand-600 text-white rounded py-2.5 text-sm font-medium hover:bg-brand-700 disabled:opacity-50">
             {loading ? 'Guardando…' : 'Guardar firma'}
           </button>
         </div>

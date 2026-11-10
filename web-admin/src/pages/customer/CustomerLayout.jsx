@@ -23,12 +23,12 @@ export default function CustomerLayout() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="relative bg-ink-gradient text-white sticky top-0 z-20 shadow-elevated" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header className="relative bg-ink-gradient text-white sticky top-0 z-20 shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="pointer-events-none absolute inset-0 bg-mesh opacity-60" />
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
         <div className="relative max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-white rounded-lg px-2 py-1 shadow-soft">
+            <div className="bg-white rounded px-2 py-1 shadow-sm">
               <img src="/color.png" alt="4EVRcustoms" className="h-5 w-auto" />
             </div>
           </div>

@@ -28,14 +28,14 @@ export default function CustomerAppointments() {
           <RefreshButton onClick={() => refetch()} spinning={isFetching} />
         </div>
         <button onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 bg-brand-600 text-white rounded-lg px-3 py-2 text-sm font-medium hover:bg-brand-700">
+          className="flex items-center gap-1.5 bg-brand-600 text-white rounded px-3 py-2 text-sm font-medium hover:bg-brand-700">
           <CalendarPlus size={16} /> Agendar
         </button>
       </div>
 
       {isLoading && <p className="text-gray-400 text-sm">Cargando…</p>}
       {!isLoading && (!appts || appts.length === 0) && (
-        <div className="bg-white rounded-xl p-6 text-center text-gray-500 text-sm shadow-sm">
+        <div className="bg-white rounded-md p-6 text-center text-gray-500 text-sm shadow-sm">
           No tienes citas. Toca “Agendar” para solicitar una.
         </div>
       )}
@@ -45,10 +45,10 @@ export default function CustomerAppointments() {
           const st = APPT_STATUS[a.status];
           const canCancel = ['PENDING', 'CONFIRMED'].includes(a.status);
           return (
-            <div key={a.id} className="bg-white rounded-xl p-4 shadow-sm">
+            <div key={a.id} className="bg-white rounded-md p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="font-medium text-gray-900 text-sm">{a.serviceType}</p>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${st?.color || ''}`}>{st?.label || a.status}</span>
+                <span className={`text-xs font-medium px-2.5 py-1 rounded ${st?.color || ''}`}>{st?.label || a.status}</span>
               </div>
               <p className="text-xs text-gray-500 mt-1">{fmtDateTime(a.scheduledAt)}</p>
               {a.vehicle && <p className="text-xs text-gray-400 mt-0.5">{a.vehicle.make} {a.vehicle.model} {a.vehicle.year}</p>}
@@ -89,14 +89,14 @@ function BookModal({ vehicles, onClose, onSubmit, loading, error }) {
 
   return (
     <div className="fixed inset-0 z-30 bg-black/50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-md p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-gray-900 mb-4">Agendar cita</h2>
         {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
         <form onSubmit={submit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Vehículo</label>
             <select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
               {vehicles.length === 0 && <option value="">Sin vehículos</option>}
               {vehicles.map((v) => <option key={v.id} value={v.id}>{v.make} {v.model} {v.year}</option>)}
             </select>
@@ -104,19 +104,19 @@ function BookModal({ vehicles, onClose, onSubmit, loading, error }) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha y hora</label>
             <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Servicio</label>
             <input type="text" value={serviceType} onChange={(e) => setServiceType(e.target.value)}
               placeholder="Ej. Cambio de aceite, afinación…"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose}
-              className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm font-medium text-gray-700">Cancelar</button>
+              className="flex-1 border border-gray-300 rounded py-2.5 text-sm font-medium text-gray-700">Cancelar</button>
             <button type="submit" disabled={loading || vehicles.length === 0}
-              className="flex-1 bg-brand-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-brand-700 disabled:opacity-50">
+              className="flex-1 bg-brand-600 text-white rounded py-2.5 text-sm font-medium hover:bg-brand-700 disabled:opacity-50">
               {loading ? 'Enviando…' : 'Solicitar'}
             </button>
           </div>

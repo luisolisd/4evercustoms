@@ -46,7 +46,7 @@ export default function CustomerDetail() {
       </button>
 
       {/* Perfil */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-2xl font-bold shrink-0">
             {c.firstName?.[0]}{c.lastName?.[0]}
@@ -61,7 +61,7 @@ export default function CustomerDetail() {
             </div>
           </div>
         </div>
-        {c.notes && <p className="text-sm text-gray-500 mt-4 bg-gray-50 rounded-lg p-3">{c.notes}</p>}
+        {c.notes && <p className="text-sm text-gray-500 mt-4 bg-gray-50 rounded p-3">{c.notes}</p>}
         <div className="grid grid-cols-3 gap-3 mt-5">
           <Stat icon={Car} label="Vehículos" value={c.vehicles?.length ?? 0} />
           <Stat icon={ClipboardList} label="Órdenes" value={c._count?.workOrders ?? 0} />
@@ -73,12 +73,12 @@ export default function CustomerDetail() {
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-2">Vehículos</h2>
         {(!c.vehicles || c.vehicles.length === 0) ? (
-          <p className="text-sm text-gray-400 bg-white rounded-xl p-4 border border-gray-100">Sin vehículos registrados.</p>
+          <p className="text-sm text-gray-400 bg-white rounded-md p-4 border border-gray-200">Sin vehículos registrados.</p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {c.vehicles.map((v) => (
-              <div key={v.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
-                <div className="bg-white border border-gray-100 rounded-xl w-10 h-10 flex items-center justify-center"><BrandLogo make={v.make} size={24} /></div>
+              <div key={v.id} className="bg-white rounded-md p-4 shadow-sm border border-gray-200 flex items-center gap-3">
+                <div className="bg-white border border-gray-200 rounded-md w-10 h-10 flex items-center justify-center"><BrandLogo make={v.make} size={24} /></div>
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-900">{v.year} {v.make} {v.model}</p>
                   <p className="text-xs text-gray-500">{v.licensePlate || 'Sin placa'}{v.color ? ` · ${v.color}` : ''}</p>
@@ -93,9 +93,9 @@ export default function CustomerDetail() {
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-2">Órdenes de trabajo</h2>
         {orders.length === 0 ? (
-          <p className="text-sm text-gray-400 bg-white rounded-xl p-4 border border-gray-100">Sin órdenes.</p>
+          <p className="text-sm text-gray-400 bg-white rounded-md p-4 border border-gray-200">Sin órdenes.</p>
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+          <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden divide-y divide-gray-50">
             {orders.map((o) => (
               <button key={o.id} onClick={() => navigate(`/work-orders/${o.id}`)}
                 className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 text-left">
@@ -118,7 +118,7 @@ export default function CustomerDetail() {
 }
 
 const Stat = ({ icon: Icon, label, value }) => (
-  <div className="bg-gray-50 rounded-xl p-4 text-center">
+  <div className="bg-gray-50 rounded-md p-4 text-center">
     <Icon size={18} className="mx-auto text-gray-400 mb-1" />
     <p className="text-2xl font-bold text-gray-900">{value}</p>
     <p className="text-xs text-gray-500">{label}</p>

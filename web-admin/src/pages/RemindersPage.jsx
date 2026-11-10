@@ -123,18 +123,18 @@ export default function RemindersPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-md overflow-x-auto">
           {VIEWS.map((v) => (
             <button key={v.key} onClick={() => { setView(v.key); setPage(1); }}
-              className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition', view === v.key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
+              className={clsx('px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition', view === v.key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
               {v.label}
             </button>
           ))}
         </div>
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-md overflow-x-auto">
           {[['', 'Todos'], ['SERVICE', 'Servicios'], ['QUOTE', 'Cotizaciones']].map(([k, l]) => (
             <button key={k} onClick={() => { setType(k); setPage(1); }}
-              className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition', type === k ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
+              className={clsx('px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition', type === k ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
               {l}
             </button>
           ))}
@@ -167,7 +167,7 @@ export default function RemindersPage() {
                   {isOpen && (
                     <div className="flex items-center gap-1.5">
                       <button onClick={() => sendWhatsApp(r)}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] text-white px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-semibold hover:brightness-95">
+                        className="inline-flex items-center gap-1.5 rounded-md bg-[#25D366] text-white px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-semibold hover:brightness-95">
                         <MessageCircle size={14} /> WhatsApp
                       </button>
                       {r.type === 'QUOTE' ? (
@@ -176,15 +176,15 @@ export default function RemindersPage() {
                         <>
                           {r.status !== 'CONFIRMED' && (
                             <button onClick={() => statusMut.mutate({ id: r.id, status: 'CONFIRMED' })} title="Marcar como confirmado"
-                              className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"><Check size={18} /></button>
+                              className="p-2.5 sm:p-1.5 rounded text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"><Check size={18} /></button>
                           )}
                           <button onClick={() => statusMut.mutate({ id: r.id, status: 'DONE' })} title="Marcar como realizado"
-                            className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50"><CheckCheck size={18} /></button>
+                            className="p-2.5 sm:p-1.5 rounded text-gray-400 hover:text-teal-600 hover:bg-teal-50"><CheckCheck size={18} /></button>
                         </>
                       )}
                     </div>
                   )}
-                  <button onClick={() => setDeleting(r)} title="Eliminar" className="p-2.5 sm:p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"><Trash2 size={16} /></button>
+                  <button onClick={() => setDeleting(r)} title="Eliminar" className="p-2.5 sm:p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50"><Trash2 size={16} /></button>
                 </div>
               );
             })}

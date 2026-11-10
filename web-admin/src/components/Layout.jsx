@@ -87,9 +87,9 @@ function NavItem({ to, icon: Icon, label, onClick, badge = 0 }) {
       onClick={onClick}
       className={({ isActive }) =>
         clsx(
-          'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+          'group relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200',
           isActive
-            ? 'bg-brand-gradient text-white shadow-glow'
+            ? 'bg-brand-600 text-white shadow-sm'
             : 'text-ink-300 hover:bg-white/5 hover:text-white'
         )
       }
@@ -140,7 +140,7 @@ function Sidebar({ mobile = false, onNavigate }) {
       <div className="relative flex flex-col h-full">
         {/* Logo a color contrastado sobre pastilla blanca */}
         <div className="px-5 py-6 border-b border-white/10">
-          <div className="bg-white rounded-2xl px-3 py-2.5 flex items-center justify-center shadow-elevated ring-1 ring-black/5">
+          <div className="bg-white rounded-md px-3 py-2.5 flex items-center justify-center shadow-sm">
             <img src="/color.png" alt="4EVRcustoms" className="h-7 w-auto select-none" draggable={false} />
           </div>
           <p className="text-white font-display text-sm font-bold mt-3 text-center truncate">{workshopName || '4EVRcustoms'}</p>
@@ -156,8 +156,8 @@ function Sidebar({ mobile = false, onNavigate }) {
 
         {/* User */}
         <div className="px-4 py-4 border-t border-white/10">
-          <Link to="/profile" onClick={mobile ? onNavigate : undefined} className="flex items-center gap-3 mb-3 group px-2 rounded-xl hover:bg-white/5 py-2 -mx-1 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-brand-gradient flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-glow">
+          <Link to="/profile" onClick={mobile ? onNavigate : undefined} className="flex items-center gap-3 mb-3 group px-2 rounded-md hover:bg-white/5 py-2 -mx-1 transition-colors">
+            <div className="w-9 h-9 rounded-md bg-brand-600 flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm">
               {(user?.firstName?.[0] || 'A')}{user?.lastName?.[0] || ''}
             </div>
             <div className="flex-1 min-w-0">
@@ -169,7 +169,7 @@ function Sidebar({ mobile = false, onNavigate }) {
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 text-ink-300 hover:text-white text-sm font-medium transition-colors px-2 py-2 rounded-lg hover:bg-white/5"
+            className="w-full flex items-center gap-2 text-ink-300 hover:text-white text-sm font-medium transition-colors px-2 py-2 rounded hover:bg-white/5"
           >
             <LogOut size={15} /> Cerrar sesión
           </button>
@@ -207,14 +207,14 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar (mobile) */}
         <header
-          className="lg:hidden flex items-center justify-between px-4 pb-3 glass border-b border-gray-200/70 shadow-soft shrink-0 sticky top-0 z-30"
+          className="lg:hidden flex items-center justify-between px-4 pb-3 glass border-b border-gray-200/70 shadow-sm shrink-0 sticky top-0 z-30"
           style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
         >
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-md hover:bg-gray-100 active:scale-95 transition">
             <Menu size={20} />
           </button>
           <img src="/color.png" alt="4EVRcustoms" className="h-6 w-auto select-none" draggable={false} />
-          <Link to="/notificaciones" aria-label="Notificaciones" className="relative p-2 rounded-xl hover:bg-gray-100">
+          <Link to="/notificaciones" aria-label="Notificaciones" className="relative p-2 rounded-md hover:bg-gray-100">
             <Bell size={20} />
             {headerUnread > 0 && <span className="absolute right-0.5 top-0.5 min-w-[16px] rounded bg-red-500 px-1 text-center text-[10px] font-bold leading-4 text-white">{headerUnread > 9 ? '9+' : headerUnread}</span>}
           </Link>
@@ -222,7 +222,7 @@ export default function Layout() {
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
-          <div className="max-w-7xl mx-auto p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 lg:pb-8 animate-fade-up">
+          <div className="w-full max-w-[2000px] mx-auto p-4 pb-28 sm:p-6 sm:pb-28 lg:px-8 lg:py-8 xl:px-10 lg:pb-8 animate-fade-up">
             <PushBanner />
             <Suspense fallback={<div className="flex justify-center py-24"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>}>
               <Outlet />

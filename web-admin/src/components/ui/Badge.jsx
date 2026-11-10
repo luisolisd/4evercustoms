@@ -14,7 +14,7 @@ const COLORS = {
 
 export default function Badge({ color = 'gray', children, className, square = false }) {
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ring-1 ring-inset', square ? 'rounded' : 'rounded-full', COLORS[color], className)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ring-1 ring-inset', square ? 'rounded' : 'rounded', COLORS[color], className)}>
       {children}
     </span>
   );

@@ -89,7 +89,7 @@ export default function WorkOrdersPage() {
         <Select options={techOpts} value={techFilter} onChange={(e) => { setTechFilter(e.target.value); setPage(1); }} className="w-full sm:w-[220px]" />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><div className="animate-spin h-8 w-8 rounded-full border-4 border-brand-600 border-t-transparent" /></div>
         ) : orders.length === 0 ? (
@@ -112,7 +112,7 @@ export default function WorkOrdersPage() {
       <button
         onClick={(e) => { e.stopPropagation(); setAssigning(o); }}
         title="Asignar técnico"
-        className={o.technicians?.length ? 'text-gray-700 hover:text-brand-600 hover:underline text-sm' : 'inline-flex rounded-full bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-3 py-1 text-xs font-semibold hover:bg-amber-100'}
+        className={o.technicians?.length ? 'text-gray-700 hover:text-brand-600 hover:underline text-sm' : 'inline-flex rounded bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-3 py-1 text-xs font-semibold hover:bg-amber-100'}
       >
         {o.technicians?.length ? o.technicians.map((t) => t.firstName).join(', ') : 'Asignar técnico'}
       </button>

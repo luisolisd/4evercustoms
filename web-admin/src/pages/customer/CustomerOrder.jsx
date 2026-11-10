@@ -38,13 +38,13 @@ export default function CustomerOrder() {
 
       {o && (
         <>
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-md p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-bold text-gray-900">Orden #{o.orderNumber}</p>
                 <p className="text-xs text-gray-500">{o.vehicle?.make} {o.vehicle?.model} {o.vehicle?.year}</p>
               </div>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${WO_STATUS[o.status]?.color || ''}`}>
+              <span className={`text-xs font-medium px-2.5 py-1 rounded ${WO_STATUS[o.status]?.color || ''}`}>
                 {WO_STATUS[o.status]?.label || o.status}
               </span>
             </div>
@@ -58,7 +58,7 @@ export default function CustomerOrder() {
 
           {/* Línea de tiempo del estatus */}
           {!cancelled && (
-            <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="bg-white rounded-md p-4 shadow-sm">
               <p className="text-sm font-semibold text-gray-700 mb-3">Seguimiento</p>
               <ol className="space-y-0">
                 {WO_STEPS.map((step, i) => {
@@ -94,10 +94,10 @@ export default function CustomerOrder() {
                 const qs = QUOTE_STATUS[q.status];
                 const pending = ['SENT', 'DRAFT'].includes(q.status);
                 return (
-                  <div key={q.id} className="bg-white rounded-xl p-4 shadow-sm">
+                  <div key={q.id} className="bg-white rounded-md p-4 shadow-sm">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-gray-900 text-sm">#{q.quoteNumber}</p>
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${qs?.color || ''}`}>{qs?.label || q.status}</span>
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded ${qs?.color || ''}`}>{qs?.label || q.status}</span>
                     </div>
                     <ul className="mt-2 space-y-1">
                       {q.items?.map((it) => (
@@ -116,12 +116,12 @@ export default function CustomerOrder() {
                       <div className="flex gap-2 mt-3">
                         <button disabled={respond.isPending}
                           onClick={() => respond.mutate({ quoteId: q.id, decision: 'APPROVED' })}
-                          className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1">
+                          className="flex-1 bg-green-600 text-white rounded py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1">
                           <Check size={15} /> Aprobar
                         </button>
                         <button disabled={respond.isPending}
                           onClick={() => respond.mutate({ quoteId: q.id, decision: 'REJECTED' })}
-                          className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-sm font-medium hover:bg-red-100 disabled:opacity-50 flex items-center justify-center gap-1">
+                          className="flex-1 bg-red-50 text-red-600 border border-red-200 rounded py-2 text-sm font-medium hover:bg-red-100 disabled:opacity-50 flex items-center justify-center gap-1">
                           <X size={15} /> Rechazar
                         </button>
                       </div>
@@ -134,7 +134,7 @@ export default function CustomerOrder() {
 
           {/* Refacciones */}
           {o.workOrderParts?.length > 0 && (
-            <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="bg-white rounded-md p-4 shadow-sm">
               <p className="text-sm font-semibold text-gray-700 mb-2">Refacciones</p>
               <ul className="space-y-1">
                 {o.workOrderParts.map((p) => (
@@ -165,7 +165,7 @@ export default function CustomerOrder() {
               <div className="grid grid-cols-3 gap-2">
                 {o.photos.map((p) => (
                   <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
-                    <img src={p.thumbnailUrl || p.url} alt={p.caption || ''} className="w-full h-24 object-cover rounded-lg" />
+                    <img src={p.thumbnailUrl || p.url} alt={p.caption || ''} className="w-full h-24 object-cover rounded" />
                   </a>
                 ))}
               </div>
@@ -173,10 +173,10 @@ export default function CustomerOrder() {
           )}
 
           {/* Pago */}
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-md p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-gray-700">Pago</p>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${PAY_STATUS[o.paymentStatus]?.color || ''}`}>
+              <span className={`text-xs font-medium px-2.5 py-1 rounded ${PAY_STATUS[o.paymentStatus]?.color || ''}`}>
                 {PAY_STATUS[o.paymentStatus]?.label || o.paymentStatus}
               </span>
             </div>
@@ -198,7 +198,7 @@ export default function CustomerOrder() {
           </div>
 
           {/* Firma digital */}
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-md p-4 shadow-sm">
             <p className="text-sm font-semibold text-gray-700 mb-2">Firma de conformidad</p>
             {o.signedAt ? (
               <p className="text-sm text-green-700 flex items-center gap-1.5">
@@ -208,7 +208,7 @@ export default function CustomerOrder() {
               <>
                 <p className="text-xs text-gray-500 mb-3">Firma para dar tu conformidad con el servicio realizado.</p>
                 <button onClick={() => setSigning(true)}
-                  className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white rounded-lg py-2.5 text-sm font-medium">
+                  className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white rounded py-2.5 text-sm font-medium">
                   <PenLine size={16} /> Firmar orden
                 </button>
               </>

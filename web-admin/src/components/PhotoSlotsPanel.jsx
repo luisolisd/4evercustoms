@@ -116,7 +116,7 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
           const ok = s.photos?.length > 0;
           const busy = uploadingSlot === s.id;
           return (
-            <div key={s.id} className={clsx('rounded-xl border p-3', ok ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-200 bg-white')}>
+            <div key={s.id} className={clsx('rounded-md border p-3', ok ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-200 bg-white')}>
               <div className="flex items-center gap-2">
                 {ok ? <CheckCircle2 size={18} className="text-emerald-600 shrink-0" /> : <Circle size={18} className="text-gray-300 shrink-0" />}
                 <p className="flex-1 text-sm font-medium text-gray-900">{s.label}</p>
@@ -124,7 +124,7 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
                   type="button"
                   onClick={() => pick(s.id)}
                   disabled={busy || locked}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
                 >
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
                   {ok ? 'Agregar' : 'Tomar foto'}
@@ -147,7 +147,7 @@ export default function PhotoSlotsPanel({ order, workshopId, kind = 'TECH', titl
               {ok && (
                 <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {s.photos.map((p) => (
-                    <div key={p.id} className="relative rounded-lg overflow-hidden aspect-square bg-gray-100">
+                    <div key={p.id} className="relative rounded overflow-hidden aspect-square bg-gray-100">
                       <img src={p.thumbnailUrl || p.url} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
                       <div className="absolute bottom-1 right-1 flex gap-1">
                         <a href={p.url} target="_blank" rel="noreferrer" className="p-1.5 rounded-md bg-black/55 text-white"><Eye size={12} /></a>

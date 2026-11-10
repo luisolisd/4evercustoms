@@ -19,7 +19,7 @@ export default function CustomerVehicle() {
 
       {v && (
         <>
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-md p-4 shadow-sm">
             <h1 className="text-lg font-bold text-gray-900">{v.make} {v.model} {v.year}</h1>
             <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
               <Info label="Placa" value={v.licensePlate || '—'} />
@@ -32,7 +32,7 @@ export default function CustomerVehicle() {
           <h2 className="text-sm font-semibold text-gray-700 px-1">Servicios e historial</h2>
 
           {(!v.workOrders || v.workOrders.length === 0) && (
-            <div className="bg-white rounded-xl p-6 text-center text-gray-500 text-sm shadow-sm">
+            <div className="bg-white rounded-md p-6 text-center text-gray-500 text-sm shadow-sm">
               <Wrench className="w-7 h-7 mx-auto mb-2 text-gray-300" />
               Este vehículo aún no tiene órdenes de servicio.
             </div>
@@ -43,7 +43,7 @@ export default function CustomerVehicle() {
               const st = WO_STATUS[o.status];
               return (
                 <Link key={o.id} to={`/cliente/orden/${o.id}`}
-                  className="block bg-white rounded-xl p-4 shadow-sm hover:shadow transition">
+                  className="block bg-white rounded-md p-4 shadow-sm hover:shadow transition">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-gray-900 text-sm">Orden #{o.orderNumber}</p>
@@ -52,7 +52,7 @@ export default function CustomerVehicle() {
                     <ChevronRight className="text-gray-300 shrink-0" size={18} />
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${st?.color || ''}`}>{st?.label || o.status}</span>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded ${st?.color || ''}`}>{st?.label || o.status}</span>
                     <span className="text-xs text-gray-500">{fmtDate(o.receivedAt)} · {money(o.totalAmount)}</span>
                   </div>
                 </Link>

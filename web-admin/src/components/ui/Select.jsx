@@ -12,7 +12,7 @@ const Select = forwardRef(({ label, labelAction, error, hint, options = [], plac
     <select
       ref={ref}
       className={clsx(
-        'w-full min-w-0 min-h-[44px] sm:min-h-0 rounded-xl border bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-soft transition',
+        'w-full min-w-0 min-h-[44px] sm:min-h-0 rounded-md border bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition',
         'focus:outline-none focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500',
         'disabled:bg-gray-50 disabled:text-gray-500',
         error ? 'border-red-400 focus:ring-red-400/20' : 'border-gray-200 hover:border-gray-300',

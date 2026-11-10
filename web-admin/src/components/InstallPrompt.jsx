@@ -61,7 +61,7 @@ export default function InstallPrompt({ offset = 'bottom-4' }) {
   if (!show || (!deferred && !ios)) return null;
 
   return (
-    <div className={`fixed inset-x-3 ${offset} z-40 mx-auto max-w-md rounded-md border border-gray-200 bg-white shadow-elevated animate-fade-up`}>
+    <div className={`fixed inset-x-3 ${offset} z-40 mx-auto max-w-md rounded-md border border-gray-200 bg-white shadow-sm animate-fade-up`}>
       <div className="flex items-start gap-3 p-3.5">
         <img src="/pwa-192.png" alt="" className="h-11 w-11 rounded-md shrink-0" />
         <div className="min-w-0 flex-1">

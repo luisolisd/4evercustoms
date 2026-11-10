@@ -19,7 +19,7 @@ function Person({ u, on, onToggle, note }) {
       type="button"
       onClick={onToggle}
       className={clsx(
-        'w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition',
+        'w-full flex items-center gap-3 rounded-md border px-3 py-2.5 text-left transition',
         on ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
       )}
     >
@@ -28,7 +28,7 @@ function Person({ u, on, onToggle, note }) {
       </span>
       <span className="flex-1 text-sm font-medium text-gray-900">
         {u.firstName} {u.lastName}
-        {note && <span className="ml-2 rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-white">{note}</span>}
+        {note && <span className="ml-2 rounded bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-white">{note}</span>}
       </span>
       {on && <Check size={16} className="text-brand-600" />}
     </button>
@@ -71,7 +71,7 @@ export default function AssignTechniciansModal({ open, onClose, order, onSaved }
         {isLoading ? (
           <p className="text-sm text-gray-400">Cargando técnicos…</p>
         ) : technicians.length === 0 ? (
-          <p className="text-sm text-gray-500 rounded-lg bg-gray-50 p-3">No hay técnicos activos. Un administrador puede crearlos en <b>Usuarios</b>.</p>
+          <p className="text-sm text-gray-500 rounded bg-gray-50 p-3">No hay técnicos activos. Un administrador puede crearlos en <b>Usuarios</b>.</p>
         ) : (
           <div className="space-y-2">
             {crew.map((u) => <Person key={u.id} u={u} on={ids.includes(u.id)} onToggle={() => toggle(u.id)} />)}

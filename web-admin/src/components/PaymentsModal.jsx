@@ -53,14 +53,14 @@ export default function PaymentsModal({ open, onClose, order, workshopId, isAdmi
     <Modal open={open} onClose={onClose} title="Cobros de la orden" size="md">
       <div className="space-y-5">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-xl bg-gray-50 p-3"><p className="text-xs text-gray-500">Total</p><p className="font-bold">{fMoney(total)}</p></div>
-          <div className="rounded-xl bg-emerald-50 p-3"><p className="text-xs text-emerald-700">Pagado</p><p className="font-bold text-emerald-800">{fMoney(paid)}</p></div>
-          <div className="rounded-xl bg-amber-50 p-3"><p className="text-xs text-amber-700">Saldo</p><p className="font-bold text-amber-800">{fMoney(balance)}</p></div>
+          <div className="rounded-md bg-gray-50 p-3"><p className="text-xs text-gray-500">Total</p><p className="font-bold">{fMoney(total)}</p></div>
+          <div className="rounded-md bg-emerald-50 p-3"><p className="text-xs text-emerald-700">Pagado</p><p className="font-bold text-emerald-800">{fMoney(paid)}</p></div>
+          <div className="rounded-md bg-amber-50 p-3"><p className="text-xs text-amber-700">Saldo</p><p className="font-bold text-amber-800">{fMoney(balance)}</p></div>
         </div>
 
         <form
           onSubmit={(e) => { e.preventDefault(); if (valid) addMut.mutate(); }}
-          className="space-y-3 rounded-xl border border-gray-200 p-4"
+          className="space-y-3 rounded-md border border-gray-200 p-4"
         >
           <p className="text-sm font-semibold text-gray-800">Registrar cobro</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -79,7 +79,7 @@ export default function PaymentsModal({ open, onClose, order, workshopId, isAdmi
           {!order.payments?.length ? (
             <p className="text-xs text-gray-400">Aún no hay cobros.</p>
           ) : (
-            <ul className="divide-y divide-gray-100 rounded-xl border border-gray-200">
+            <ul className="divide-y divide-gray-100 rounded-md border border-gray-200">
               {order.payments.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                   <div className="flex-1 min-w-0">
@@ -97,7 +97,7 @@ export default function PaymentsModal({ open, onClose, order, workshopId, isAdmi
           )}
         </div>
 
-        <div className="rounded-xl border border-dashed border-gray-300 p-3">
+        <div className="rounded-md border border-dashed border-gray-300 p-3">
           <p className="text-xs text-gray-500 mb-2">El total se calcula con refacciones + cotizaciones aprobadas. Si necesitas corregirlo manualmente:</p>
           <div className="flex gap-2 items-end">
             <div className="flex-1">

@@ -29,7 +29,7 @@ export default function QuoteDecision({ reminder, workshopId, compact = false, o
 
   const base = compact
     ? 'p-2.5 rounded'
-    : 'inline-flex items-center gap-1.5 rounded-xl border px-3.5 min-h-[40px] sm:min-h-0 sm:py-1.5 text-sm font-medium';
+    : 'inline-flex items-center gap-1.5 rounded-md border px-3.5 min-h-[40px] sm:min-h-0 sm:py-1.5 text-sm font-medium';
   const num = reminder.quote?.quoteNumber || '';
 
   return (

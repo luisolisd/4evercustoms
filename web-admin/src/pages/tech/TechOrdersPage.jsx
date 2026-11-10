@@ -56,7 +56,7 @@ export default function TechOrdersPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Por ingresar · {toEnter.length}</p>
           {toEnter.map((a) => (
             <div key={a.id} className="card flex items-center gap-3 p-4 border-l-[3px] border-l-blue-500">
-              <div className="p-2.5 bg-blue-50 rounded-xl shrink-0"><CalendarClock size={20} className="text-blue-600" /></div>
+              <div className="p-2.5 bg-blue-50 rounded-md shrink-0"><CalendarClock size={20} className="text-blue-600" /></div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-900">{fDateTime(a.scheduledAt)}</p>
                 <p className="text-sm text-gray-700 truncate">{a.vehicle?.year} {a.vehicle?.make} {a.vehicle?.model}{a.vehicle?.licensePlate ? ` · ${a.vehicle.licensePlate}` : ''}</p>
@@ -67,10 +67,10 @@ export default function TechOrdersPage() {
         </div>
       )}
 
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-md w-fit">
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={clsx('px-4 py-1.5 rounded-lg text-sm font-medium transition', tab === t.key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
+            className={clsx('px-4 py-1.5 rounded text-sm font-medium transition', tab === t.key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500')}>
             {t.label}
           </button>
         ))}
@@ -86,7 +86,7 @@ export default function TechOrdersPage() {
             const p = o.slotProgress || { total: 0, done: 0 };
             return (
               <Link key={o.id} to={`/mis-ordenes/${o.id}`} className="card flex items-center gap-3 p-4 hover:shadow-md transition">
-                <div className="p-2.5 bg-gray-100 rounded-xl shrink-0"><Car size={20} className="text-gray-500" /></div>
+                <div className="p-2.5 bg-gray-100 rounded-md shrink-0"><Car size={20} className="text-gray-500" /></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-gray-900">{o.orderNumber}</p>
