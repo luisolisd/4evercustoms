@@ -7,7 +7,8 @@ import Input from './ui/Input';
 import Textarea from './ui/Textarea';
 import ConfirmDialog from './ui/ConfirmDialog';
 import SignaturePad from '../pages/customer/SignaturePad';
-import { updateWorkOrder, signReception, clearReceptionSignature } from '../services/workOrders';
+import { updateWorkOrder, signReception, signAdvisor, clearReceptionSignature } from '../services/workOrders';
+import { useAuthStore } from '../store/authStore';
 import { useToast } from '../hooks/useToast';
 import { fDateTime } from '../utils/formatters';
 import { FUEL_LEVELS, RECEPTION_STATEMENT } from '../constants/reception';
@@ -102,6 +103,15 @@ export function ReceptionSignature({ order, workshopId, isAdmin, onChanged }) {
     onSuccess: () => { setOpen(false); onChanged(); toast.success('Recepción firmada por el cliente'); },
     onError: (e) => toast.error(e.message || 'No se pudo guardar la firma'),
   });
+  // Firma del asesor (administrador o supervisor) que recibe el vehículo
+  const user = useAuthStore((s) => s.user);
+  const advisorSigned = !!order.advisorSignedAt;
+  const [advOpen, setAdvOpen] = useState(false);
+  const advMut = useMutation({
+    mutationFn: (signature) => signAdvisor(workshopId, order.id, { signature }),
+    onSuccess: () => { setAdvOpen(false); onChanged(); toast.success('Firma del asesor guardada'); },
+    onError: (e) => toast.error(e.message || 'No se pudo guardar la firma'),
+  });
   const clearMut = useMutation({
     mutationFn: () => clearReceptionSignature(workshopId, order.id),
     onSuccess: () => { setAnnul(false); onChanged(); toast.success('Firma anulada: ya se puede corregir la recepción'); },
@@ -140,6 +150,36 @@ export function ReceptionSignature({ order, workshopId, isAdmin, onChanged }) {
         </div>
       )}
 
+      <div className="space-y-3 pt-1">
+        <p className="text-sm font-semibold text-gray-800">Firma del asesor que recibe <span className="font-normal text-gray-400">(administrador o supervisor)</span></p>
+        {advisorSigned ? (
+          <div className="rounded-md border border-emerald-200 border-l-[3px] border-l-emerald-500 bg-emerald-50/50 p-4 space-y-2">
+            <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800"><ShieldCheck size={16} /> Recibido por el asesor</p>
+            {order.advisorSignature && (
+              <div className="rounded-md border border-gray-200 bg-white p-2 inline-block">
+                <img src={order.advisorSignature} alt="Firma del asesor" className="h-20 w-auto max-w-full" />
+              </div>
+            )}
+            <p className="text-xs text-gray-600"><b>{order.advisorName}</b> · {fDateTime(order.advisorSignedAt)}</p>
+          </div>
+        ) : (
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2">
+            <p className="text-xs text-gray-600">Firma quien recibe el vehículo: <b>{`${user?.firstName || ''} ${user?.lastName || ''}`.trim()}</b>. Su nombre y firma salen en la orden de recepción.</p>
+            <Button icon={PenLine} variant="secondary" onClick={() => setAdvOpen(true)}>Firmar como asesor</Button>
+          </div>
+        )}
+      </div>
+
+      {advOpen && (
+        <SignaturePad
+          title="Firma del asesor"
+          subtitle="Firma con el dedo dentro del recuadro."
+          onClose={() => setAdvOpen(false)}
+          onSave={(dataUrl) => advMut.mutate(dataUrl)}
+          loading={advMut.isPending}
+        />
+      )}
+
       {open && (
         <SignaturePad
           title="Conformidad de recepción"
@@ -162,7 +202,7 @@ export function ReceptionSignature({ order, workshopId, isAdmin, onChanged }) {
         onConfirm={() => clearMut.mutate()}
         loading={clearMut.isPending}
         title="Anular firma de recepción"
-        message="Se borrará la firma del cliente y se desbloquearán los datos y fotos de recepción. Después habrá que volver a pedir la firma."
+        message="Se borrarán la firma del cliente y la del asesor, y se desbloquearán los datos y fotos de recepción. Después habrá que volver a pedir la firma."
       />
     </div>
   );

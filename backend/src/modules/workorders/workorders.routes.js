@@ -17,6 +17,7 @@ router.patch('/:orderId/status', ...anyRole, ctrl.updateStatus);
 router.patch('/:orderId/payment', ...staff, ctrl.updatePayment);
 router.patch('/:orderId/link-quote', ...staff, ctrl.linkQuote);
 router.post('/:orderId/reception-signature', ...staff, ctrl.signReception);
+router.post('/:orderId/advisor-signature', ...staff, ctrl.signAdvisor);
 router.delete('/:orderId/reception-signature', ...adminOnly, ctrl.clearReceptionSignature);
 router.get('/:orderId/payments', ...staff, ctrl.listPayments);
 router.post('/:orderId/payments', ...staff, ctrl.addPayment);

@@ -29,8 +29,9 @@ const s = StyleSheet.create({
   invRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: LINE },
   invCell: { paddingHorizontal: 4, justifyContent: 'center', height: 12.4, fontSize: 7.6, borderRightWidth: 0.5, borderRightColor: LINE },
   cond: { fontSize: 7.4, marginTop: 3, lineHeight: 1.35 },
-  sigRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  sig: { width: '31%', alignItems: 'center', borderTopWidth: 0.6, borderTopColor: '#9aa5b4', paddingTop: 3 },
+  sigRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
+  sigNameValue: { fontSize: 7.4, color: '#1f2937', marginTop: 1.5 },
+  sig: { alignItems: 'center', borderTopWidth: 0.6, borderTopColor: '#9aa5b4', paddingTop: 3 },
   sigName: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#334155' },
   sigSub: { fontSize: 5.8, color: '#b0b8c4', marginTop: 1.5 },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, marginHorizontal: -4 },
@@ -96,8 +97,23 @@ function Inventory() {
 }
 
 // ── Dibujos de carrocería ────────────────────────────────────────────────────
+// Espacio de firma: imagen (si ya firmó en digital) sobre la línea, rótulo y nombre debajo
+function SigSlot({ title, image, name, signed }) {
+  return (
+    <View style={{ width: '31%' }}>
+      <View style={{ height: 30, justifyContent: 'flex-end', alignItems: 'center' }}>
+        {image ? <Image src={image} style={{ height: 29, maxWidth: '100%', objectFit: 'contain' }} /> : null}
+      </View>
+      <View style={s.sig}>
+        <Text style={s.sigName}>{title}</Text>
+        <Text style={signed && name ? s.sigNameValue : s.sigSub}>{signed && name ? name : 'Nombre y firma'}</Text>
+      </View>
+    </View>
+  );
+}
+
 // Dibujo idéntico al del formato impreso (imagen) + rótulos como texto nítido
-const K = 366 / 988;
+const K = 320 / 988;
 const LBL = [
   ['LADO IZQUIERDO', 195, 22], ['VISTA SUPERIOR', 540, 76], ['LADO DERECHO', 197, 198],
   ['FRENTE', 870, 22], ['ATRÁS', 870, 196],
@@ -105,8 +121,8 @@ const LBL = [
 function BodyImage({ src }) {
   const lab = { position: 'absolute', width: 120, textAlign: 'center', fontSize: 7, color: '#475569' };
   return (
-    <View style={{ width: 366, height: 372 * K, alignSelf: 'center', marginTop: 3 }}>
-      <Image src={src} style={{ width: 366, height: 372 * K }} />
+    <View style={{ width: 320, height: 372 * K, alignSelf: 'center', marginTop: 3 }}>
+      <Image src={src} style={{ width: 320, height: 372 * K }} />
       {LBL.map(([t, x, y]) => <Text key={t + y} style={{ ...lab, left: x * K - 60, top: y * K - 4 }}>{t}</Text>)}
       <Text style={{ ...lab, left: 368 * K - 60, top: 190 * K - 4, transform: 'rotate(-90deg)' }}>FRENTE</Text>
       <Text style={{ ...lab, left: 718 * K - 60, top: 188 * K - 4, transform: 'rotate(90deg)' }}>ATRÁS</Text>
@@ -217,9 +233,10 @@ function ReceptionOrderDocument({ order, workshop, photos = [], carsSrc }) {
         <Text style={s.cond}><Text style={{ fontFamily: 'Helvetica-Bold' }}>4. </Text>Vehículos no recogidos ______ días después de avisar que están listos generarán un cargo por resguardo de $________ por día.</Text>
 
         <View style={s.sigRow}>
-          <View style={s.sig}><Text style={s.sigName}>CLIENTE (ENTREGA EL VEHÍCULO)</Text><Text style={s.sigSub}>Nombre y firma</Text></View>
-          <View style={s.sig}><Text style={s.sigName}>ASESOR (RECIBE)</Text><Text style={s.sigSub}>Nombre y firma</Text></View>
-          <View style={s.sig}><Text style={s.sigName}>CLIENTE (RECIBE DE CONFORMIDAD)</Text><Text style={s.sigSub}>Nombre y firma</Text></View>
+          {/* Cliente y asesor firman en digital al recibir; el cliente firma a mano al entregarle el vehículo */}
+          <SigSlot title="CLIENTE (ENTREGA EL VEHÍCULO)" image={order.receptionSignature} name={order.receptionSignedBy || `${c.firstName || ''} ${c.lastName || ''}`.trim()} signed={!!order.receptionSignature} />
+          <SigSlot title="ASESOR (RECIBE)" image={order.advisorSignature} name={order.advisorName} signed={!!order.advisorSignature} />
+          <SigSlot title="CLIENTE (RECIBE DE CONFORMIDAD)" />
         </View>
         <View style={s.footer} fixed><Text>{workshop.name} · Orden de recepción {order.orderNumber}</Text><Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} /></View>
       </Page>
@@ -286,7 +303,7 @@ export async function downloadReceptionOrderPdf(order, workshop, advisor) {
     buildPhotos(order),
   ]);
   const blob = await pdf(
-    <ReceptionOrderDocument order={{ ...order, advisor }} workshop={workshop} photos={photos} carsSrc={carsSrc} />
+    <ReceptionOrderDocument order={{ ...order, advisor: order.advisorName || advisor }} workshop={workshop} photos={photos} carsSrc={carsSrc} />
   ).toBlob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

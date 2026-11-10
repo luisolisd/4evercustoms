@@ -94,10 +94,10 @@ const shapeTechs = (o) => (o.technicians ? { ...o, technicians: o.technicians.ma
 // Vista reducida para el técnico: sin dinero, cotizaciones ni datos de contacto
 const forTechnician = (o) => {
   const {
-    totalAmount, paidAmount, paymentStatus, paidAt, customerSignature, signedAt, receptionSignature, quotes, payments, workOrderParts, ...rest
+    totalAmount, paidAmount, paymentStatus, paidAt, customerSignature, signedAt, receptionSignature, advisorSignature, quotes, payments, workOrderParts, ...rest
   } = o;
   void totalAmount; void paidAmount; void paymentStatus; void paidAt; void customerSignature; void signedAt;
-  void quotes; void payments; void workOrderParts; void receptionSignature;
+  void quotes; void payments; void workOrderParts; void receptionSignature; void advisorSignature;
   if (rest.photoSlots) rest.photoSlots = rest.photoSlots.filter((s) => s.kind === 'TECH');
   return rest;
 };
@@ -186,8 +186,8 @@ const list = async (req, res, next) => {
     // Avance de fotos requeridas: cuántas ya tienen al menos una foto
     const data = rows.map((o) => {
       const slots = (o.photoSlots || []).filter((s) => s.kind === 'TECH');
-      const { photoSlots, customerSignature, receptionSignature, ...rest } = shapeTechs(o);
-      void photoSlots; void customerSignature; void receptionSignature;
+      const { photoSlots, customerSignature, receptionSignature, advisorSignature, ...rest } = shapeTechs(o);
+      void photoSlots; void customerSignature; void receptionSignature; void advisorSignature;
       const shaped = { ...rest, receptionSigned: !!o.receptionSignedAt, slotProgress: { total: slots.length, done: slots.filter((s) => s._count.photos > 0).length } };
       return tech ? forTechnician(shaped) : shaped;
     });
@@ -466,12 +466,29 @@ const signReception = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-// Solo administrador: anula la firma para corregir la recepción (después se vuelve a firmar)
+// Firma del asesor que recibe el vehículo: administrador o supervisor (el nombre sale de su sesión)
+const signAdvisor = async (req, res, next) => {
+  try {
+    const { orderId, workshopId } = req.params;
+    const order = await prisma.workOrder.findFirst({ where: { id: orderId, workshopId }, select: { id: true } });
+    if (!order) return notFound(res);
+    const body = z.object({ signature: signSchema.shape.signature }).parse(req.body);
+    const name = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim();
+    const upd = await prisma.workOrder.updateMany({
+      where: { id: orderId, advisorSignedAt: null },
+      data: { advisorSignature: body.signature, advisorSignedAt: new Date(), advisorName: name },
+    });
+    if (upd.count === 0) return error(res, 'La orden ya tiene la firma del asesor', 409);
+    ok(res, { message: 'Firma del asesor guardada' });
+  } catch (e) { next(e); }
+};
+
+// Solo administrador: anula las firmas para corregir la recepción (después se vuelve a firmar)
 const clearReceptionSignature = async (req, res, next) => {
   try {
     const { orderId, workshopId } = req.params;
     await ensure.workOrder(orderId, workshopId);
-    await prisma.workOrder.update({ where: { id: orderId }, data: { receptionSignature: null, receptionSignedAt: null, receptionSignedBy: null } });
+    await prisma.workOrder.update({ where: { id: orderId }, data: { receptionSignature: null, receptionSignedAt: null, receptionSignedBy: null, advisorSignature: null, advisorSignedAt: null, advisorName: null } });
     ok(res, { message: 'Firma anulada' });
   } catch (e) { next(e); }
 };
@@ -548,7 +565,7 @@ const remove = async (req, res, next) => {
 
 module.exports = {
   createOrderRecord, list, create, getOne, update, updateStatus, updatePayment, linkQuote,
-  listPayments, addPayment, removePayment, addPart, removePart, signReception, clearReceptionSignature, remove,
+  listPayments, addPayment, removePayment, addPart, removePart, signReception, signAdvisor, clearReceptionSignature, remove,
 };
 
 

@@ -301,6 +301,10 @@ model WorkOrder {
   receptionSignature String?         @db.Text
   receptionSignedAt  DateTime?
   receptionSignedBy  String?
+  // Firma del asesor (administrador o supervisor) que recibe el vehículo
+  advisorSignature   String?         @db.Text
+  advisorSignedAt    DateTime?
+  advisorName        String?
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 

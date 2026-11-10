@@ -21,4 +21,5 @@ export const deletePhoto  = (wid, photoId) => api.delete(`/workshops/${wid}/phot
 export const addWOPayment = (wid, id, d) => api.post(`${base(wid)}/${id}/payments`, d);
 export const removeWOPayment = (wid, id, paymentId) => api.delete(`${base(wid)}/${id}/payments/${paymentId}`);
 export const signReception = (wid, id, d) => api.post(`${base(wid)}/${id}/reception-signature`, d);
+export const signAdvisor = (wid, id, d) => api.post(`${base(wid)}/${id}/advisor-signature`, d);
 export const clearReceptionSignature = (wid, id) => api.delete(`${base(wid)}/${id}/reception-signature`);
