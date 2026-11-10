@@ -70,6 +70,8 @@ const list = async (req, res, next) => {
         orderBy: { createdAt: 'desc' },
         include: {
           customer: { select: { id: true, firstName: true, lastName: true } },
+          // El listado muestra las líneas de cada cotización (sin ellas "Agregar línea" parecía no hacer nada)
+          items: { orderBy: { id: 'asc' }, select: { id: true, description: true, quantity: true, unitPrice: true, total: true, isLabor: true, partId: true } },
           _count: { select: { items: true } },
         },
       }),
