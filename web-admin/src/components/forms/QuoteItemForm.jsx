@@ -13,12 +13,15 @@ const EMPTY = { name: '', quantity: '1', unitPrice: '' };
  * Línea de cotización: se elige si es refacción o mano de obra y se escribe directamente su nombre.
  * Si lo escrito coincide con una refacción del inventario, se toma su precio (y se liga a ella).
  */
-export default function QuoteItemForm({ onSubmit, loading }) {
+export default function QuoteItemForm({ onSubmit, loading, initial, submitLabel = 'Agregar línea', onCancel }) {
   const workshopId = useAuthStore((s) => s.workshopId);
   const toast = useToast();
   const listId = useId();
-  const [labor, setLabor] = useState(false);
-  const [f, setF] = useState(EMPTY);
+  // `initial` = línea existente a editar; sin ella, el formulario agrega líneas nuevas
+  const [labor, setLabor] = useState(!!initial?.isLabor);
+  const [f, setF] = useState(initial
+    ? { name: initial.description || '', quantity: String(Number(initial.quantity)), unitPrice: String(Number(initial.unitPrice)) }
+    : EMPTY);
 
   const { data: partsRes } = useQuery({
     queryKey: ['parts-all', workshopId],
@@ -48,7 +51,7 @@ export default function QuoteItemForm({ onSubmit, loading }) {
     const part = matchPart(name);
     onSubmit(
       { description: name, partId: part?.id || undefined, quantity, unitPrice, isLabor: labor },
-      () => setF(EMPTY)
+      () => { if (!initial) setF(EMPTY); }
     );
   };
 
@@ -90,8 +93,9 @@ export default function QuoteItemForm({ onSubmit, loading }) {
         <Input label="Cantidad *" type="number" step="0.01" inputMode="decimal" value={f.quantity} onChange={set('quantity')} />
         <Input label="Precio unit. (IVA incl.) *" type="number" step="0.01" inputMode="decimal" placeholder="0.00" value={f.unitPrice} onChange={set('unitPrice')} />
       </div>
-      <div className="flex justify-end pt-2">
-        <Button type="submit" className="w-full sm:w-auto" loading={loading}>Agregar línea</Button>
+      <div className="flex justify-end gap-3 pt-2">
+        {onCancel && <Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button>}
+        <Button type="submit" className={onCancel ? '' : 'w-full sm:w-auto'} loading={loading}>{submitLabel}</Button>
       </div>
     </form>
   );

@@ -72,6 +72,8 @@ const list = async (req, res, next) => {
           customer: { select: { id: true, firstName: true, lastName: true } },
           // El listado muestra las líneas de cada cotización (sin ellas "Agregar línea" parecía no hacer nada)
           items: { orderBy: { id: 'asc' }, select: { id: true, description: true, quantity: true, unitPrice: true, total: true, isLabor: true, partId: true } },
+          // Vehículo de la orden ligada: lo usa el PDF de la cotización
+          workOrder: { select: { id: true, orderNumber: true, vehicle: { select: { make: true, model: true, year: true, licensePlate: true } } } },
           _count: { select: { items: true } },
         },
       }),
@@ -211,6 +213,34 @@ const addItem = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// Edita una línea existente (descripción, cantidad, precio, tipo) sin borrarla y volverla a crear
+const updateItem = async (req, res, next) => {
+  try {
+    const { workshopId, quoteId, itemId } = req.params;
+    const quote = await ensure.quote(quoteId, workshopId);
+    const body = itemSchema.parse(req.body);
+    if (body.partId) await ensure.part(body.partId, workshopId);
+
+    const found = await prisma.quoteItem.findFirst({ where: { id: itemId, quoteId }, select: { id: true } });
+    if (!found) return notFound(res, 'Ítem no encontrado');
+
+    const item = await prisma.quoteItem.update({
+      where: { id: itemId },
+      data: {
+        description: body.description,
+        partId: body.partId || null,
+        quantity: body.quantity,
+        unitPrice: body.unitPrice,
+        total: Math.round(body.quantity * body.unitPrice * 100) / 100,
+        isLabor: body.isLabor || false,
+      },
+    });
+    await recalcTotals(quoteId);
+    if (quote.workOrderId) await recalcOrderTotal(quote.workOrderId);
+    ok(res, item);
+  } catch (e) { next(e); }
+};
+
 const removeItem = async (req, res, next) => {
   try {
     const { workshopId, quoteId, itemId } = req.params;
@@ -272,4 +302,4 @@ const remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, updateStatus, addItem, removeItem, createOrder, remove };
+module.exports = { list, create, getOne, update, updateStatus, addItem, updateItem, removeItem, createOrder, remove };

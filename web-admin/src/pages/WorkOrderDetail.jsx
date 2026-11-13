@@ -31,6 +31,7 @@ import Select from '../components/ui/Select';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import QuoteItemForm from '../components/forms/QuoteItemForm';
+import EditQuoteItemModal from '../components/EditQuoteItemModal';
 import { useToast } from '../hooks/useToast';
 import { fMoney, fDate, fDateTime, fNumber, toLocalInput, fromLocalInput } from '../utils/formatters';
 import clsx from 'clsx';
@@ -122,6 +123,18 @@ export default function WorkOrderDetail() {
       await downloadWorkOrderPdf(order, workshopRes?.data || {});
     } catch { toast.error('No se pudo generar el PDF'); }
     finally { setPdfBusy(false); }
+  };
+
+  // Cotización en PDF (mismo formato que la orden) para enviarla al cliente y que la autorice
+  const [quotePdfBusy, setQuotePdfBusy] = useState(null);
+  const [editingItem, setEditingItem] = useState(null); // { qid, item }
+  const handleQuotePdf = async (q) => {
+    setQuotePdfBusy(q.id);
+    try {
+      const { downloadQuotePdf } = await import('../pdf/QuotePDF');
+      await downloadQuotePdf(q, workshopRes?.data || {}, { vehicle: order.vehicle, customer: order.customer });
+    } catch { toast.error('No se pudo generar el PDF de la cotización'); }
+    finally { setQuotePdfBusy(null); }
   };
 
   // Orden de recepción (formato impreso del taller); "Recibió" es quien la genera
@@ -452,6 +465,7 @@ export default function WorkOrderDetail() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-900">{fMoney(q.total)}</span>
+                        <Button size="xs" variant="secondary" icon={FileDown} loading={quotePdfBusy === q.id} onClick={() => handleQuotePdf(q)}>PDF</Button>
                         {q.status === 'DRAFT' && (
                           <Button size="xs" variant="secondary" onClick={() => quoteStatusMut.mutate({ qid: q.id, status: 'SENT' })}>Enviar</Button>
                         )}
@@ -472,9 +486,16 @@ export default function WorkOrderDetail() {
     { key: 't', header: 'Total', align: 'right', cell: (item) => <span className="font-semibold">{fMoney(Number(item.total) / IVA_FACTOR)}</span> },
   ]}
   actions={(item, { mobile }) => (
-    <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} className={mobile ? 'inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'text-gray-400 hover:text-red-500'}>
-      <Trash2 size={13} />{mobile && 'Quitar'}
-    </button>
+    <span className={mobile ? 'inline-flex gap-2' : 'inline-flex items-center gap-3'}>
+      {['DRAFT','SENT'].includes(q.status) && (
+        <button onClick={() => setEditingItem({ qid: q.id, item })} title="Editar" className={mobile ? 'inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3.5 min-h-[40px] text-sm text-gray-700' : 'text-gray-400 hover:text-brand-600'}>
+          <Edit2 size={13} />{mobile && 'Editar'}
+        </button>
+      )}
+      <button onClick={() => removeQuoteItemMut?.mutate({ qid: q.id, itemId: item.id })} title="Quitar" className={mobile ? 'inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3.5 min-h-[40px] text-sm text-red-600' : 'text-gray-400 hover:text-red-500'}>
+        <Trash2 size={13} />{mobile && 'Quitar'}
+      </button>
+    </span>
   )}
 />
 <div className="px-4 py-3 ml-auto max-w-xs space-y-0.5 text-xs">
@@ -494,6 +515,13 @@ export default function WorkOrderDetail() {
           )}
         </div>
       </div>
+
+      <EditQuoteItemModal
+        item={editingItem?.item}
+        quoteId={editingItem?.qid}
+        onClose={() => setEditingItem(null)}
+        invalidateKeys={[['work-order', id]]}
+      />
 
       {/* Edit modal */}
       <Modal open={editModal} onClose={() => setEditModal(false)} title="Editar orden" size="md">

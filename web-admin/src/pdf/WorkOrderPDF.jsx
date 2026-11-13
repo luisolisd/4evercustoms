@@ -5,10 +5,10 @@ import QRCode from 'qrcode';
 // Evita que react-pdf corte palabras a la mitad (AUTO-MOTRIZ); solo corta en espacios.
 Font.registerHyphenationCallback((word) => [word]);
 
-const money = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(n || 0));
-const fdate = (d) => (d ? new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
+export const money = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(n || 0));
+export const fdate = (d) => (d ? new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 9, color: '#111827', fontFamily: 'Helvetica' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between' },
   title: { fontSize: 20, fontFamily: 'Helvetica-Bold' },
@@ -159,7 +159,7 @@ function WorkOrderDocument({ order, workshop, qrDataUrl, logoDataUrl }) {
   );
 }
 
-async function toDataUrl(url) {
+export async function toDataUrl(url) {
   const res = await fetch(url);
   const blob = await res.blob();
   return await new Promise((resolve) => {

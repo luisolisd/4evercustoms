@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, FileText, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Plus, FileText, ChevronDown, ChevronUp, Trash2, Edit2, FileDown } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { getWorkshop } from '../services/workshop';
+import EditQuoteItemModal from '../components/EditQuoteItemModal';
 import {
   getQuotes, createQuote, updateQuoteStatus,
   addQuoteItem, removeQuoteItem, deleteQuote,
@@ -58,6 +60,22 @@ function QuoteRow({ quote, workshopId, onDelete }) {
   });
 
   const editable = ['DRAFT', 'SENT'].includes(quote.status);
+  const [editingItem, setEditingItem] = useState(null);
+
+  const { data: workshopRes } = useQuery({
+    queryKey: ['workshop', workshopId],
+    queryFn: () => getWorkshop(workshopId),
+    enabled: !!workshopId,
+  });
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const handlePdf = async () => {
+    setPdfBusy(true);
+    try {
+      const { downloadQuotePdf } = await import('../pdf/QuotePDF');
+      await downloadQuotePdf(quote, workshopRes?.data || {});
+    } catch { toast.error('No se pudo generar el PDF'); }
+    finally { setPdfBusy(false); }
+  };
 
   return (
     <div className="border border-gray-200 rounded-md overflow-hidden">
@@ -76,6 +94,7 @@ function QuoteRow({ quote, workshopId, onDelete }) {
           <span className="text-xs text-gray-400 shrink-0">{fDate(quote.createdAt)}</span>
         </div>
         <div className="mt-2.5 pl-6 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button size="xs" variant="secondary" icon={FileDown} loading={pdfBusy} onClick={handlePdf}>PDF</Button>
           {quote.status === 'DRAFT' && <Button size="xs" variant="secondary" onClick={() => statusMut.mutate('SENT')}>Enviar al cliente</Button>}
           {quote.status === 'SENT' && (
             <>
@@ -98,6 +117,12 @@ function QuoteRow({ quote, workshopId, onDelete }) {
         </div>
       </div>
 
+      <EditQuoteItemModal
+        item={editingItem}
+        quoteId={quote.id}
+        onClose={() => setEditingItem(null)}
+        invalidateKeys={[['quotes', workshopId]]}
+      />
       <CreateOrderFromQuoteModal open={orderModal} onClose={() => setOrderModal(false)} quote={quote} workshopId={workshopId} />
 
       {expanded && (
@@ -129,8 +154,11 @@ function QuoteRow({ quote, workshopId, onDelete }) {
                   <td className="px-4 py-2.5 text-right">{item.discount > 0 ? `${item.discount}%` : '—'}</td>
                   <td className="px-4 py-2.5 text-right font-semibold">{fMoney(item.total)}</td>
                   {editable && (
-                    <td className="px-4 py-2.5 text-right">
-                      <button onClick={() => removeItemMut.mutate(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">
+                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                      <button onClick={() => setEditingItem(item)} title="Editar" className="text-gray-300 hover:text-brand-600 transition-colors mr-3">
+                        <Edit2 size={12} />
+                      </button>
+                      <button onClick={() => removeItemMut.mutate(item.id)} title="Quitar" className="text-gray-300 hover:text-red-500 transition-colors">
                         <Trash2 size={12} />
                       </button>
                     </td>
@@ -160,7 +188,10 @@ function QuoteRow({ quote, workshopId, onDelete }) {
                 <div className="text-right shrink-0">
                   <p className="text-sm font-semibold text-gray-900">{fMoney(item.total)}</p>
                   {editable && (
-                    <button onClick={() => removeItemMut.mutate(item.id)} className="mt-1 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><Trash2 size={12} /> Quitar</button>
+                    <div className="mt-1 flex items-center justify-end gap-3">
+                      <button onClick={() => setEditingItem(item)} className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-brand-600"><Edit2 size={12} /> Editar</button>
+                      <button onClick={() => removeItemMut.mutate(item.id)} className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"><Trash2 size={12} /> Quitar</button>
+                    </div>
                   )}
                 </div>
               </div>

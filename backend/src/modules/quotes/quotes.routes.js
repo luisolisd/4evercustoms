@@ -13,6 +13,7 @@ router.put('/:quoteId', ...staff, ctrl.update);
 router.patch('/:quoteId/status', ...staff, ctrl.updateStatus);
 router.post('/:quoteId/create-order', ...staff, ctrl.createOrder);
 router.post('/:quoteId/items', ...staff, ctrl.addItem);
+router.put('/:quoteId/items/:itemId', ...staff, ctrl.updateItem);
 router.delete('/:quoteId/items/:itemId', ...staff, ctrl.removeItem);
 router.delete('/:quoteId', ...staff, ctrl.remove);
 
