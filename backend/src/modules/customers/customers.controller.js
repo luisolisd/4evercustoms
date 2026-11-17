@@ -1,4 +1,5 @@
 const prisma = require('../../config/database');
+const bcrypt = require('bcryptjs');
 const { ok, created, notFound } = require('../../utils/response');
 const { parsePagination } = require('../../utils/pagination');
 const { z, pick, CUSTOMER_PUBLIC } = require('../../utils/guards');
@@ -80,10 +81,36 @@ const getOne = async (req, res, next) => {
         ...CUSTOMER_PUBLIC,
         vehicles: { where: { isActive: true } },
         _count: { select: { workOrders: true, appointments: true } },
+        passwordHash: true,
       },
     });
     if (!customer) return notFound(res);
-    ok(res, customer);
+    // Solo se expone si tiene contraseña, nunca el hash
+    const { passwordHash, ...safe } = customer;
+    ok(res, { ...safe, hasPassword: !!passwordHash });
+  } catch (e) { next(e); }
+};
+
+// Admin: { password } → fija una contraseña nueva; sin password → borra la actual y el cliente
+// crea una nueva la próxima vez que entre al portal con su número.
+const setPassword = async (req, res, next) => {
+  try {
+    const customer = await prisma.customer.findFirst({
+      where: { id: req.params.customerId, workshopId: req.params.workshopId },
+      select: { id: true },
+    });
+    if (!customer) return notFound(res);
+
+    const { password } = z.object({
+      password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').max(100).optional(),
+    }).parse(req.body || {});
+
+    const passwordHash = password ? await bcrypt.hash(password, 12) : null;
+    await prisma.customer.update({ where: { id: customer.id }, data: { passwordHash } });
+    ok(res, {
+      hasPassword: !!passwordHash,
+      message: password ? 'Contraseña actualizada' : 'Acceso restablecido: el cliente creará una nueva contraseña al entrar',
+    });
   } catch (e) { next(e); }
 };
 
@@ -115,4 +142,4 @@ const remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { list, create, getOne, update, remove };
+module.exports = { list, create, getOne, update, remove, setPassword };

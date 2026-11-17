@@ -7,3 +7,6 @@ export const getCustomer   = (wid, id) => api.get(`${base(wid)}/${id}`);
 export const createCustomer= (wid, d) => api.post(base(wid), d);
 export const updateCustomer= (wid, id, d) => api.put(`${base(wid)}/${id}`, d);
 export const deleteCustomer= (wid, id) => api.delete(`${base(wid)}/${id}`);
+// Con password → la cambia; sin password → la borra y el cliente crea una nueva al entrar
+export const setCustomerPassword = (wid, id, password) =>
+  api.put(`${base(wid)}/${id}/password`, password ? { password } : {});

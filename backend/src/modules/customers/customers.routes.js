@@ -12,5 +12,7 @@ router.post('/', ...staff, ctrl.create);
 router.get('/:customerId', ...staff, ctrl.getOne);
 router.put('/:customerId', ...staff, ctrl.update);
 router.delete('/:customerId', ...adminOnly, ctrl.remove);
+// Solo admin: cambia la contraseña del portal del cliente o la borra para que el cliente cree una nueva
+router.put('/:customerId/password', ...adminOnly, ctrl.setPassword);
 
 module.exports = router;

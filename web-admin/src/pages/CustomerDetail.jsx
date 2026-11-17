@@ -1,8 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Mail, MapPin, Car, ClipboardList, CalendarDays } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
-import { getCustomer } from '../services/customers';
+import { ArrowLeft, Phone, Mail, MapPin, Car, ClipboardList, CalendarDays, KeyRound, RotateCcw } from 'lucide-react';
+import { useAuthStore, selectIsAdmin } from '../store/authStore';
+import { getCustomer, setCustomerPassword } from '../services/customers';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { useToast } from '../hooks/useToast';
 import { getWorkOrders } from '../services/workOrders';
 import { WorkOrderBadge, PaymentBadge } from '../components/ui/Badge';
 import BrandLogo from '../components/ui/BrandLogo';
@@ -12,6 +18,7 @@ export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const workshopId = useAuthStore((s) => s.workshopId);
+  const isAdmin = useAuthStore(selectIsAdmin);
 
   const { data, isLoading } = useQuery({
     queryKey: ['customer', workshopId, id],
@@ -69,6 +76,8 @@ export default function CustomerDetail() {
         </div>
       </div>
 
+      {isAdmin && <PortalAccess customer={c} workshopId={workshopId} />}
+
       {/* Vehículos */}
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-2">Vehículos</h2>
@@ -113,6 +122,75 @@ export default function CustomerDetail() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+const randomPassword = () => {
+  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.getRandomValues(new Uint32Array(8));
+  return Array.from(bytes, (b) => chars[b % chars.length]).join('');
+};
+
+// Solo admin: cambiar la contraseña del portal del cliente o borrarla para que él cree una nueva
+function PortalAccess({ customer, workshopId }) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const [modal, setModal] = useState(null); // 'password' | 'reset' | null
+  const [password, setPassword] = useState('');
+
+  const mut = useMutation({
+    mutationFn: (pw) => setCustomerPassword(workshopId, customer.id, pw),
+    onSuccess: (r, pw) => {
+      qc.invalidateQueries({ queryKey: ['customer', workshopId, customer.id] });
+      setModal(null);
+      toast.success(pw ? 'Contraseña actualizada' : 'Acceso restablecido');
+    },
+    onError: (e) => toast.error(e.message || 'Ocurrió un error'),
+  });
+
+  return (
+    <div className="bg-white rounded-md shadow-sm border border-gray-200 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-gray-700">Acceso al portal</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {customer.hasPassword
+              ? 'El cliente ya creó su contraseña.'
+              : 'Sin contraseña: la creará la próxima vez que entre con su número.'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" icon={KeyRound} onClick={() => { setPassword(randomPassword()); setModal('password'); }}>
+            Cambiar contraseña
+          </Button>
+          {customer.hasPassword && (
+            <Button variant="secondary" icon={RotateCcw} onClick={() => setModal('reset')}>Restablecer acceso</Button>
+          )}
+        </div>
+      </div>
+
+      <Modal open={modal === 'password'} onClose={() => setModal(null)} title="Cambiar contraseña del cliente" size="sm">
+        <form onSubmit={(e) => { e.preventDefault(); mut.mutate(password); }} className="space-y-4">
+          <p className="text-sm text-gray-600">{customer.firstName} {customer.lastName} · {customer.phone}</p>
+          <Input label="Nueva contraseña *" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+          <p className="text-xs text-gray-500">Compártela con el cliente; entra al portal con su número y esta contraseña.</p>
+          <div className="flex justify-between">
+            <Button type="button" variant="secondary" onClick={() => setPassword(randomPassword())}>Generar</Button>
+            <Button type="submit" loading={mut.isPending}>Guardar</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        open={modal === 'reset'}
+        onClose={() => setModal(null)}
+        onConfirm={() => mut.mutate(undefined)}
+        loading={mut.isPending}
+        variant="primary"
+        title="Restablecer acceso"
+        message={`Se borrará la contraseña actual de ${customer.firstName}. La próxima vez que entre al portal con su número, creará una nueva.`}
+      />
     </div>
   );
 }
